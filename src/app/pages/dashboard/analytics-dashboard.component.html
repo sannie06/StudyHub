@@ -1,0 +1,321 @@
+<div class="p-6 space-y-6 w-full max-w-[1650px] mx-auto bg-[#F8F9FD] min-h-screen">
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Dashboard phân tích học tập</h1>
+      <p class="text-sm text-gray-500 mt-1">Tổng quan và phân tích chi tiết quá trình học tập của bạn</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl
+                     text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
+        <i class="pi pi-calendar text-gray-400 text-sm"></i>
+        <span>26/05/2024 - 01/06/2024</span>
+        <i class="pi pi-chevron-down text-gray-400 text-xs"></i>
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl
+                     text-xs font-semibold hover:bg-purple-50 transition-all shadow-sm"
+              style="border-color:#5B4DFF; color:#5B4DFF;">
+        <i class="pi pi-download text-xs"></i>
+        <span>Xuất báo cáo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── ROW 1: 5 KPI CARDS ── -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div *ngFor="let card of kpiCards"
+         class="rounded-2xl p-4 shadow-sm flex flex-col gap-3"
+         [style]="'background:' + card.bg + ';'">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-gray-700">{{ card.title }}</span>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+             [style]="'background:rgba(255,255,255,0.6);'">
+          <i class="pi text-base" [class]="card.icon" [style]="'color:'+card.iconColor+';'"></i>
+        </div>
+      </div>
+      <div>
+        <span class="text-3xl font-bold leading-none block" [style]="'color:'+card.valueColor+';'">
+          {{ card.value }}
+        </span>
+        <span class="text-xs font-semibold mt-2 block" [style]="'color:'+card.subColor+';'">
+          {{ card.sub }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: CHARTS + DEADLINE ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Card 1: Tiến độ học tập (lg:col-span-5) -->
+    <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <!-- Header -->
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold text-gray-900">Tiến độ học tập</h2>
+          <p class="text-xs text-gray-400">(Số giờ học theo ngày)</p>
+        </div>
+        <div class="flex items-center bg-gray-100 p-1 rounded-xl gap-1 text-xs font-semibold">
+          <button (click)="setActiveTab('day')"
+                  class="px-2.5 py-1 rounded-lg transition-all"
+                  [style]="activeTab==='day' ? 'background:#EEECFF;color:#5B4DFF;' : 'color:#94a3b8;'">Ngày</button>
+          <button (click)="setActiveTab('week')"
+                  class="px-2.5 py-1 rounded-lg transition-all"
+                  [style]="activeTab==='week' ? 'background:#EEECFF;color:#5B4DFF;' : 'color:#94a3b8;'">Tuần</button>
+          <button (click)="setActiveTab('month')"
+                  class="px-2.5 py-1 rounded-lg transition-all"
+                  [style]="activeTab==='month' ? 'background:#EEECFF;color:#5B4DFF;' : 'color:#94a3b8;'">Tháng</button>
+        </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="relative" style="height:200px;">
+        <!-- Y-axis labels + gridlines -->
+        <div class="absolute inset-0 flex flex-col justify-between pb-8 pointer-events-none">
+          <div *ngFor="let tick of [10,8,6,4,2,0]" class="flex items-center gap-2">
+            <span class="text-[10px] text-gray-400 w-4 text-right flex-shrink-0">{{tick}}</span>
+            <div class="flex-1 border-t border-gray-100"></div>
+          </div>
+        </div>
+
+        <!-- Bars area -->
+        <div class="absolute bottom-8 left-7 right-0 flex items-end justify-between gap-2 h-[136px]">
+          <div *ngFor="let bar of barData"
+               class="flex flex-col items-center flex-1 h-full justify-end relative group">
+
+            <!-- Tooltip (only for active bar T5) -->
+            <div *ngIf="bar.active"
+                 class="absolute bg-white border border-gray-200 shadow-lg rounded-xl px-2.5 py-1.5 text-center whitespace-nowrap z-10"
+                 style="bottom: calc(100% + 8px);">
+              <span class="text-[10px] text-gray-400 block">Thứ 5 - {{ bar.date }}</span>
+              <span class="text-xs font-bold text-gray-900">{{ bar.h }} giờ</span>
+            </div>
+
+            <!-- Bar column -->
+            <div class="w-full rounded-t-lg transition-all duration-300"
+                 [style]="'height:' + bar.pct + '%; background:' + (bar.active ? '#5B4DFF' : '#8B80FF') + ';'"></div>
+          </div>
+        </div>
+
+        <!-- X-axis labels -->
+        <div class="absolute bottom-0 left-7 right-0 flex justify-between gap-2">
+          <div *ngFor="let bar of barData" class="flex-1 text-center">
+            <span class="text-[11px] font-semibold text-gray-600 block leading-none">{{ bar.day }}</span>
+            <span class="text-[10px] text-gray-400 block mt-0.5 leading-none">{{ bar.date }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Thống kê theo môn học (lg:col-span-4) -->
+    <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-gray-900">Thống kê theo môn học</h2>
+        <button class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-semibold text-gray-600">
+          <span>Tất cả môn học</span>
+          <i class="pi pi-chevron-down text-[10px] text-gray-400"></i>
+        </button>
+      </div>
+
+      <!-- Donut + Legend -->
+      <div class="flex flex-col sm:flex-row items-center gap-5">
+        <!-- SVG Donut Chart -->
+        <div class="relative flex-shrink-0 mx-auto" style="width:140px;height:140px;">
+          <svg class="donut-svg w-full h-full" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#5B4DFF" stroke-width="14"
+                    stroke-dasharray="200 52" stroke-dashoffset="0"/>
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10b981" stroke-width="14"
+                    stroke-dasharray="163 89" stroke-dashoffset="-200"/>
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f59e0b" stroke-width="14"
+                    stroke-dasharray="226 26" stroke-dashoffset="-363"/>
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#ef4444" stroke-width="14"
+                    stroke-dasharray="188 64" stroke-dashoffset="-589"/>
+            <circle cx="50" cy="50" r="40" fill="transparent" stroke="#94a3b8" stroke-width="14"
+                    stroke-dasharray="150 102" stroke-dashoffset="-777"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span class="text-[10px] text-gray-400 font-medium">Tổng</span>
+            <span class="text-xl font-bold text-gray-900">70%</span>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex-1 space-y-2 w-full">
+          <div *ngFor="let s of subjects" class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 inline-block" [class]="s.dot"></span>
+              <span class="text-gray-700 font-medium truncate">{{ s.name }}</span>
+            </div>
+            <span class="font-bold text-gray-900 ml-2">{{ s.pct }}%</span>
+          </div>
+          <p class="text-[11px] text-gray-400 text-center pt-1">Hiệu suất trung bình</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Deadline sắp tới (lg:col-span-3) -->
+    <div class="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-gray-900">Deadline sắp tới</h2>
+        <a href="javascript:void(0)" class="text-xs font-semibold" style="color:#5B4DFF;">Xem tất cả</a>
+      </div>
+
+      <div class="space-y-0">
+        <div *ngFor="let d of deadlines; let last = last"
+             class="flex items-center gap-3 py-3"
+             [class.border-b]="!last" [class.border-gray-100]="!last">
+          <!-- Icon box -->
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+               [class]="d.iconBg">
+            <i class="pi pi-calendar text-sm" [class]="d.iconColor"></i>
+          </div>
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-gray-900 truncate">{{ d.title }}</p>
+            <p class="text-[11px] text-gray-400 truncate mt-0.5">{{ d.sub }}</p>
+          </div>
+          <!-- Right: due + badge -->
+          <div class="text-right flex-shrink-0">
+            <p class="text-[11px] font-semibold text-gray-700 whitespace-nowrap">{{ d.due }}</p>
+            <p class="text-[10px] text-gray-400">{{ d.date }}</p>
+            <span class="mt-1 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold" [class]="d.pClass">
+              {{ d.priority }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 3: POMODORO + AI INSIGHT + GOALS ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Card 1: Phân tích Pomodoro (lg:col-span-4) -->
+    <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-gray-900">Phân tích Pomodoro</h2>
+        <button class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-semibold text-gray-600">
+          <span>Tuần này</span>
+          <i class="pi pi-chevron-down text-[10px] text-gray-400"></i>
+        </button>
+      </div>
+
+      <!-- 2 columns: stats left, line chart right -->
+      <div class="flex flex-col sm:flex-row gap-4">
+        <!-- Left: 4 stat rows -->
+        <div class="flex flex-col gap-3 w-full sm:w-[140px]">
+          <div *ngFor="let s of pomoStats" class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                 [class]="s.iconBg + ' ' + s.iconColor">
+              <i class="pi text-sm" [class]="s.icon"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[10px] text-gray-400 leading-none">{{ s.label }}</p>
+              <p class="text-xs font-extrabold text-gray-900 mt-0.5 leading-tight">{{ s.value }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Line Chart SVG -->
+        <div class="flex-1 flex flex-col w-full">
+          <p class="text-[11px] text-gray-400 text-center mb-2">Thời gian tập trung theo ngày</p>
+          <div class="relative flex-1" style="min-height:100px;">
+            <svg class="w-full h-full overflow-visible" viewBox="0 0 260 100" preserveAspectRatio="none">
+              <!-- Gridlines -->
+              <line x1="0" y1="20"  x2="260" y2="20"  stroke="#f1f5f9" stroke-width="1"/>
+              <line x1="0" y1="40"  x2="260" y2="40"  stroke="#f1f5f9" stroke-width="1"/>
+              <line x1="0" y1="60"  x2="260" y2="60"  stroke="#f1f5f9" stroke-width="1"/>
+              <line x1="0" y1="80"  x2="260" y2="80"  stroke="#f1f5f9" stroke-width="1"/>
+              <!-- Line -->
+              <polyline [attr.points]="linePolyline"
+                        fill="none" stroke="#5B4DFF" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Dots -->
+              <circle *ngFor="let p of linePoints"
+                      [attr.cx]="p.x" [attr.cy]="p.y" r="4"
+                      fill="white" stroke="#5B4DFF" stroke-width="2.5"/>
+            </svg>
+            <!-- X labels -->
+            <div class="flex justify-between mt-1">
+              <span *ngFor="let l of lineDayLabels" class="text-[10px] text-gray-400 flex-1 text-center">{{ l }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: AI Insight (lg:col-span-4) -->
+    <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
+      <div class="mb-4">
+        <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+          <i class="pi pi-sparkles" style="color:#5B4DFF;"></i>
+          AI Insight
+        </h2>
+        <p class="text-[11px] text-gray-400 mt-0.5">Dựa trên dữ liệu học tập của bạn</p>
+      </div>
+
+      <div class="space-y-3 flex-1">
+        <div *ngFor="let item of aiInsights"
+             class="rounded-xl p-3 border flex items-start gap-3"
+             [style]="'background:' + item.bg + ';border-color:' + item.border + ';'">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+               [class]="item.iconBg + ' ' + item.iconColor">
+            <i class="pi text-xs" [class]="item.icon"></i>
+          </div>
+          <p class="text-xs text-gray-800 leading-relaxed">{{ item.text }}</p>
+        </div>
+      </div>
+
+      <button class="mt-4 w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2
+                     hover:bg-purple-50 transition-all"
+              style="border-color:#C4BCFF; color:#5B4DFF;">
+        Xem đề xuất chi tiết
+        <i class="pi pi-arrow-right text-xs"></i>
+      </button>
+    </div>
+
+    <!-- Card 3: Mục tiêu học tập (lg:col-span-4) -->
+    <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-gray-900">
+          Mục tiêu học tập
+          <span class="text-xs font-normal text-gray-400 ml-1">(Tuần này)</span>
+        </h2>
+        <a href="javascript:void(0)" class="text-xs font-semibold" style="color:#5B4DFF;">Chỉnh sửa</a>
+      </div>
+
+      <div class="space-y-4">
+        <div *ngFor="let g of goals">
+          <!-- Row: icon + label | value -->
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                   [class]="g.iconBg + ' ' + g.iconColor">
+                <i class="pi text-xs" [class]="g.icon"></i>
+              </div>
+              <span class="font-semibold text-gray-800 truncate">{{ g.title }}</span>
+            </div>
+            <span class="font-semibold text-gray-500 flex-shrink-0 ml-2">{{ g.val }}</span>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500"
+                 [style]="'width:' + g.pct + '%; background:' + g.barColor + ';'"></div>
+          </div>
+          <div class="text-right mt-0.5">
+            <span class="text-[10px] font-bold text-gray-400">{{ g.pct }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-gray-400 pt-4 border-t border-gray-200">
+    © 2024 StudyHub - Hệ thống hỗ trợ học tập và quản lý đời sống sinh viên tích hợp AI
+  </footer>
+
+</div>

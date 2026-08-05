@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - StudyHub</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Font Inter for Vietnamese support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom site CSS (Premium Light Theme Mockup) -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="appSidebar" style="padding: 1.5rem 1.25rem;">
+            <div class="d-flex flex-column h-100 justify-content-between">
+                <div>
+                    <a href="/Dashboard" class="sidebar-brand d-flex align-items-center gap-3 text-decoration-none py-1 px-2 mb-4">
+                        <div class="d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #2563eb; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); color: white; flex-shrink: 0;">
+                            <i class="fa-solid fa-graduation-cap" style="font-size: 0.95rem; color: #ffffff !important;"></i>
+                        </div>
+                        <span style="font-weight: 700; font-size: 1.35rem; color: #0f172a; letter-spacing: -0.5px;">StudyHub</span>
+                    </a>
+                    
+                    <nav class="sidebar-menu d-flex flex-column gap-1">
+                        <a href="/Dashboard" class="nav-link-custom" id="nav-dashboard">
+                            <i class="fa-solid fa-house"></i> Dashboard
+                        </a>
+                        <a href="#" class="nav-link-custom" id="nav-profile">
+                            <i class="fa-regular fa-user"></i> Tài khoản của tôi
+                        </a>
+                        <div class="nav-item-dropdown">
+                            <a href="#" class="nav-link-custom d-flex justify-content-between align-items-center" id="nav-task-parent" data-bs-toggle="collapse" data-bs-target="#submenu-task" aria-expanded="false">
+                                <span class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-list-check"></i> Công việc cá nhân
+                                </span>
+                                <i class="fa-solid fa-chevron-down dropdown-arrow" style="font-size: 0.7rem; width: auto; margin-left: auto; transition: transform 0.2s;"></i>
+                            </a>
+                            <div class="collapse" id="submenu-task">
+                                <ul class="sidebar-submenu" style="padding-left: 1.5rem; margin-bottom: 0.5rem; list-style: none;">
+                                    <li class="mb-1">
+                                        <a href="/Task/List" class="sidebar-submenu-link" id="nav-task-list" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: #64748b; text-decoration: none; padding: 0.4rem 0.5rem; border-radius: 6px; transition: all 0.2s;">
+                                            Danh sách công việc
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/Task" class="sidebar-submenu-link" id="nav-task-kanban" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: #64748b; text-decoration: none; padding: 0.4rem 0.5rem; border-radius: 6px; transition: all 0.2s;">
+                                            Kanban board
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <a href="/Schedule" class="nav-link-custom" id="nav-schedule">
+                            <i class="fa-regular fa-calendar"></i> Lịch học - Lịch thi
+                        </a>
+                        <a href="/Pomodoro" class="nav-link-custom" id="nav-pomodoro">
+                            <i class="fa-regular fa-clock"></i> Pomodoro / Focus
+                        </a>
+                        <a href="/StudyGroup" class="nav-link-custom" id="nav-group">
+                            <i class="fa-solid fa-users"></i> Nhóm học tập
+                        </a>
+                        <a href="/AIAssistant" class="nav-link-custom" id="nav-ai">
+                            <i class="fa-solid fa-robot"></i> AI Assistant
+                        </a>
+                        <a href="#" class="nav-link-custom d-flex justify-content-between align-items-center" id="nav-notif">
+                            <span class="d-flex align-items-center gap-2">
+                                <i class="fa-regular fa-bell"></i> Thông báo
+                            </span>
+                            <span class="badge bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 18px; height: 18px; font-size: 0.65rem; padding: 0; margin-left: auto;">3</span>
+                        </a>
+                        <a href="#" class="nav-link-custom" id="nav-analytics">
+                            <i class="fa-solid fa-chart-simple"></i> Phân tích học tập
+                        </a>
+                    </nav>
+                </div>
+                
+                <div class="sidebar-footer pt-3" style="border-top: 1px solid #f1f5f9;">
+                    <a href="#" class="nav-link-custom text-secondary" style="height: 40px;" onclick="Swal.fire('Đăng xuất', 'Bạn đã đăng xuất tài khoản thành công.', 'success')">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <!-- Header bar -->
+            <header class="top-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="mobile-header-toggle" id="sidebarToggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </div>
+                    <div class="header-search">
+                        <i class="fa-solid fa-magnifying-glass" style="color: #64748b;"></i>
+                        <input type="text" placeholder="Tìm kiếm..." style="background-color: #f8fafc;" />
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <!-- Notification Bell -->
+                    <div class="header-action-btn dropdown">
+                        <div data-bs-toggle="dropdown" aria-expanded="false" id="notifDropdown" class="position-relative">
+                            <i class="fa-regular fa-bell" style="color: #475569;"></i>
+                            <span class="header-badge bg-danger rounded-circle" style="width: 14px; height: 14px; font-size: 0.6rem; top: -4px; right: -4px; position: absolute; display: flex; align-items: center; justify-content: center; color: white;">3</span>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="notifDropdown" style="width: 320px; border: 1px solid var(--border-color); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-top: 15px; border-radius:12px;">
+                            <li class="p-2 border-bottom mb-2">
+                                <h6 class="mb-0 fw-bold">Thông báo gần đây</h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item p-2 rounded-2 mb-1" href="#" style="background: #e0e7ff;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-clock text-warning"></i>
+                                        <div>
+                                            <div class="small fw-bold text-dark">Deadline "Báo cáo đồ án" còn 1 ngày!</div>
+                                            <div class="small text-muted" style="font-size: 0.75rem;">10 phút trước</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item p-2 rounded-2 mb-1" href="#">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-users text-info"></i>
+                                        <div>
+                                            <div class="small text-dark">Nhóm Đồ án tốt nghiệp có 5 tin nhắn mới</div>
+                                            <div class="small text-muted" style="font-size: 0.75rem;">30 phút trước</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item p-2 rounded-2" href="#">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-sparkles text-success"></i>
+                                        <div>
+                                            <div class="small text-dark">AI đã đề xuất điều chỉnh kế hoạch học tập</div>
+                                            <div class="small text-muted" style="font-size: 0.75rem;">1 giờ trước</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="header-action-btn">
+                        <i class="fa-regular fa-question-circle" style="color: #475569;"></i>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <a href="#" class="user-profile-menu">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Avatar" />
+                        <div class="user-info d-none d-sm-flex">
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="user-name" style="color: #0f172a;">Nguyễn Minh Anh</span>
+                                <i class="fa-solid fa-chevron-down text-secondary" style="font-size: 0.7rem; margin-top: 2px;"></i>
+                            </div>
+                            <span class="user-role" style="color: #64748b;">Sinh viên</span>
+                        </div>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <main class="workspace">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap & jQuery -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- ChartJS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Global Javascript UI Control -->
+    <script>
+        $(document).ready(function () {
+            // Sidebar Mobile toggle
+            $('#sidebarToggle').click(function () {
+                $('#appSidebar').toggleClass('open');
+            });
+
+            // Auto activate navigation links based on URL path
+            const path = window.location.pathname;
+            $('.nav-link-custom').removeClass('active');
+            $('.sidebar-submenu-link').removeClass('active');
+            
+            if (path.includes('/Dashboard') || path === '/' || path === '') {
+                $('#nav-dashboard').addClass('active');
+            } else if (path.includes('/Task')) {
+                $('#nav-task-parent').addClass('active');
+                $('#submenu-task').addClass('show');
+                $('#nav-task-parent .dropdown-arrow').css('transform', 'rotate(180deg)');
+                if (path.includes('/Task/List')) {
+                    $('#nav-task-list').addClass('active');
+                } else {
+                    $('#nav-task-kanban').addClass('active');
+                }
+            } else if (path.includes('/Schedule')) {
+                $('#nav-schedule').addClass('active');
+            } else if (path.includes('/Pomodoro')) {
+                $('#nav-pomodoro').addClass('active');
+            } else if (path.includes('/StudyGroup')) {
+                $('#nav-group').addClass('active');
+            } else if (path.includes('/AIAssistant')) {
+                $('#nav-ai').addClass('active');
+            }
+
+            // Manual toggle fallback for task submenu dropdown
+            $('#nav-task-parent').on('click', function (e) {
+                e.preventDefault();
+                var targetEl = document.getElementById('submenu-task');
+                var bsCollapse = bootstrap.Collapse.getOrCreateInstance(targetEl);
+                bsCollapse.toggle();
+            });
+
+            // Submenu collapse event listener to rotate arrow
+            $('#submenu-task').on('shown.bs.collapse', function () {
+                $('#nav-task-parent .dropdown-arrow').css('transform', 'rotate(180deg)');
+            });
+            $('#submenu-task').on('hidden.bs.collapse', function () {
+                $('#nav-task-parent .dropdown-arrow').css('transform', 'rotate(0deg)');
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

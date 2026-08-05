@@ -1,0 +1,849 @@
+<div class="p-6 space-y-6 w-full max-w-[1600px] mx-auto">
+
+  <!-- ═══════════════════════════════════════
+       1. HEADER TRANG & TABS CHẾ ĐỘ
+       ═══════════════════════════════════════ -->
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Pomodoro / Focus Mode</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Tập trung học tập · Nâng cao hiệu suất</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <div class="bg-gray-100 p-1 rounded-xl flex space-x-1">
+        <button (click)="setMode('pomodoro')"
+                class="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+                [style]="activeMode==='pomodoro' ? 'background:#5B4DFF;color:white;' : 'color:#4b5563;'">
+          <i class="pi pi-clock"></i> Pomodoro
+        </button>
+        <button (click)="setMode('short_break')"
+                class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-all flex items-center gap-1.5"
+                [style]="activeMode==='short_break' ? 'background:#5B4DFF;color:white;' : 'color:#4b5563;'">
+          <i class="pi pi-hourglass"></i> Short Break
+        </button>
+        <button (click)="setMode('long_break')"
+                class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-all flex items-center gap-1.5"
+                [style]="activeMode==='long_break' ? 'background:#5B4DFF;color:white;' : 'color:#4b5563;'">
+          <i class="pi pi-moon"></i> Long Break
+        </button>
+      </div>
+      <button class="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-xs">
+        Lịch sử phiên
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       2. BỐ CỤC 3 CỘT
+       ═══════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Wrapper: CỘT TRÁI + GIỮA + FOCUS (col-span-9) -->
+    <div class="lg:col-span-9 flex flex-col gap-6">
+
+      <!-- Grid nội bộ: trái 4 / giữa 8 (tỉ lệ 3:6 trong 9 cột tổng) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+    <!-- ───────────────────────────────────────
+         CỘT TRÁI (4 COLS trong wrapper)
+         ─────────────────────────────────────── -->
+    <div class="lg:col-span-4 flex flex-col space-y-4">
+
+      <!-- Card Công việc đang tập trung -->
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+
+        <!-- Outer Card Header -->
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-gray-900 uppercase tracking-wider">CÔNG VIỆC ĐANG TẬP TRUNG</span>
+        </div>
+
+        <!-- Inner Card Con Lót Nền Trắng / Khung Viền -->
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs space-y-3">
+          
+          <!-- Task Title & Star -->
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+              <h3 class="font-bold text-gray-900 text-sm leading-snug">{{ focusedTask ? focusedTask.tieuDe : 'Làm báo cáo đồ án tốt nghiệp' }}</h3>
+            </div>
+            <span class="text-amber-400 text-sm shrink-0">⭐</span>
+          </div>
+
+          <!-- Subject Tag -->
+          <div>
+            <span class="inline-block bg-blue-50 text-[#5B4DFF] text-xs px-3 py-1 rounded-lg font-bold">{{ focusedTask?.tenMonHoc || 'Đồ án tốt nghiệp' }}</span>
+          </div>
+
+          <!-- Description -->
+          <p class="text-xs text-gray-500 leading-relaxed">{{ focusedTask?.moTa || 'Hoàn thiện chương 3: Thiết kế hệ thống và triển khai chức năng.' }}</p>
+
+          <!-- Detailed Stats with Icons -->
+          <div class="space-y-2.5 text-xs pt-1">
+            
+            <!-- Deadline -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-gray-500 font-medium">
+                <i class="pi pi-calendar text-gray-400 text-sm"></i>
+                <span>Deadline</span>
+              </div>
+              <span class="font-bold text-gray-900">{{ focusedTask?.hanHoanThanh ? (focusedTask?.hanHoanThanh | date:'dd/MM/yyyy') : '30/06/2024' }}</span>
+            </div>
+
+            <!-- Priority -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-gray-500 font-medium">
+                <i class="pi pi-flag text-gray-400 text-sm"></i>
+                <span>Ưu tiên</span>
+              </div>
+              <span [ngClass]="{
+                'bg-rose-100 text-rose-600': (focusedTask?.doUuTien ?? 2) === 2,
+                'bg-amber-50 text-amber-600': focusedTask?.doUuTien === 1,
+                'bg-emerald-50 text-emerald-600': focusedTask?.doUuTien === 0
+              }" class="px-2.5 py-0.5 rounded text-[10px] font-bold">
+                {{ focusedTask?.doUuTien === 2 ? 'Cao' : focusedTask?.doUuTien === 1 ? 'Trung bình' : 'Thấp' }}
+              </span>
+            </div>
+
+            <!-- Progress -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-gray-500 font-medium">
+                <i class="pi pi-chart-pie text-gray-400 text-sm"></i>
+                <span>Tiến độ</span>
+              </div>
+              <div class="flex items-center gap-2 w-32 justify-end">
+                <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div class="h-full rounded-full" [style.width.%]="focusedTask?.tiLeHoanThanh || 60" style="background:#5B4DFF;"></div>
+                </div>
+                <span class="font-bold text-gray-900">{{ focusedTask?.tiLeHoanThanh || 60 }}%</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Action Button -->
+          <button (click)="openEditTaskModal()" class="w-full mt-2 bg-white text-[#5B4DFF] text-xs py-2.5 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-2 transition-all">
+            <span>Xem chi tiết công việc</span>
+            <i class="pi pi-arrow-right text-xs"></i>
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- Card Danh sách công việc khác -->
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold text-gray-900 uppercase tracking-wider block">DANH SÁCH CÔNG VIỆC KHÁC</span>
+          <span class="text-[11px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full" *ngIf="otherTasks.length > 0">
+            {{ displayOtherTasks.length }}/{{ otherTasks.length }}
+          </span>
+        </div>
+
+        <div class="space-y-2.5 text-xs" *ngIf="displayOtherTasks.length > 0; else defaultOtherTasks">
+          <div *ngFor="let task of displayOtherTasks"
+               (click)="selectOtherTask(task)"
+               class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+               [class.bg-gray-50]="selectedOtherTaskId === task.maCongViec">
+            <input type="radio" name="subtask" [checked]="selectedOtherTaskId === task.maCongViec" class="mt-0.5 accent-[#5B4DFF]"/>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 truncate">{{ task.tieuDe }}</p>
+              <p class="text-gray-400 text-[10px] mt-0.5">{{ task.hanHoanThanh ? (task.hanHoanThanh | date:'dd/MM/yyyy') : '25/06/2024' }}</p>
+            </div>
+            <span [ngClass]="{
+              'bg-rose-100 text-rose-600': task.doUuTien === 2,
+              'bg-amber-50 text-amber-600': task.doUuTien === 1,
+              'bg-emerald-50 text-emerald-600': task.doUuTien === 0
+            }" class="px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0">
+              {{ task.doUuTien === 2 ? 'Cao' : task.doUuTien === 1 ? 'Trung bình' : 'Thấp' }}
+            </span>
+          </div>
+        </div>
+
+        <ng-template #defaultOtherTasks>
+          <div class="space-y-2.5 text-xs">
+            <!-- Task 1 -->
+            <div class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-100 cursor-pointer bg-gray-50">
+              <input type="radio" name="subtask" checked class="mt-0.5 accent-[#5B4DFF]"/>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-gray-900 truncate">Ôn tập môn Cơ sở dữ liệu</p>
+                <p class="text-gray-400 text-[10px] mt-0.5">25/06/2024</p>
+              </div>
+              <span class="bg-amber-50 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0">Trung bình</span>
+            </div>
+
+            <!-- Task 2 -->
+            <div class="flex items-start gap-2.5 p-2.5 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50">
+              <input type="radio" name="subtask" class="mt-0.5 accent-[#5B4DFF]"/>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-gray-900 truncate">Chuẩn bị bài thuyết trình</p>
+                <p class="text-gray-400 text-[10px] mt-0.5">28/06/2024</p>
+              </div>
+              <span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0">Thấp</span>
+            </div>
+          </div>
+        </ng-template>
+
+        <button (click)="openAllTasksModal()" class="w-full mt-2 bg-gray-50 text-gray-700 text-xs py-2 rounded-xl font-semibold border border-gray-100 hover:bg-purple-50 hover:text-[#5B4DFF] hover:border-purple-200 flex items-center justify-center gap-1 transition-all cursor-pointer">
+          Xem tất cả ({{ otherTasks.length }} công việc) →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ───────────────────────────────────────
+         CỘT GIỮA (8 COLS trong wrapper)
+         ─────────────────────────────────────── -->
+    <div class="lg:col-span-8 space-y-6 flex flex-col items-stretch w-full">
+
+      <!-- Card Đồng hồ Pomodoro -->
+      <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center relative w-full space-y-4">
+
+        <!-- SVG Circular Timer Ring (Phóng to max-w-[380px] & r=142) -->
+        <div class="relative w-full max-w-[380px] aspect-square flex items-center justify-center mx-auto my-2">
+          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 300 300">
+            <circle cx="150" cy="150" r="142" fill="transparent" stroke="#EEECFF" stroke-width="8"/>
+            <circle cx="150" cy="150" r="142" fill="transparent"
+                    stroke="#5B4DFF"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    class="timer-ring"
+                    [attr.stroke-dasharray]="circumference"
+                    [attr.stroke-dashoffset]="strokeDashoffset"/>
+            <g class="transform rotate-90 origin-center opacity-40">
+              <line *ngFor="let tick of clockTicks"
+                    [attr.x1]="tick.x1" [attr.y1]="tick.y1"
+                    [attr.x2]="tick.x2" [attr.y2]="tick.y2"
+                    [attr.stroke]="tick.isMajor ? '#5B4DFF' : '#94a3b8'"
+                    [attr.stroke-width]="tick.isMajor ? 2 : 1"/>
+            </g>
+          </svg>
+
+          <!-- Inside Ring Content -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 space-y-3">
+            <div class="flex items-center gap-1.5 px-3.5 py-1 bg-rose-50 rounded-full border border-rose-100">
+              <span class="text-sm">🍅</span>
+              <span class="text-xs font-extrabold text-rose-600 uppercase tracking-wider">
+                {{ activeMode === 'pomodoro' ? 'Pomodoro' : activeMode === 'short_break' ? 'Short Break' : 'Long Break' }}
+              </span>
+            </div>
+
+            <h2 class="text-6xl lg:text-7xl font-black text-gray-900 tracking-tight font-mono py-1">
+              {{ formattedTime }}
+            </h2>
+
+            <p class="text-xs font-semibold text-gray-500 max-w-[220px]">
+              {{ isRunning ? 'Đang trong phiên tập trung!' : 'Hãy tập trung và học thật hiệu quả!' }}
+            </p>
+
+            <span class="bg-purple-50 text-[#5B4DFF] text-xs px-3.5 py-1.5 rounded-full font-bold border border-purple-100 max-w-[260px] truncate"
+                  [title]="'Mục tiêu: ' + (focusedTask ? focusedTask.tieuDe : 'Tập trung học tập')">
+              Mục tiêu: {{ focusedTask ? focusedTask.tieuDe : 'Tập trung học tập' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Overlapping Large Purple Play Button -->
+        <button (click)="togglePlay()"
+                class="w-14 h-14 bg-[#5B4DFF] shadow-lg shadow-purple-300 text-white rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all -mt-7 z-20">
+          <i class="pi text-xl" [class]="isRunning ? 'pi-pause' : 'pi-play ml-0.5'"></i>
+        </button>
+
+        <!-- Control Buttons Below -->
+        <div class="flex gap-4 pt-2">
+          <button (click)="pauseTimer()"
+                  class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2">
+            <i class="pi pi-pause text-xs"></i> Tạm dừng
+          </button>
+          <button (click)="resetTimer()"
+                  class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2">
+            <i class="pi pi-refresh text-xs"></i> Đặt lại
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Card Quy tắc Pomodoro -->
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-full space-y-3">
+        <h4 class="text-xs font-bold text-gray-400 uppercase">Quy tắc Pomodoro</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
+            <i class="pi pi-bell text-purple-600 mb-1 text-sm"></i>
+            <p class="font-bold text-gray-900">1. Chọn task</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">muốn tập trung</p>
+          </div>
+          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
+            <i class="pi pi-clock text-purple-600 mb-1 text-sm"></i>
+            <p class="font-bold text-gray-900">2. Học 25 phút</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">tập trung cao độ</p>
+          </div>
+          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
+            <i class="pi pi-hourglass text-purple-600 mb-1 text-sm"></i>
+            <p class="font-bold text-gray-900">3. Nghỉ 5 phút</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">giải lao thư giãn</p>
+          </div>
+          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
+            <i class="pi pi-star text-purple-600 mb-1 text-sm"></i>
+            <p class="font-bold text-gray-900">4. Nghỉ dài 15m</p>
+            <p class="text-[10px] text-gray-400 mt-0.5">sau 4 phiên</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+      </div><!-- /grid nội bộ -->
+
+      <!-- Card CHẾ ĐỘ FOCUS (nằm ngay dưới, full width col-span-9) -->
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-full space-y-3">
+
+        <!-- Header -->
+        <div class="flex items-center gap-2.5 border-b border-gray-100 pb-2.5">
+          <div class="w-7 h-7 rounded-xl bg-[#5B4DFF] text-white flex items-center justify-center shadow-xs shrink-0">
+            <i class="pi pi-bolt text-xs"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-xs text-gray-900 uppercase tracking-wider">CHẾ ĐỘ FOCUS</h4>
+            <p class="text-[10px] text-gray-400">Hạn chế xao nhãng, tăng khả năng tập trung</p>
+          </div>
+        </div>
+
+        <!-- Grid 4 Cột - 1 hàng ngang -->
+        <div class="grid grid-cols-4 gap-4">
+
+          <!-- Item 1: Tắt thông báo -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-purple-50/40 border border-purple-100/60">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-purple-100/80 text-[#5B4DFF] flex items-center justify-center shrink-0">
+                <i class="pi pi-bell-slash text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-gray-900 truncate">Tắt thông báo</p>
+                <p class="text-[10px] text-gray-400 truncate mt-0.5">Tắt tất cả thông báo trong khi tập trung</p>
+              </div>
+            </div>
+            <div (click)="onToggleMuteNotifications()"
+                 class="w-9 h-5 rounded-full relative p-0.5 cursor-pointer transition-colors shrink-0 ml-2"
+                 [style]="toggleMuteNotifications ? 'background:#5B4DFF;' : 'background:#cbd5e1;'">
+              <div class="w-4 h-4 bg-white rounded-full transition-transform duration-200"
+                   [class.translate-x-4]="toggleMuteNotifications"></div>
+            </div>
+          </div>
+
+          <!-- Item 2: Chặn trang web -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-purple-50/40 border border-purple-100/60">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-purple-100/80 text-[#5B4DFF] flex items-center justify-center shrink-0">
+                <i class="pi pi-ban text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-gray-900 truncate">Chặn trang web</p>
+                <p class="text-[10px] text-gray-400 truncate mt-0.5">Chặn các trang web gây xao nhãng</p>
+              </div>
+            </div>
+            <div (click)="onToggleBlockWebsites()"
+                 class="w-9 h-5 rounded-full relative p-0.5 cursor-pointer transition-colors shrink-0 ml-2"
+                 [style]="toggleBlockWebsites ? 'background:#5B4DFF;' : 'background:#cbd5e1;'">
+              <div class="w-4 h-4 bg-white rounded-full transition-transform duration-200"
+                   [class.translate-x-4]="toggleBlockWebsites"></div>
+            </div>
+          </div>
+
+          <!-- Item 3: Âm thanh nền -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-purple-50/40 border border-purple-100/60">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-purple-100/80 text-[#5B4DFF] flex items-center justify-center shrink-0">
+                <i class="pi pi-volume-up text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-gray-900 truncate">Nhạc nền Piano</p>
+                <p class="text-[10px] text-gray-400 truncate mt-0.5">Phát nhạc Piano thư giãn tập trung</p>
+              </div>
+            </div>
+            <div (click)="onToggleBackgroundSound()"
+                 class="w-9 h-5 rounded-full relative p-0.5 cursor-pointer transition-colors shrink-0 ml-2"
+                 [style]="toggleBackgroundSound ? 'background:#5B4DFF;' : 'background:#cbd5e1;'">
+              <div class="w-4 h-4 bg-white rounded-full transition-transform duration-200"
+                   [class.translate-x-4]="toggleBackgroundSound"></div>
+            </div>
+          </div>
+
+          <!-- Item 4: Toàn màn hình -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-purple-50/40 border border-purple-100/60">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-purple-100/80 text-[#5B4DFF] flex items-center justify-center shrink-0">
+                <i class="pi pi-window-maximize text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-gray-900 truncate">Toàn màn hình</p>
+                <p class="text-[10px] text-gray-400 truncate mt-0.5">Ẩn thanh tác vụ, tăng sự tập trung</p>
+              </div>
+            </div>
+            <div (click)="onToggleFullscreen()"
+                 class="w-9 h-5 rounded-full relative p-0.5 cursor-pointer transition-colors shrink-0 ml-2"
+                 [style]="toggleFullscreen ? 'background:#5B4DFF;' : 'background:#cbd5e1;'">
+              <div class="w-4 h-4 bg-white rounded-full transition-transform duration-200"
+                   [class.translate-x-4]="toggleFullscreen"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /wrapper col-span-9 -->
+
+    <!-- ───────────────────────────────────────
+         CỘT PHẢI (3 COLS): THỐNG KÊ, LỊCH SỬ & AI ASSISTANT
+         ─────────────────────────────────────── -->
+    <div class="lg:col-span-3 space-y-4">
+
+      <!-- Widget 1: Thống kê hôm nay (Grid 2x2) -->
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-gray-400 uppercase">Thống kê hôm nay</h4>
+          <a href="javascript:void(0)" class="text-xs font-semibold text-[#5B4DFF]">Xem chi tiết</a>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-purple-50/60 rounded-xl border border-purple-100 text-center">
+            <p class="text-xl font-black text-gray-900">4</p>
+            <p class="text-[10px] text-gray-500 font-medium">Phiên hoàn thành</p>
+          </div>
+          <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-center">
+            <p class="text-xl font-black text-gray-900">2h 15m</p>
+            <p class="text-[10px] text-gray-500 font-medium">Tổng thời gian</p>
+          </div>
+          <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100 text-center">
+            <p class="text-xl font-black text-gray-900">7 ngày</p>
+            <p class="text-[10px] text-gray-500 font-medium">Chuỗi tập trung</p>
+          </div>
+          <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 text-center">
+            <p class="text-xl font-black text-gray-900">85%</p>
+            <p class="text-[10px] text-gray-500 font-medium">Hiệu suất</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Widget 2: Lịch sử phiên học -->
+      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+        <h4 class="text-xs font-bold text-gray-400 uppercase">Lịch sử phiên học</h4>
+        <div class="space-y-2">
+          <div *ngFor="let item of sessionHistory"
+               class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-xs">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-sm">{{ item.icon }}</span>
+              <span class="font-bold text-gray-900 truncate">{{ item.name }}</span>
+              <span class="text-gray-400 text-[10px] flex-shrink-0">{{ item.duration }}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="text-[10px] text-gray-400">{{ item.timeRange }}</span>
+              <i class="pi pi-check-circle text-xs text-emerald-500"></i>
+            </div>
+          </div>
+        </div>
+        <a href="javascript:void(0)" class="block text-center text-xs font-bold text-[#5B4DFF] pt-1">
+          Xem tất cả lịch sử →
+        </a>
+      </div>
+
+      <!-- Widget 3: AI Assistant (Beta) -->
+      <div class="rounded-2xl p-4 border border-purple-100 space-y-3" style="background:#F4F2FF;">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl bg-white shadow-xs flex items-center justify-center">
+              <i class="pi pi-android text-sm text-[#5B4DFF]"></i>
+            </div>
+            <h3 class="text-xs font-bold text-gray-900">AI ASSISTANT</h3>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Beta</span>
+        </div>
+
+        <p class="text-xs text-gray-800 leading-relaxed font-medium">
+          Bạn đã hoàn thành <span class="font-bold text-purple-700">4 phiên Pomodoro</span> hôm nay! 🎉 Hiệu suất của bạn cao hơn <span class="font-bold text-purple-700">20%</span> so với trung bình.
+        </p>
+
+        <div class="p-3 bg-white/80 rounded-xl border border-purple-100 text-xs text-purple-900 font-medium leading-relaxed">
+          <span class="font-bold">Gợi ý:</span> Bạn nên nghỉ dài 15 phút sau phiên thứ 4 để tái tạo năng lượng và duy trì sự tập trung.
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <button class="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-500 hover:text-gray-900">
+            <i class="pi pi-chevron-left text-xs"></i>
+          </button>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#5B4DFF]"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+          </div>
+          <button class="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-500 hover:text-gray-900">
+            <i class="pi pi-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+
+  </div>
+
+</div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL CHỈNH SỬA CÔNG VIỆC (POPUP)
+       ═══════════════════════════════════════ -->
+  <div *ngIf="showEditTaskModal"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    
+    <!-- Modal Container (Enlarged max-w-2xl, p-8, rounded-3xl) -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-2xl w-full max-w-2xl flex flex-col max-h-[92vh] animate-fadeIn relative">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-gray-50/50 rounded-t-3xl shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-purple-100 text-[#5B4DFF] flex items-center justify-center font-bold text-base shadow-xs">
+            <i class="pi pi-pencil"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-gray-900">Chỉnh sửa công việc</h3>
+            <p class="text-xs text-gray-500 font-medium">Cập nhật thông tin chi tiết và tiến độ tập trung</p>
+          </div>
+        </div>
+        <button (click)="closeEditTaskModal()"
+                class="w-9 h-9 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-700 flex items-center justify-center transition-colors">
+          <i class="pi pi-times text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable Form with p-8 and pb-36 for dropdown floating) -->
+      <div class="p-8 space-y-6 overflow-y-auto flex-1 text-xs text-gray-700 pb-36">
+        
+        <!-- Tiêu đề -->
+        <div class="space-y-2 relative z-10">
+          <label class="font-bold text-gray-900 block text-xs">Tiêu đề công việc <span class="text-rose-500">*</span></label>
+          <input type="text"
+                 [(ngModel)]="editingTaskForm.tieuDe"
+                 placeholder="Nhập tiêu đề công việc..."
+                 class="w-full px-4 py-3 border border-gray-200 rounded-2xl text-xs focus:outline-none focus:border-[#5B4DFF] focus:ring-1 focus:ring-[#5B4DFF] transition-all shadow-xs"/>
+        </div>
+
+        <!-- Row: Môn học / Nhãn & Hạn hoàn thành -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 relative" [class.z-50]="openSubjectDropdown" [class.z-20]="!openSubjectDropdown">
+          <!-- Môn học / Nhãn (Custom Dropdown) -->
+          <div id="dropdown-subject-wrapper" class="space-y-2 relative">
+            <label class="font-bold text-gray-900 block text-xs">Môn học / Nhãn</label>
+            <button type="button"
+                    (click)="toggleSubjectDropdown($event)"
+                    class="w-full px-4 py-3 border rounded-2xl text-xs bg-white flex items-center justify-between transition-all shadow-xs"
+                    [class.border-[#5B4DFF]]="openSubjectDropdown"
+                    [class.border-gray-200]="!openSubjectDropdown">
+              <span *ngIf="selectedSubjectTag" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full font-bold text-xs"
+                    [style.backgroundColor]="selectedSubjectTag.color + '1F'"
+                    [style.color]="selectedSubjectTag.color">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.backgroundColor]="selectedSubjectTag.color"></span>
+                <span>{{ selectedSubjectTag.name }}</span>
+              </span>
+              <span *ngIf="!selectedSubjectTag" class="text-gray-400 font-medium">Không chọn môn</span>
+              <i class="pi text-gray-400 text-xs transition-transform" [class.pi-chevron-up]="openSubjectDropdown" [class.pi-chevron-down]="!openSubjectDropdown"></i>
+            </button>
+
+            <!-- Dropdown Menu Popover -->
+            <div *ngIf="openSubjectDropdown"
+                 class="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-3xl shadow-2xl p-4 z-50 space-y-2 max-h-64 overflow-y-auto animate-fadeIn">
+              
+              <!-- List of Colored Subject Pills -->
+              <div *ngFor="let tag of subjects"
+                   (click)="selectSubject(tag)"
+                   class="px-2 py-1.5 cursor-pointer flex items-center justify-between rounded-2xl hover:bg-gray-50 transition-colors">
+                <span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full font-bold text-xs"
+                      [style.backgroundColor]="tag.color + '1F'"
+                      [style.color]="tag.color">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.backgroundColor]="tag.color"></span>
+                  <span>{{ tag.name }}</span>
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div class="space-y-2">
+            <label class="font-bold text-gray-900 block text-xs">Hạn hoàn thành (Deadline)</label>
+            <input type="date"
+                   [(ngModel)]="editingTaskForm.hanHoanThanh"
+                   class="w-full px-4 py-3 border border-gray-200 rounded-2xl text-xs bg-white focus:outline-none focus:border-[#5B4DFF] focus:ring-1 focus:ring-[#5B4DFF] shadow-xs"/>
+          </div>
+        </div>
+
+        <!-- Row: Mức độ ưu tiên & Trạng thái -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 relative" [class.z-40]="openStatusDropdown || openPriorityDropdown" [class.z-10]="!openStatusDropdown && !openPriorityDropdown">
+          <!-- Độ ưu tiên (Custom Pill Dropdown) -->
+          <div id="dropdown-priority-wrapper" class="space-y-2 relative">
+            <label class="font-bold text-gray-900 block text-xs">Mức độ ưu tiên</label>
+            <button type="button"
+                    (click)="togglePriorityDropdown($event)"
+                    class="w-full px-4 py-3 border rounded-2xl text-xs bg-white flex items-center justify-between transition-all shadow-xs"
+                    [class.border-[#5B4DFF]]="openPriorityDropdown"
+                    [class.border-gray-200]="!openPriorityDropdown">
+              <span [ngClass]="{
+                'bg-green-50 text-green-600': editingTaskForm.doUuTien === 0,
+                'bg-amber-50 text-amber-600': editingTaskForm.doUuTien === 1,
+                'bg-red-50 text-red-600': editingTaskForm.doUuTien === 2
+              }" class="px-3.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0" [ngClass]="{
+                  'bg-green-500': editingTaskForm.doUuTien === 0,
+                  'bg-amber-500': editingTaskForm.doUuTien === 1,
+                  'bg-red-500': editingTaskForm.doUuTien === 2
+                }"></span>
+                <span>{{ editingTaskForm.doUuTien === 0 ? 'Thấp' : editingTaskForm.doUuTien === 1 ? 'Trung bình' : 'Cao' }}</span>
+              </span>
+              <i class="pi text-gray-400 text-xs transition-transform" [class.pi-chevron-up]="openPriorityDropdown" [class.pi-chevron-down]="!openPriorityDropdown"></i>
+            </button>
+
+            <!-- Dropdown Menu Overlay -->
+            <div *ngIf="openPriorityDropdown"
+                 class="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-3xl shadow-2xl p-4 z-40 space-y-2 animate-fadeIn">
+              <div (click)="selectPriority(0)" class="px-2 py-1.5 rounded-2xl hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors">
+                <span class="bg-green-50 text-green-600 px-3.5 py-1.5 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Thấp
+                </span>
+              </div>
+              <div (click)="selectPriority(1)" class="px-2 py-1.5 rounded-2xl hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors">
+                <span class="bg-amber-50 text-amber-600 px-3.5 py-1.5 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Trung bình
+                </span>
+              </div>
+              <div (click)="selectPriority(2)" class="px-2 py-1.5 rounded-2xl hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors">
+                <span class="bg-red-50 text-red-600 px-3.5 py-1.5 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Cao
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trạng thái (Custom Pill Dropdown) -->
+          <div id="dropdown-status-wrapper" class="space-y-2 relative">
+            <label class="font-bold text-gray-900 block text-xs">Trạng thái</label>
+            <button type="button"
+                    (click)="toggleStatusDropdown($event)"
+                    class="w-full px-4 py-3 border rounded-2xl text-xs bg-white flex items-center justify-between transition-all shadow-xs"
+                    [class.border-[#5B4DFF]]="openStatusDropdown"
+                    [class.border-gray-200]="!openStatusDropdown">
+              <span [ngClass]="{
+                'bg-blue-50 text-blue-600': editingTaskForm.trangThai === 0,
+                'bg-amber-50 text-amber-600': editingTaskForm.trangThai === 1,
+                'bg-emerald-50 text-emerald-600': editingTaskForm.trangThai === 3
+              }" class="px-3.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0" [ngClass]="{
+                  'bg-blue-500': editingTaskForm.trangThai === 0,
+                  'bg-amber-500': editingTaskForm.trangThai === 1,
+                  'bg-emerald-500': editingTaskForm.trangThai === 3
+                }"></span>
+                <span>{{ editingTaskForm.trangThai === 0 ? 'Cần thực hiện' : editingTaskForm.trangThai === 1 ? 'Đang thực hiện' : 'Hoàn thành' }}</span>
+              </span>
+              <i class="pi text-gray-400 text-xs transition-transform" [class.pi-chevron-up]="openStatusDropdown" [class.pi-chevron-down]="!openStatusDropdown"></i>
+            </button>
+
+            <!-- Dropdown Menu Overlay -->
+            <div *ngIf="openStatusDropdown"
+                 class="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-3xl shadow-2xl p-4 z-40 space-y-2 animate-fadeIn">
+              <div (click)="selectStatus(0)" class="px-2 py-1.5 rounded-2xl hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors">
+                <span class="bg-blue-50 text-blue-600 px-3.5 py-1.5 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Cần thực hiện
+                </span>
+              </div>
+              <div (click)="selectStatus(1)" class="px-2 py-1.5 rounded-2xl hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors">
+                <span class="bg-amber-50 text-amber-600 px-3.5 py-1.5 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Đang thực hiện
+                </span>
+              </div>
+              <div (click)="selectStatus(3)" class="px-2 py-1.5 rounded-2xl hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors">
+                <span class="bg-emerald-50 text-emerald-600 px-3.5 py-1.5 rounded-full font-bold text-xs inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hoàn thành
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tiến độ hoàn thành % -->
+        <div class="space-y-2.5 pt-2 relative z-0">
+          <div class="flex items-center justify-between">
+            <label class="font-bold text-gray-900 block text-xs">Tiến độ hoàn thành</label>
+            <span class="font-extrabold text-[#5B4DFF] text-sm">{{ editingTaskForm.tiLeHoanThanh }}%</span>
+          </div>
+          <input type="range"
+                 min="0"
+                 max="100"
+                 step="5"
+                 [(ngModel)]="editingTaskForm.tiLeHoanThanh"
+                 (input)="onProgressChange()"
+                 class="w-full accent-[#5B4DFF] cursor-pointer h-2 bg-gray-100 rounded-lg appearance-none"/>
+        </div>
+
+        <!-- Mô tả -->
+        <div class="space-y-2 pt-1 relative z-0">
+          <label class="font-bold text-gray-900 block text-xs">Mô tả công việc</label>
+          <textarea [(ngModel)]="editingTaskForm.moTa"
+                    rows="3.5"
+                    placeholder="Nhập ghi chú hoặc hướng dẫn thực hiện..."
+                    class="w-full px-4 py-3 border border-gray-200 rounded-2xl text-xs focus:outline-none focus:border-[#5B4DFF] focus:ring-1 focus:ring-[#5B4DFF] transition-all resize-none shadow-xs"></textarea>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end gap-3.5 px-8 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-3xl shrink-0">
+        <button (click)="closeEditTaskModal()"
+                [disabled]="isSavingTask"
+                class="px-5 py-2.5 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all shadow-xs">
+          Hủy
+        </button>
+        <button (click)="saveEditedTask()"
+                [disabled]="isSavingTask"
+                class="px-6 py-2.5 rounded-2xl bg-[#5B4DFF] hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all disabled:opacity-50">
+          <i *ngIf="isSavingTask" class="pi pi-spin pi-spinner text-xs"></i>
+          <span>{{ isSavingTask ? 'Đang lưu...' : 'Lưu thay đổi' }}</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL: TẤT CẢ CÔNG VIỆC
+     ═══════════════════════════════════════════════════════════ -->
+<div *ngIf="showAllTasksModal"
+     class="fixed inset-0 z-[900] flex items-center justify-center p-4"
+     (click)="closeAllTasksModal()">
+
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+  <!-- Modal Container -->
+  <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-fadeIn"
+       (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 px-7 py-5 border-b border-gray-100 shrink-0">
+      <div class="w-11 h-11 rounded-2xl bg-[#5B4DFF]/10 flex items-center justify-center shrink-0">
+        <i class="pi pi-calendar text-[#5B4DFF] text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-base font-black text-gray-900">Tất cả công việc</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Chọn một công việc để bắt đầu tập trung</p>
+      </div>
+      <button (click)="closeAllTasksModal()"
+              class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="pi pi-times text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Body: Task List -->
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2.5">
+
+      <!-- Loading state -->
+      <div *ngIf="isLoadingAllTasks" class="flex items-center justify-center py-12">
+        <i class="pi pi-spin pi-spinner text-[#5B4DFF] text-2xl"></i>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!isLoadingAllTasks && allTasksList.length === 0"
+           class="flex flex-col items-center justify-center py-14 text-center">
+        <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-3">
+          <i class="pi pi-check-circle text-[#5B4DFF] text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-700">Không có công việc chưa hoàn thành</p>
+        <p class="text-xs text-gray-400 mt-1">Tất cả công việc đã được hoàn thành!</p>
+      </div>
+
+      <!-- Task Rows -->
+      <div *ngFor="let task of allTasksList"
+           (click)="selectFocusTask(task)"
+           class="group flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all"
+           [class.border-[#5B4DFF]]="focusedTask && task.maCongViec === focusedTask.maCongViec"
+           [class.bg-purple-50]="focusedTask && task.maCongViec === focusedTask.maCongViec"
+           [class.border-gray-100]="!focusedTask || task.maCongViec !== focusedTask.maCongViec"
+           [class.hover:bg-gray-50]="!focusedTask || task.maCongViec !== focusedTask.maCongViec">
+
+        <!-- Radio selector -->
+        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
+             [class.border-[#5B4DFF]]="focusedTask && task.maCongViec === focusedTask.maCongViec"
+             [class.bg-[#5B4DFF]]="focusedTask && task.maCongViec === focusedTask.maCongViec"
+             [class.border-gray-300]="!focusedTask || task.maCongViec !== focusedTask.maCongViec">
+          <i *ngIf="focusedTask && task.maCongViec === focusedTask.maCongViec"
+             class="pi pi-check text-white text-[10px] font-black"></i>
+        </div>
+
+        <!-- Subject icon -->
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white"
+             [ngStyle]="{'background': task.maMonHoc ? '#5B4DFF' : '#94a3b8'}">
+          <i class="pi pi-book text-sm"></i>
+        </div>
+
+        <!-- Title & subject -->
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-gray-900 text-sm truncate">{{ task.tieuDe }}</p>
+          <p class="text-gray-400 text-xs mt-0.5 truncate">{{ task.tenMonHoc || 'Không có môn' }}</p>
+        </div>
+
+        <!-- Priority badge -->
+        <span class="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5"
+              [ngClass]="{
+                'bg-red-50 text-red-600':          task.doUuTien === 2,
+                'bg-amber-50 text-amber-600':      task.doUuTien === 1,
+                'bg-emerald-50 text-emerald-600':  task.doUuTien === 0
+              }">
+          <i class="pi pi-arrow-up text-[10px]" *ngIf="task.doUuTien === 2"></i>
+          <i class="pi pi-arrow-right text-[10px]" *ngIf="task.doUuTien === 1"></i>
+          <i class="pi pi-arrow-down text-[10px]" *ngIf="task.doUuTien === 0"></i>
+          {{ task.doUuTien === 2 ? 'Cao' : task.doUuTien === 1 ? 'Trung bình' : 'Thấp' }}
+        </span>
+
+        <!-- Deadline -->
+        <div class="shrink-0 flex items-center gap-1.5 text-gray-400 text-xs">
+          <i class="pi pi-calendar text-gray-300 text-xs"></i>
+          <span>{{ task.hanHoanThanh ? (task.hanHoanThanh | date:'dd/MM/yyyy') : '—' }}</span>
+        </div>
+
+        <!-- Arrow -->
+        <i class="pi pi-chevron-right text-gray-300 text-xs shrink-0 group-hover:text-[#5B4DFF] transition-colors"></i>
+      </div>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div *ngIf="!isLoadingAllTasks && allTasksTotalPages > 1"
+         class="flex items-center justify-center gap-1.5 px-6 py-4 border-t border-gray-100 shrink-0">
+      <!-- Prev -->
+      <button (click)="goToAllTasksPage(allTasksPage - 1)"
+              [disabled]="allTasksPage === 1"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-all">
+        <i class="pi pi-chevron-left text-xs"></i>
+      </button>
+
+      <!-- Page numbers -->
+      <button *ngFor="let p of allTasksPages"
+              (click)="goToAllTasksPage(p)"
+              class="w-8 h-8 rounded-full text-xs font-bold transition-all"
+              [class.bg-[#5B4DFF]]="p === allTasksPage"
+              [class.text-white]="p === allTasksPage"
+              [class.text-gray-600]="p !== allTasksPage"
+              [class.hover:bg-gray-100]="p !== allTasksPage">
+        {{ p }}
+      </button>
+
+      <!-- Next -->
+      <button (click)="goToAllTasksPage(allTasksPage + 1)"
+              [disabled]="allTasksPage === allTasksTotalPages"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 disabled:opacity-30 transition-all">
+        <i class="pi pi-chevron-right text-xs"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TOAST NOTIFICATION FLOATING BANNER
+     ═══════════════════════════════════════════════════════════ -->
+<div *ngIf="toastMessage" class="fixed bottom-6 right-6 z-[1000] bg-gray-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-fadeIn border border-gray-800">
+  <i class="pi pi-info-circle text-[#5B4DFF] text-sm"></i>
+  <span>{{ toastMessage }}</span>
+</div>

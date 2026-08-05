@@ -1,0 +1,449 @@
+<div class="min-h-screen bg-[#F8FAFC] p-6 md:p-8 space-y-6 overflow-y-auto font-sans antialiased text-slate-800">
+
+  <!-- PAGE HEADER & BREADCRUMB -->
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ isEditMode ? 'Chỉnh sửa lịch' : 'Tạo lịch mới' }}</h1>
+      <div class="flex items-center gap-2 text-xs text-slate-400 mt-1 font-normal">
+        <i class="pi pi-home text-[10px]"></i>
+        <span class="hover:underline cursor-pointer" routerLink="/calendar">Lịch học - Lịch thi</span>
+        <span>&rsaquo;</span>
+        <span class="text-slate-600 font-medium">{{ isEditMode ? 'Chỉnh sửa lịch' : 'Tạo lịch mới' }}</span>
+      </div>
+    </div>
+    <button (click)="cancel()"
+            class="flex items-center gap-2 border border-slate-200/80 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer bg-white">
+      <i class="pi pi-arrow-left text-xs"></i> Quay lại
+    </button>
+  </div>
+
+  <!-- MAIN 2-COLUMN GRID -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- ───────────────────────────────────────────────────────
+         LEFT COLUMN: INPUT FORM (7 / 12 Cols)
+         ─────────────────────────────────────────────────────── -->
+    <form (ngSubmit)="onSubmit()" class="lg:col-span-7 space-y-6">
+
+      <!-- CARD 1: THÔNG TIN CƠ BẢN -->
+      <div class="bg-white p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,23,42,0.03)] border border-slate-100 space-y-5">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 pb-3 border-b border-slate-100">
+          <i class="pi pi-file-edit text-[#5B4DFF] text-xs"></i> Thông tin cơ bản
+        </h3>
+
+        <!-- Tiêu đề lịch -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-2">Tiêu đề lịch <span class="text-rose-500">*</span></label>
+          <input type="text"
+                 [(ngModel)]="eventForm.title"
+                 name="title"
+                 required
+                 placeholder="Nhập tiêu đề lịch..."
+                 class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 py-3 w-full text-sm outline-none transition-all placeholder-slate-400 font-normal"/>
+        </div>
+
+        <!-- Loại lịch Custom Dropdown -->
+        <div class="relative custom-dropdown-container">
+          <label class="block text-xs font-bold text-slate-700 mb-2">Loại lịch <span class="text-rose-500">*</span></label>
+
+          <!-- Trigger Button -->
+          <button type="button"
+                  (click)="toggleTypeDropdown($event)"
+                  class="w-full h-11 px-4 flex items-center justify-between border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm bg-white cursor-pointer transition-all hover:border-indigo-300 shadow-xs">
+            <div class="flex items-center gap-2">
+              <span class="px-3 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                    [class]="selectedType.badgeBg + ' ' + selectedType.badgeText">
+                {{ selectedType.label }}
+              </span>
+            </div>
+            <i class="pi pi-chevron-down text-xs text-slate-400 transition-transform duration-200"
+               [class.rotate-180]="isTypeDropdownOpen"></i>
+          </button>
+
+          <!-- Floating Popup Menu -->
+          <div *ngIf="isTypeDropdownOpen"
+               class="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in zoom-in-95 duration-150">
+            <div class="space-y-1">
+              <div *ngFor="let opt of typeOptions"
+                   (click)="selectType(opt, $event)"
+                   class="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-all group">
+                <span class="px-3 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                      [class]="opt.badgeBg + ' ' + opt.badgeText">
+                  {{ opt.label }}
+                </span>
+                <i *ngIf="selectedType.value === opt.value" class="pi pi-check text-xs font-bold" style="color:#5B4DFF;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Môn học / Nhãn Custom Dropdown -->
+        <div class="relative custom-dropdown-container">
+          <label class="block text-xs font-bold text-slate-700 mb-2">Môn học / Nhãn <span class="text-rose-500">*</span></label>
+
+          <!-- Trigger Button -->
+          <button type="button"
+                  (click)="toggleSubjectDropdown($event)"
+                  class="w-full h-11 px-4 flex items-center justify-between border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm bg-white cursor-pointer transition-all hover:border-indigo-300 shadow-xs">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span *ngIf="selectedSubjectTag" class="px-3 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                    [ngStyle]="getTagBadgeStyle(selectedSubjectTag.color)">
+                {{ selectedSubjectTag.name }}
+              </span>
+            </div>
+            <i class="pi pi-chevron-down text-xs text-slate-400 transition-transform duration-200"
+               [class.rotate-180]="isSubjectDropdownOpen"></i>
+          </button>
+
+          <!-- Floating Popup Menu -->
+          <div *ngIf="isSubjectDropdownOpen"
+               class="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in zoom-in-95 duration-150">
+            <div class="max-h-52 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
+              <div *ngFor="let tag of subjectTags"
+                   (click)="selectSubjectTag(tag, $event)"
+                   class="flex items-center justify-between px-3 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-all group">
+                <span class="px-3 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                      [ngStyle]="getTagBadgeStyle(tag.color)">
+                  {{ tag.name }}
+                </span>
+                <i *ngIf="selectedSubjectTag?.id === tag.id" class="pi pi-check text-xs font-bold" style="color:#5B4DFF;"></i>
+              </div>
+            </div>
+
+            <!-- Footer: Add New Tag Button -->
+            <div class="border-t border-slate-100 pt-2 mt-1">
+              <button type="button"
+                      (click)="openCreateTagModal($event)"
+                      class="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold hover:bg-purple-50 transition-all cursor-pointer"
+                      style="color:#5B4DFF;">
+                <i class="pi pi-plus text-xs"></i>
+                <span>Tạo tag mới</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mô tả chi tiết -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-bold text-slate-700">Mô tả chi tiết</label>
+            <span class="text-[11px] text-slate-400 font-normal">{{ (eventForm.description || '').length }}/300</span>
+          </div>
+          <textarea [(ngModel)]="eventForm.description"
+                    name="description"
+                    maxlength="300"
+                    placeholder="Thêm ghi chú, yêu cầu hoặc hướng dẫn chi tiết..."
+                    class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl p-4 w-full text-sm h-28 outline-none resize-none transition-all placeholder-slate-400 font-normal leading-relaxed"></textarea>
+        </div>
+      </div>
+
+      <!-- CARD 2: CẤU HÌNH & THỜI GIAN -->
+      <div class="bg-white p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,23,42,0.03)] border border-slate-100 space-y-5">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 pb-3 border-b border-slate-100">
+          <i class="pi pi-clock text-[#5B4DFF] text-xs"></i> Cấu hình & Thời gian
+        </h3>
+
+        <!-- Thời gian Bắt đầu & Kết thúc -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Thời gian bắt đầu <span class="text-rose-500">*</span></label>
+            <div class="flex items-center gap-2">
+              <input type="date"
+                     [(ngModel)]="eventForm.startDate"
+                     name="startDate"
+                     class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl px-3 py-2.5 w-full text-xs outline-none font-medium cursor-pointer text-slate-700 bg-white"/>
+
+              <!-- Custom Google Calendar Time Dropdown (Start Time) -->
+              <div class="relative w-36">
+                <button type="button"
+                        (click)="toggleStartTimePicker($event)"
+                        class="w-full border border-slate-200/80 hover:border-slate-300 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl px-3 py-2.5 text-xs outline-none font-semibold text-slate-800 bg-white shadow-2xs flex items-center justify-between transition-all">
+                  <span>{{ getTimeLabel(eventForm.startTime) }}</span>
+                  <i class="pi pi-chevron-down text-[10px] text-slate-400"></i>
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div *ngIf="showStartTimePicker"
+                     (click)="$event.stopPropagation()"
+                     class="absolute top-full left-0 mt-1.5 w-40 max-h-56 overflow-y-auto custom-scrollbar bg-white rounded-xl shadow-xl border border-slate-200/80 z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
+                  <div *ngFor="let opt of timeOptions"
+                       (click)="selectStartTime(opt.value, $event)"
+                       class="px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors flex items-center justify-between"
+                       [ngClass]="eventForm.startTime === opt.value ? 'bg-purple-50 text-[#5B4DFF]' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'">
+                    <span>{{ opt.label }}</span>
+                    <i *ngIf="eventForm.startTime === opt.value" class="pi pi-check text-xs text-[#5B4DFF]"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Thời gian kết thúc <span class="text-rose-500">*</span></label>
+            <div class="flex items-center gap-2">
+              <input type="date"
+                     [(ngModel)]="eventForm.endDate"
+                     name="endDate"
+                     class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl px-3 py-2.5 w-full text-xs outline-none font-medium cursor-pointer text-slate-700 bg-white"/>
+
+              <!-- Custom Google Calendar Time Dropdown (End Time) -->
+              <div class="relative w-36">
+                <button type="button"
+                        (click)="toggleEndTimePicker($event)"
+                        class="w-full border border-slate-200/80 hover:border-slate-300 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl px-3 py-2.5 text-xs outline-none font-semibold text-slate-800 bg-white shadow-2xs flex items-center justify-between transition-all">
+                  <span>{{ getTimeLabel(eventForm.endTime) }}</span>
+                  <i class="pi pi-chevron-down text-[10px] text-slate-400"></i>
+                </button>
+
+                <!-- Floating Dropdown Menu -->
+                <div *ngIf="showEndTimePicker"
+                     (click)="$event.stopPropagation()"
+                     class="absolute top-full left-0 mt-1.5 w-40 max-h-56 overflow-y-auto custom-scrollbar bg-white rounded-xl shadow-xl border border-slate-200/80 z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
+                  <div *ngFor="let opt of timeOptions"
+                       (click)="selectEndTime(opt.value, $event)"
+                       class="px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors flex items-center justify-between"
+                       [ngClass]="eventForm.endTime === opt.value ? 'bg-purple-50 text-[#5B4DFF]' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'">
+                    <span>{{ opt.label }}</span>
+                    <i *ngIf="eventForm.endTime === opt.value" class="pi pi-check text-xs text-[#5B4DFF]"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Địa điểm & Giảng viên -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Địa điểm / Phòng <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <input type="text"
+                     [(ngModel)]="eventForm.location"
+                     name="location"
+                     placeholder="Phòng A101..."
+                     class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl pl-4 pr-10 py-2.5 w-full text-xs outline-none font-normal text-slate-800"/>
+              <i class="pi pi-[#map-marker] text-slate-400 text-xs absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Giảng viên</label>
+            <div class="relative">
+              <input type="text"
+                     [(ngModel)]="eventForm.teacher"
+                     name="teacher"
+                     placeholder="Nguyễn Văn A..."
+                     class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl pl-4 pr-10 py-2.5 w-full text-xs outline-none font-normal text-slate-800"/>
+              <i class="pi pi-user text-slate-400 text-xs absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hình thức -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-2">Hình thức</label>
+          <div class="flex items-center gap-3">
+            <label (click)="eventForm.format = 'Trực tiếp'"
+                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all"
+                   [ngClass]="eventForm.format === 'Trực tiếp' ? 'border-[#5B4DFF] bg-purple-50/60 text-[#5B4DFF]' : 'border-slate-200/80 text-slate-600 bg-white hover:bg-slate-50'">
+              <span class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center"
+                    [ngClass]="eventForm.format === 'Trực tiếp' ? 'border-[#5B4DFF]' : 'border-slate-300'">
+                <span *ngIf="eventForm.format === 'Trực tiếp'" class="w-1.5 h-1.5 rounded-full" style="background:#5B4DFF;"></span>
+              </span>
+              Trực tiếp
+            </label>
+
+            <label (click)="eventForm.format = 'Online'"
+                   class="flex items-center gap-2 px-5 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all"
+                   [ngClass]="eventForm.format === 'Online' ? 'border-[#5B4DFF] bg-purple-50/60 text-[#5B4DFF]' : 'border-slate-200/80 text-slate-600 bg-white hover:bg-slate-50'">
+              <span class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center"
+                    [ngClass]="eventForm.format === 'Online' ? 'border-[#5B4DFF]' : 'border-slate-300'">
+                <span *ngIf="eventForm.format === 'Online'" class="w-1.5 h-1.5 rounded-full" style="background:#5B4DFF;"></span>
+              </span>
+              Online
+            </label>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS INTEGRATED AT CARD FOOTER -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+          <button type="button" (click)="cancel()"
+                  class="px-6 py-2.5 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200/80 bg-white hover:bg-slate-50 transition-all cursor-pointer">
+            Hủy bỏ
+          </button>
+          <button type="submit" [disabled]="isSubmitting"
+                  class="px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 transition-all cursor-pointer"
+                  style="background:#5B4DFF;">
+            {{ isSubmitting ? 'Đang lưu...' : (isEditMode ? 'Lưu' : 'Tạo lịch') }}
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+
+    <!-- ───────────────────────────────────────────────────────
+         RIGHT COLUMN: LIVE PREVIEW & COLOR PICKER (5 / 12 Cols)
+         ─────────────────────────────────────────────────────── -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- PREVIEW CONTAINER -->
+      <div class="bg-white p-6 rounded-3xl shadow-[0_8px_30px_rgba(15,23,42,0.03)] border border-slate-100 space-y-6">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+          <span class="w-1 h-4 rounded-full" style="background:#5B4DFF;"></span>
+          <h3 class="text-sm font-bold text-slate-900">Xem trước</h3>
+        </div>
+
+        <!-- FLOATING PREVIEW CARD (Matching Image 2 Mockup 100%) -->
+        <div class="rounded-3xl border border-slate-100 shadow-md overflow-hidden bg-white">
+          <!-- Envelope V-Fold Header with depth layer opacity -->
+          <div class="h-36 relative flex items-center justify-center p-4 transition-all"
+               [style.background]="'linear-gradient(180deg, ' + eventForm.color + '15 0%, ' + eventForm.color + '30 100%)'">
+            <!-- SVG Envelope V-Fold Flaps -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 120" preserveAspectRatio="none">
+              <!-- Left Fold Flap -->
+              <path d="M0,0 L150,75 L0,120 Z" [attr.fill]="eventForm.color" fill-opacity="0.12"/>
+              <!-- Right Fold Flap -->
+              <path d="M300,0 L150,75 L300,120 Z" [attr.fill]="eventForm.color" fill-opacity="0.22"/>
+              <!-- Bottom V-Cutout Shape -->
+              <path d="M0,85 Q150,130 300,85 L300,120 L0,120 Z" fill="#FFFFFF"/>
+            </svg>
+
+            <!-- Floating White Circle Icon Badge -->
+            <div class="w-14 h-14 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center z-10 -mt-2">
+              <i class="pi pi-calendar text-2xl" [style.color]="eventForm.color"></i>
+            </div>
+          </div>
+
+          <!-- Card Content Body -->
+          <div class="px-6 pb-6 pt-1 space-y-4">
+            <!-- Type Badge -->
+            <div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold inline-block shadow-xs"
+                    [ngStyle]="getTagBadgeStyle(eventForm.color)">
+                {{ eventForm.typeLabel }}
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h2 class="text-xl font-bold text-slate-900 leading-snug break-words">
+              {{ eventForm.title || 'Tiêu đề lịch' }}
+            </h2>
+
+            <!-- Real-time Detail List with colored icons -->
+            <div class="space-y-2.5 text-xs text-slate-600 font-medium pt-1">
+              <div class="flex items-center gap-3">
+                <i class="pi pi-calendar text-sm w-4" [style.color]="eventForm.color"></i>
+                <span class="text-slate-800 font-semibold">{{ getFormattedDisplayDate() }}</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <i class="pi pi-clock text-sm w-4" [style.color]="eventForm.color"></i>
+                <span class="text-slate-800 font-semibold">{{ eventForm.startTime }} - {{ eventForm.endTime }} ({{ getCalculatedDuration() }})</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <i class="pi pi-map-marker text-sm w-4" [style.color]="eventForm.color"></i>
+                <span class="text-slate-800 font-semibold">{{ eventForm.location || 'Chưa nhập phòng' }}</span>
+              </div>
+
+              <div *ngIf="eventForm.teacher" class="flex items-center gap-3">
+                <i class="pi pi-user text-sm w-4" [style.color]="eventForm.color"></i>
+                <span class="text-slate-800 font-semibold">{{ eventForm.teacher }}</span>
+              </div>
+            </div>
+
+            <!-- Dotted Divider Line -->
+            <div class="border-b border-dashed border-slate-200/80 my-3"></div>
+
+            <!-- Light Notice Banner -->
+            <div class="p-3.5 rounded-xl bg-purple-50/40 border border-purple-100/60 flex items-start gap-2.5 text-[11px] text-slate-600 leading-relaxed">
+              <i class="pi pi-lightbulb text-purple-600 text-xs shrink-0 mt-0.5"></i>
+              <span>Lịch thi sẽ hiển thị trong thời gian biểu với màu sắc bạn đã chọn.</span>
+            </div>
+
+            <!-- Integrated Color Picker inside Card Footer -->
+            <div class="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-2.5 mt-3">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-slate-700">Màu hiển thị</label>
+                <span class="text-[10px] text-slate-400 font-medium">Click để đổi màu</span>
+              </div>
+              <div class="flex items-center justify-between gap-1">
+                <button *ngFor="let c of colorOptions"
+                        type="button"
+                        (click)="selectColor(c.hex)"
+                        [title]="c.name"
+                        class="w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs hover:scale-110"
+                        [style.background]="c.hex"
+                        [class.ring-2]="eventForm.color === c.hex"
+                        [class.ring-offset-2]="eventForm.color === c.hex"
+                        [class.ring-[#5B4DFF]]="eventForm.color === c.hex">
+                  <i *ngIf="eventForm.color === c.hex" class="pi pi-check text-[10px] text-white font-bold"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ───────────────────────────────────────────────────────
+       CREATE TAG MODAL
+       ─────────────────────────────────────────────────────── -->
+  <div *ngIf="showTagModal"
+       (click)="closeTagModal()"
+       class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+    <div (click)="$event.stopPropagation()"
+         class="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 w-full max-w-sm space-y-5 animate-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i class="pi pi-tag text-[#5B4DFF]"></i> Tạo tag môn học mới
+        </h3>
+        <button (click)="closeTagModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-2">Tên tag môn học <span class="text-rose-500">*</span></label>
+          <input type="text"
+                 [(ngModel)]="newTagName"
+                 placeholder="Nhập tên môn học / tag..."
+                 class="border border-slate-200/80 focus:border-[#5B4DFF] focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 py-2.5 w-full text-xs outline-none font-normal"/>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-2">Màu sắc hiển thị</label>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <button *ngFor="let c of colorOptions"
+                    type="button"
+                    (click)="newTagColor = c.hex"
+                    class="w-7 h-7 rounded-full flex items-center justify-center transition-transform cursor-pointer shadow-xs hover:scale-110"
+                    [style.background]="c.hex"
+                    [class.ring-2]="newTagColor === c.hex"
+                    [class.ring-offset-2]="newTagColor === c.hex"
+                    [class.ring-[#5B4DFF]]="newTagColor === c.hex">
+              <i *ngIf="newTagColor === c.hex" class="pi pi-check text-[10px] text-white font-bold"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button type="button" (click)="closeTagModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200/80 hover:bg-slate-50 cursor-pointer">
+          Hủy
+        </button>
+        <button type="button" (click)="addNewTag()" class="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs cursor-pointer" style="background:#5B4DFF;">
+          Tạo tag
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

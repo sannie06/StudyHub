@@ -1,0 +1,207 @@
+<!-- MAIN PROFILE CONTAINER -->
+<div class="min-h-screen bg-[#F8F9FD] p-6 md:p-8 font-sans">
+  
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- TOP NAVIGATION HEADER -->
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Quản lý tài khoản</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Quản lý thông tin cá nhân và cài đặt tài khoản của bạn</p>
+      </div>
+
+      <!-- Navigation Tabs Underline -->
+      <div class="flex items-center gap-6 border-b border-gray-200 text-sm pb-px">
+        <button (click)="changeTab('personal')" 
+                class="pb-3.5 font-semibold transition-all relative flex items-center gap-1.5 focus:outline-none cursor-pointer"
+                [class.text-[#5B4DFF]]="activeTab === 'personal'"
+                [class.border-b-2]="activeTab === 'personal'"
+                [class.border-[#5B4DFF]]="activeTab === 'personal'"
+                [class.text-gray-500]="activeTab !== 'personal'">
+          Hồ sơ cá nhân
+        </button>
+        <button (click)="changeTab('password')" 
+                class="pb-3.5 font-semibold transition-all relative flex items-center gap-1.5 focus:outline-none cursor-pointer"
+                [class.text-[#5B4DFF]]="activeTab === 'password'"
+                [class.border-b-2]="activeTab === 'password'"
+                [class.border-[#5B4DFF]]="activeTab === 'password'"
+                [class.text-gray-500]="activeTab !== 'password'">
+          Đổi mật khẩu
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert Messages Banner -->
+    <div *ngIf="successMessage" class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-center gap-2">
+      <i class="pi pi-check-circle text-emerald-500 text-sm"></i>
+      <p class="text-xs text-emerald-700 font-bold leading-normal">{{ successMessage }}</p>
+    </div>
+    <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-2">
+      <i class="pi pi-exclamation-circle text-rose-500 text-sm"></i>
+      <p class="text-xs text-rose-700 font-bold leading-normal">{{ errorMessage }}</p>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT: GRID 2 COLUMNS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- ==============================================
+           CARD 1: THÔNG TIN CÁ NHÂN (TOP-LEFT)
+           ============================================== -->
+      <div id="personal" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6 flex flex-col justify-between">
+        <div class="space-y-6">
+          <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+            <span>Thông tin cá nhân</span>
+          </h2>
+
+          <form [formGroup]="profileForm" (ngSubmit)="onUpdateProfile()" class="space-y-6">
+            <div class="flex flex-col sm:flex-row items-center gap-6">
+              <!-- Avatar Profile Section -->
+              <div class="flex flex-col items-center">
+                <div class="relative w-[110px] h-[110px] rounded-full overflow-hidden border-2 border-gray-100 shadow-xs bg-slate-50 flex items-center justify-center">
+                  <img *ngIf="profileData.anhDaiDien" [src]="profileData.anhDaiDien.startsWith('http') || profileData.anhDaiDien.startsWith('data:') ? profileData.anhDaiDien : 'http://localhost:5186' + profileData.anhDaiDien" alt="Avatar" class="w-full h-full object-cover">
+                  <i *ngIf="!profileData.anhDaiDien" class="pi pi-user text-4xl text-gray-300"></i>
+                  
+                  <!-- Camera button -->
+                  <label class="absolute bottom-0 right-0 p-2 bg-[#5B4DFF] hover:bg-[#4B3DFF] text-white rounded-full cursor-pointer flex items-center justify-center shadow-xs transition-colors">
+                    <i class="pi pi-camera text-xs"></i>
+                    <input type="file" (change)="onAvatarChange($event)" accept="image/*" class="hidden">
+                  </label>
+                </div>
+                <span class="text-[10px] text-gray-400 font-medium text-center mt-2 block">JPG, PNG, tối đa 2MB</span>
+                <div *ngIf="uploading" class="text-[10px] text-[#5B4DFF] font-semibold mt-1">
+                  <i class="pi pi-spin pi-spinner mr-0.5"></i> Đang tải lên...
+                </div>
+              </div>
+
+              <!-- Basic Fields -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 w-full">
+                <!-- Ho Ten -->
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-bold text-slate-500 mb-1.5">Họ và tên</label>
+                  <input type="text" formControlName="hoTen" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800">
+                  <div *ngIf="profileForm.get('hoTen')?.touched && profileForm.get('hoTen')?.invalid" class="mt-1 text-[10px] text-rose-500 font-bold">
+                    Họ tên không được để trống.
+                  </div>
+                </div>
+
+                <!-- Email (Readonly) -->
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-bold text-slate-500 mb-1.5">Email</label>
+                  <input type="text" [value]="profileData.email" disabled class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-500 cursor-not-allowed">
+                </div>
+              </div>
+            </div>
+
+            <!-- Detailed Grid Fields -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- So Dien Thoai -->
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5">Số điện thoại</label>
+                <input type="text" formControlName="soDienThoai" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800">
+              </div>
+
+              <!-- Ngay Sinh -->
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5">Ngày sinh</label>
+                <div class="relative">
+                  <input type="date" formControlName="ngaySinh" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800 appearance-none">
+                </div>
+              </div>
+
+              <!-- Gioi Tinh -->
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5">Giới tính</label>
+                <div class="relative">
+                  <select formControlName="gioiTinh" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800 appearance-none">
+                    <option *ngFor="let opt of genderOptions" [value]="opt.value">{{ opt.label }}</option>
+                  </select>
+                  <i class="pi pi-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"></i>
+                </div>
+              </div>
+
+              <!-- Truong Khoa -->
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1.5">Trường / Khoa</label>
+                <input type="text" formControlName="truongKhoa" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800">
+              </div>
+            </div>
+
+            <!-- Submit Button (Aligned Right) -->
+            <div class="flex justify-end pt-2 border-t border-gray-100">
+              <button type="submit" [disabled]="loading" class="px-5 py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:bg-[#4B3DFF] flex items-center justify-center gap-1.5 cursor-pointer" style="background:#5B4DFF;">
+                <i class="pi pi-save"></i> Cập nhật thông tin
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ==============================================
+           CARD 2: ĐỔI MẬT KHẨU (TOP-RIGHT)
+           ============================================== -->
+      <div id="password" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
+        <div class="space-y-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+              <span>Đổi mật khẩu</span>
+            </h2>
+
+            <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="space-y-4 mt-6">
+              <!-- Current Password -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-500">Mật khẩu hiện tại</label>
+                <div class="relative">
+                  <input [type]="showOldPassword ? 'text' : 'password'" formControlName="oldPassword" placeholder="Nhập mật khẩu hiện tại" class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800">
+                  <button type="button" (click)="showOldPassword = !showOldPassword" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center justify-center">
+                    <i class="pi text-xs" [class]="showOldPassword ? 'pi-eye-slash' : 'pi-eye'"></i>
+                  </button>
+                </div>
+                <div *ngIf="passwordForm.get('oldPassword')?.touched && passwordForm.get('oldPassword')?.invalid" class="text-[10px] text-rose-500 font-bold">
+                  Mật khẩu hiện tại không được để trống.
+                </div>
+              </div>
+
+              <!-- New Password -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-500">Mật khẩu mới</label>
+                <div class="relative">
+                  <input [type]="showNewPassword ? 'text' : 'password'" formControlName="newPassword" placeholder="Nhập mật khẩu mới" class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800">
+                  <button type="button" (click)="showNewPassword = !showNewPassword" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center justify-center">
+                    <i class="pi text-xs" [class]="showNewPassword ? 'pi-eye-slash' : 'pi-eye'"></i>
+                  </button>
+                </div>
+                <div *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.invalid" class="text-[10px] text-rose-500 font-bold">
+                  Mật khẩu mới phải dài tối thiểu 6 ký tự.
+                </div>
+              </div>
+
+              <!-- Confirm Password -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-500">Xác nhận mật khẩu mới</label>
+                <div class="relative">
+                  <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmNewPassword" placeholder="Nhập lại mật khẩu mới" class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#5B4DFF] text-sm font-semibold text-gray-800">
+                  <button type="button" (click)="showConfirmPassword = !showConfirmPassword" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center justify-center">
+                    <i class="pi text-xs" [class]="showConfirmPassword ? 'pi-eye-slash' : 'pi-eye'"></i>
+                  </button>
+                </div>
+                <div *ngIf="passwordForm.get('confirmNewPassword')?.touched && passwordForm.hasError('mismatch')" class="text-[10px] text-rose-500 font-bold">
+                  Mật khẩu xác nhận không trùng khớp.
+                </div>
+              </div>
+
+              <!-- Submit Password Button -->
+              <div class="flex justify-end pt-6 border-t border-gray-100 mt-auto">
+                <button type="submit" [disabled]="loading" class="px-5 py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:bg-[#4B3DFF] flex items-center justify-center gap-1.5 cursor-pointer" style="background:#5B4DFF;">
+                  <i class="pi pi-key"></i> Đổi mật khẩu
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

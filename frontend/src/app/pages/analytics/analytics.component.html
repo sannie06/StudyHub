@@ -1,0 +1,187 @@
+<div class="min-h-screen bg-slate-50/50 p-6 md:p-8 font-sans">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Thống kê học tập</h2>
+      <p class="text-sm text-slate-500 font-medium">Xem lại tiến độ học tập và tần suất rèn luyện thói quen của bạn.</p>
+    </div>
+    <button (click)="loadAnalytics()" class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm">
+      <i class="pi pi-refresh" [class.pi-spin]="loading"></i> Tải lại
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex flex-col justify-center items-center py-20 gap-3">
+    <i class="pi pi-spin pi-spinner text-4xl text-brand-500"></i>
+    <span class="text-sm font-semibold text-slate-500">Đang phân tích dữ liệu học tập...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl mb-6">
+    <span class="text-sm text-red-700 font-medium">{{ error }}</span>
+  </div>
+
+  <!-- Content Grid -->
+  <div *ngIf="!loading && analyticsData" class="space-y-8 animate-fade-in">
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Focus time -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-100/80 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Thời gian tập trung</span>
+          <span class="text-2xl font-black text-slate-800">{{ (analyticsData.totalFocusMinutes / 60) | number:'1.1-1' }} giờ</span>
+          <span class="text-[10px] text-slate-400 font-semibold block mt-0.5">{{ analyticsData.totalFocusMinutes }} phút ({{ analyticsData.totalPomodoros }} Pomodoro)</span>
+        </div>
+        <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><i class="pi pi-clock text-xl"></i></div>
+      </div>
+
+      <!-- Productivity -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-100/80 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Điểm năng suất</span>
+          <span class="text-2xl font-black text-slate-800">{{ analyticsData.productivityScore | number:'1.0-0' }}</span>
+          <span class="text-[10px] text-indigo-500 font-bold block mt-0.5">Tích lũy từ nỗ lực học tập 🎯</span>
+        </div>
+        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600"><i class="pi pi-bookmark text-xl"></i></div>
+      </div>
+
+      <!-- Streak -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-100/80 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Chuỗi học tập</span>
+          <span class="text-2xl font-black text-slate-800">{{ analyticsData.currentStreak }} ngày</span>
+          <span class="text-[10px] text-amber-500 font-bold block mt-0.5">Duy trì thói quen hàng ngày! 🔥</span>
+        </div>
+        <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"><i class="pi pi-bolt text-xl"></i></div>
+      </div>
+
+      <!-- Task rate -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-100/80 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tỷ lệ công việc</span>
+          <span class="text-2xl font-black text-slate-800">{{ analyticsData.taskCompletionRate | number:'1.1-1' }}%</span>
+          <span class="text-[10px] text-emerald-500 font-bold block mt-0.5">Đã xong: {{ analyticsData.completedTasks }} / {{ analyticsData.totalTasks }}</span>
+        </div>
+        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><i class="pi pi-check-circle text-xl"></i></div>
+      </div>
+    </div>
+
+    <!-- Charts and Progress Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      
+      <!-- Weekly Focus Chart (3 cols) -->
+      <div class="lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-100/80 shadow-sm flex flex-col justify-between">
+        <h3 class="text-base font-bold text-slate-800 mb-6">Thời gian học trong tuần (Phút)</h3>
+        
+        <!-- Bar Chart visualization -->
+        <div class="flex items-end justify-between h-48 px-4 border-b border-slate-100 pb-2">
+          <div *ngFor="let day of analyticsData.weeklyActivity" class="flex flex-col items-center flex-1 group relative">
+            
+            <!-- Tooltip -->
+            <span class="absolute bottom-full mb-2 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+              {{ day.focusMinutes }} phút
+            </span>
+
+            <!-- Vertical Bar -->
+            <div class="w-8 bg-indigo-500/80 group-hover:bg-indigo-600 rounded-t-lg transition-all duration-300"
+                 [style.height.px]="(day.focusMinutes / getMaxWeeklyFocus()) * 140 + 4"></div>
+            
+            <span class="text-xs font-bold text-slate-500 mt-2 block">{{ day.dayName }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subject Progress List (2 cols) -->
+      <div class="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-100/80 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800 mb-6">Tiến độ môn học</h3>
+
+        <div *ngIf="analyticsData.subjectProgress.length === 0" class="text-center py-10 text-slate-400 text-sm">
+          Chưa có môn học nào được liên kết.
+        </div>
+
+        <div *ngIf="analyticsData.subjectProgress.length > 0" class="space-y-4">
+          <div *ngFor="let s of analyticsData.subjectProgress" class="space-y-2">
+            <div class="flex justify-between items-center text-xs font-bold">
+              <span class="text-slate-700 truncate max-w-[180px]">{{ s.tenMonHoc }}</span>
+              <span class="text-slate-400 font-semibold">{{ s.progress }}% ({{ s.taskCount }} CV)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-300" 
+                   [style.backgroundColor]="s.mauSac || '#6366F1'" 
+                   [style.width.%]="s.progress"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Habit Heat Map Grid Card -->
+    <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-base font-bold text-slate-800">Bản đồ nhiệt thói quen học tập (365 Ngày)</h3>
+        <span class="text-xs text-slate-400 font-semibold">Tần suất tập trung Pomodoro</span>
+      </div>
+
+      <!-- Heat Map Scroll Container -->
+      <div class="overflow-x-auto pb-4 scrollbar-thin">
+        <div class="min-w-[700px] flex flex-col gap-1">
+          
+          <!-- Month Header Labels -->
+          <div class="flex pl-8 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <div *ngFor="let mon of monthsHeader" 
+                 [style.width.px]="mon.colSpan * 14" 
+                 class="truncate pr-1">
+              {{ mon.name }}
+            </div>
+          </div>
+
+          <!-- Week Grid representation -->
+          <div class="flex gap-1">
+            
+            <!-- Days list column labels -->
+            <div class="flex flex-col justify-between text-[9px] font-extrabold text-slate-400 pr-2 w-6 text-right leading-3 select-none">
+              <span>CN</span>
+              <span>T3</span>
+              <span>T5</span>
+              <span>T7</span>
+            </div>
+
+            <!-- Heat map column cells -->
+            <div class="flex gap-1">
+              <div *ngFor="let week of weeks" class="flex flex-col gap-1">
+                <div *ngFor="let day of week.days" 
+                     [class]="'w-2.5 h-2.5 rounded-sm transition-colors relative group ' + day.colorClass">
+                  
+                  <!-- Tooltip over hover -->
+                  <span *ngIf="day.date" 
+                        class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-slate-800 text-white text-[9px] font-bold px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                    {{ day.value }} phút: {{ day.formattedDate }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="flex justify-end items-center gap-1.5 mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <span>Ít</span>
+        <span class="w-2.5 h-2.5 rounded-sm bg-slate-100"></span>
+        <span class="w-2.5 h-2.5 rounded-sm bg-indigo-100"></span>
+        <span class="w-2.5 h-2.5 rounded-sm bg-indigo-300"></span>
+        <span class="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span>
+        <span class="w-2.5 h-2.5 rounded-sm bg-indigo-700"></span>
+        <span>Nhiều</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

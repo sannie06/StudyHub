@@ -1,0 +1,286 @@
+<!-- MAIN NOTIFICATIONS MASTER-DETAIL WORKSPACE -->
+<div class="p-6 space-y-5 w-full max-w-[1650px] mx-auto bg-[#F8F9FD]">
+
+  <!-- HEADER TITLE -->
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Thông báo</h1>
+    <p class="text-xs text-gray-500 mt-0.5">Cập nhật mọi thông tin quan trọng dành cho bạn</p>
+  </div>
+
+  <!-- MASTER-DETAIL 2-COLUMN GRID -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- CỘT 1: MASTER LIST (LEFT - 7 COLS) -->
+    <div class="lg:col-span-7 space-y-4">
+
+      <!-- CATEGORY FILTER TABS (BADGE PILLS) -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <button (click)="selectedCategory = 'all'"
+                class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2 flex-shrink-0 border"
+                [class.bg-[#EEECFF]]="selectedCategory === 'all'"
+                [class.text-[#5B4DFF]]="selectedCategory === 'all'"
+                [class.border-purple-200]="selectedCategory === 'all'"
+                [class.bg-white]="selectedCategory !== 'all'"
+                [class.text-gray-600]="selectedCategory !== 'all'"
+                [class.border-gray-150]="selectedCategory !== 'all'">
+          Tất cả <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                       [class.bg-[#5B4DFF]]="selectedCategory === 'all'"
+                       [class.text-white]="selectedCategory === 'all'"
+                       [class.bg-purple-100]="selectedCategory !== 'all'"
+                       [class.text-[#5B4DFF]]="selectedCategory !== 'all'">{{ getCategoryCount('all') }}</span>
+        </button>
+
+        <button (click)="selectedCategory = 'task'"
+                class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2 flex-shrink-0 border"
+                [class.bg-[#EEECFF]]="selectedCategory === 'task'"
+                [class.text-[#5B4DFF]]="selectedCategory === 'task'"
+                [class.border-purple-200]="selectedCategory === 'task'"
+                [class.bg-white]="selectedCategory !== 'task'"
+                [class.text-gray-600]="selectedCategory !== 'task'"
+                [class.border-gray-150]="selectedCategory !== 'task'">
+          Công việc <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                       [class.bg-[#5B4DFF]]="selectedCategory === 'task'"
+                       [class.text-white]="selectedCategory === 'task'"
+                       [class.bg-gray-100]="selectedCategory !== 'task'"
+                       [class.text-gray-500]="selectedCategory !== 'task'">{{ getCategoryCount('task') }}</span>
+        </button>
+
+        <button (click)="selectedCategory = 'schedule'"
+                class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2 flex-shrink-0 border"
+                [class.bg-[#EEECFF]]="selectedCategory === 'schedule'"
+                [class.text-[#5B4DFF]]="selectedCategory === 'schedule'"
+                [class.border-purple-200]="selectedCategory === 'schedule'"
+                [class.bg-white]="selectedCategory !== 'schedule'"
+                [class.text-gray-600]="selectedCategory !== 'schedule'"
+                [class.border-gray-150]="selectedCategory !== 'schedule'">
+          Lịch học <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                       [class.bg-[#5B4DFF]]="selectedCategory === 'schedule'"
+                       [class.text-white]="selectedCategory === 'schedule'"
+                       [class.bg-gray-100]="selectedCategory !== 'schedule'"
+                       [class.text-gray-500]="selectedCategory !== 'schedule'">{{ getCategoryCount('schedule') }}</span>
+        </button>
+
+        <button (click)="selectedCategory = 'group'"
+                class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2 flex-shrink-0 border"
+                [class.bg-[#EEECFF]]="selectedCategory === 'group'"
+                [class.text-[#5B4DFF]]="selectedCategory === 'group'"
+                [class.border-purple-200]="selectedCategory === 'group'"
+                [class.bg-white]="selectedCategory !== 'group'"
+                [class.text-gray-600]="selectedCategory !== 'group'"
+                [class.border-gray-150]="selectedCategory !== 'group'">
+          Nhóm <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                       [class.bg-[#5B4DFF]]="selectedCategory === 'group'"
+                       [class.text-white]="selectedCategory === 'group'"
+                       [class.bg-gray-100]="selectedCategory !== 'group'"
+                       [class.text-gray-500]="selectedCategory !== 'group'">{{ getCategoryCount('group') }}</span>
+        </button>
+
+        <button (click)="selectedCategory = 'ai'"
+                class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2 flex-shrink-0 border"
+                [class.bg-[#EEECFF]]="selectedCategory === 'ai'"
+                [class.text-[#5B4DFF]]="selectedCategory === 'ai'"
+                [class.border-purple-200]="selectedCategory === 'ai'"
+                [class.bg-white]="selectedCategory !== 'ai'"
+                [class.text-gray-600]="selectedCategory !== 'ai'"
+                [class.border-gray-150]="selectedCategory !== 'ai'">
+          AI Assistant <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                       [class.bg-[#5B4DFF]]="selectedCategory === 'ai'"
+                       [class.text-white]="selectedCategory === 'ai'"
+                       [class.bg-gray-100]="selectedCategory !== 'ai'"
+                       [class.text-gray-500]="selectedCategory !== 'ai'">{{ getCategoryCount('ai') }}</span>
+        </button>
+
+        <button (click)="selectedCategory = 'system'"
+                class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2 flex-shrink-0 border"
+                [class.bg-[#EEECFF]]="selectedCategory === 'system'"
+                [class.text-[#5B4DFF]]="selectedCategory === 'system'"
+                [class.border-purple-200]="selectedCategory === 'system'"
+                [class.bg-white]="selectedCategory !== 'system'"
+                [class.text-gray-600]="selectedCategory !== 'system'"
+                [class.border-gray-150]="selectedCategory !== 'system'">
+          Hệ thống <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                       [class.bg-[#5B4DFF]]="selectedCategory === 'system'"
+                       [class.text-white]="selectedCategory === 'system'"
+                       [class.bg-gray-100]="selectedCategory !== 'system'"
+                       [class.text-gray-500]="selectedCategory !== 'system'">{{ getCategoryCount('system') }}</span>
+        </button>
+      </div>
+
+      <!-- SUB ACTION BAR -->
+      <div class="flex items-center justify-between text-xs pt-1">
+        <span class="font-bold text-gray-500">{{ filteredNotifications.length }} thông báo</span>
+        <div class="flex items-center gap-4">
+          <button (click)="markAllAsRead()" class="font-semibold text-[#5B4DFF] hover:underline flex items-center gap-1">
+            <i class="pi pi-check text-[10px]"></i> Đánh dấu tất cả đã đọc
+          </button>
+        </div>
+      </div>
+
+      <!-- NOTIFICATION LIST CARDS -->
+      <div class="space-y-3 max-h-[680px] overflow-y-auto pr-1 notify-list-scroll">
+        <div *ngFor="let item of filteredNotifications"
+             (click)="selectNotification(item.id)"
+             class="p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-4"
+             [ngClass]="{
+               'border-purple-300 bg-purple-50/20 shadow-xs': item.id === selectedNotificationId,
+               'border-gray-100 bg-white hover:border-gray-200': item.id !== selectedNotificationId
+             }">
+
+          <!-- Left Icon & Main Text -->
+          <div class="flex items-start gap-4 min-w-0">
+            <!-- Icon Container -->
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5" [class]="item.iconBg + ' ' + item.iconColor">
+              <i class="text-base" [class]="'pi ' + item.icon"></i>
+            </div>
+
+            <!-- Text Content -->
+            <div class="space-y-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-xs font-bold text-gray-900 leading-snug">{{ item.title }}</h3>
+                <span *ngIf="item.badge"
+                      class="px-2 py-0.5 rounded text-[10px] font-bold"
+                      [class]="item.badgeClass">{{ item.badge }}</span>
+              </div>
+              <p class="text-xs text-gray-500 leading-relaxed truncate">{{ item.content }}</p>
+            </div>
+          </div>
+
+          <!-- Right Meta: Time & Unread Indicator -->
+          <div class="flex items-center gap-2.5 flex-shrink-0 pt-0.5">
+            <span class="text-[11px] text-gray-400 font-medium">{{ item.timeAgo }}</span>
+            <!-- Unread / Read Indicator Circle -->
+            <span class="w-2 h-2 rounded-full inline-block"
+                  [class.bg-[#5B4DFF]]="!item.isRead"
+                  [class.bg-gray-300]="item.isRead"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CỘT 2: DETAIL PANEL (RIGHT - 5 COLS) -->
+    <div class="lg:col-span-5 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6 flex flex-col justify-between min-h-[680px]">
+      
+      <!-- Condition: If a notification is selected -->
+      <div class="space-y-6 flex-1 flex flex-col justify-between" *ngIf="selectedNotification && selectedNotificationId > 0">
+        <div class="space-y-6">
+          <!-- Top Header Panel -->
+          <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <h2 class="text-sm font-bold text-gray-900">Chi tiết thông báo</h2>
+            <button (click)="selectedNotificationId = 0" class="text-gray-400 hover:text-gray-600 p-1 text-xs">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
+          <!-- Header Card Info -->
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                 [class]="selectedNotification.iconBg + ' ' + selectedNotification.iconColor">
+              <i class="text-xl" [class]="'pi ' + selectedNotification.icon"></i>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-bold text-gray-900 leading-snug">{{ selectedNotification.title }}</h3>
+                <span *ngIf="selectedNotification.badge"
+                      class="px-2 py-0.5 rounded text-[10px] font-bold"
+                      [class]="selectedNotification.badgeClass">{{ selectedNotification.badge }}</span>
+              </div>
+              <p class="text-xs text-gray-400">
+                {{ selectedNotification.timeAgo }} ·
+                <span [class.text-[#5B4DFF]]="!selectedNotification.isRead" [class.font-bold]="!selectedNotification.isRead" class="text-gray-500">
+                  {{ selectedNotification.isRead ? 'Đã đọc' : 'Chưa đọc' }}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Main Message Content -->
+          <p class="text-xs text-gray-700 leading-relaxed font-medium">
+            {{ selectedNotification.fullMessage || selectedNotification.content }}
+          </p>
+
+          <!-- Block "Thông tin công việc" -->
+          <div class="bg-gray-50/80 p-4 rounded-2xl border border-gray-100/50 space-y-2.5 text-xs">
+            <h4 class="font-bold text-gray-900 text-xs mb-3">Thông tin công việc</h4>
+
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Tên công việc</span>
+              <span class="font-bold text-gray-900">{{ selectedNotification.taskName || selectedNotification.title }}</span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Hạn nộp</span>
+              <span class="font-semibold text-gray-700">{{ selectedNotification.dueDate || 'Chưa xác định' }}</span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Nhóm</span>
+              <span class="font-semibold text-gray-700">{{ selectedNotification.groupName || 'Nhóm học tập' }}</span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Mức độ ưu tiên</span>
+              <span [class]="selectedNotification.priorityClass || 'font-bold text-gray-800'">{{ selectedNotification.priority }}</span>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">Trạng thái hiện tại</span>
+              <span [class]="selectedNotification.statusClass || 'font-bold text-amber-600'">{{ selectedNotification.status }}</span>
+            </div>
+          </div>
+
+          <!-- Section: Thao tác -->
+          <div class="space-y-2 pt-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Thao tác</span>
+            <div class="grid grid-cols-2 gap-3">
+              <button (click)="navigateToTarget(selectedNotification)" 
+                      class="py-2.5 px-4 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:bg-[#4B3DFF] flex items-center justify-center gap-2 cursor-pointer"
+                      style="background:#5B4DFF;">
+                {{ selectedNotification.actionButtonText || '→ Đi tới công việc' }}
+              </button>
+              <button class="py-2.5 px-4 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs">
+                <i class="pi pi-clock text-xs"></i> Nhắc nhở sau
+              </button>
+            </div>
+          </div>
+
+          <!-- Section: Đánh dấu là -->
+          <div class="space-y-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Đánh dấu là</span>
+            <div class="flex items-center gap-2">
+              <button (click)="toggleReadStatus(selectedNotification)"
+                      class="py-2 px-3.5 bg-emerald-50/60 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+                <i class="pi pi-check text-xs"></i> {{ selectedNotification.isRead ? 'Chưa đọc' : 'Đã đọc' }}
+              </button>
+              <button class="py-2 px-3.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-2xs">
+                <i class="pi pi-star text-xs"></i> Không quan trọng
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Action: Delete Button -->
+        <div class="pt-4 border-t border-gray-100 mt-auto">
+          <button (click)="deleteNotification(selectedNotification.id)"
+                  class="w-full py-2.5 border border-rose-200 text-rose-500 hover:bg-rose-50 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5">
+            <i class="pi pi-trash text-xs"></i> Xóa thông báo
+          </button>
+        </div>
+      </div>
+
+      <!-- Condition: If no notification is selected (Blank state) -->
+      <div class="flex-1 flex flex-col items-center justify-center text-center p-6" *ngIf="!selectedNotification || selectedNotificationId <= 0">
+        <div class="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center text-[#5B4DFF] mb-4">
+          <i class="pi pi-bell text-2xl"></i>
+        </div>
+        <h3 class="text-sm font-bold text-gray-900">Không có thông báo nào được chọn</h3>
+        <p class="text-xs text-gray-400 max-w-[280px] mt-1.5 leading-relaxed">
+          Chọn một thông báo từ danh sách bên trái để xem thông tin chi tiết và thực hiện các thao tác xử lý.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

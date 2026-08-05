@@ -1,0 +1,158 @@
+<div class="min-h-screen bg-slate-50/50 p-6 md:p-8 font-sans">
+  
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Quản lý Môn học</h2>
+      <p class="text-sm text-slate-500 font-medium">Theo dõi và thiết lập danh mục môn học của bạn.</p>
+    </div>
+    <button (click)="showAddDialog()" class="h-11 px-5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-brand-500/20 transition-all text-sm">
+      <i class="pi pi-plus text-xs"></i> Thêm môn học
+    </button>
+  </div>
+
+  <!-- Loading State (Skeleton Grid) -->
+  <div *ngIf="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div *ngFor="let i of [1, 2, 3, 4]" class="bg-white rounded-2xl p-5 border border-slate-100/80 shadow-sm animate-pulse h-[180px] flex flex-col justify-between">
+      <div>
+        <div class="w-10 h-10 bg-slate-200 rounded-xl mb-3"></div>
+        <div class="h-4 bg-slate-200 rounded w-1/3 mb-2"></div>
+        <div class="h-5 bg-slate-200 rounded w-2/3"></div>
+      </div>
+      <div class="space-y-2">
+        <div class="h-3 bg-slate-200 rounded w-1/4"></div>
+        <div class="h-2 bg-slate-200 rounded w-full"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl mb-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-times-circle text-red-500 text-lg"></i>
+        <span class="text-sm text-red-700 font-semibold">{{ error }}</span>
+      </div>
+      <button (click)="loadSubjects()" class="text-xs font-bold text-red-600 hover:text-red-700 underline">Tải lại</button>
+    </div>
+  </div>
+
+  <!-- Subjects Grid Layout -->
+  <div *ngIf="!loading && !error" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    
+    <!-- Subject Cards -->
+    <div *ngFor="let subject of subjects" 
+         class="bg-white rounded-2xl p-5 border-t-4 border-x border-b border-slate-100 shadow-sm flex flex-col justify-between h-[180px] relative group hover:shadow-md transition-all duration-200"
+         [style.borderTopColor]="subject.mauSac">
+      
+      <!-- Card Action Overlay -->
+      <div class="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button (click)="showEditDialog(subject)" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200/50" title="Chỉnh sửa">
+          <i class="pi pi-pencil text-xs"></i>
+        </button>
+        <button (click)="onDeleteSubject(subject.maMonHoc)" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center border border-red-100" title="Xóa">
+          <i class="pi pi-trash text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Icon & Text Info -->
+      <div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3.5" [style.backgroundColor]="subject.mauSac + '15'" [style.color]="subject.mauSac">
+          <i [class]="'pi ' + subject.icon + ' text-lg'"></i>
+        </div>
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">{{ subject.maMon }}</span>
+        <h3 class="text-sm font-bold text-slate-800 mt-1 leading-snug truncate pr-16" [title]="subject.tenMonHoc">{{ subject.tenMonHoc }}</h3>
+      </div>
+
+      <!-- Footer Info: Task Count & Progress -->
+      <div>
+        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 mb-2">
+          <span>{{ subject.taskCount }} công việc</span>
+          <span [style.color]="subject.mauSac">{{ subject.progress }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500" 
+               [style.backgroundColor]="subject.mauSac" 
+               [style.width.%]="subject.progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persistent Add Subject Trigger Card -->
+    <div (click)="showAddDialog()" 
+         class="bg-slate-50 hover:bg-slate-100/80 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center h-[180px] cursor-pointer group transition-all">
+      <div class="w-10 h-10 bg-slate-200/50 group-hover:bg-brand-50 rounded-xl flex items-center justify-center text-slate-500 group-hover:text-brand-600 transition-colors mb-3">
+        <i class="pi pi-plus text-sm"></i>
+      </div>
+      <span class="text-sm font-bold text-slate-600 group-hover:text-brand-600 transition-colors">Thêm môn học mới</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && subjects.length === 0" class="text-center py-16 bg-white rounded-2xl border border-slate-100/80 shadow-sm mt-4">
+    <i class="pi pi-folder-open text-4xl text-slate-300 block mb-3"></i>
+    <span class="text-sm font-semibold text-slate-400">Không tìm thấy môn học nào. Hãy nhấn thêm môn học mới!</span>
+  </div>
+
+  <!-- Create/Edit Subject Dialog -->
+  <p-dialog [(visible)]="displayDialog" 
+            [header]="isEditMode ? 'Chỉnh sửa môn học' : 'Thêm môn học mới'" 
+            [modal]="true" 
+            [draggable]="false"
+            [resizable]="false"
+            styleClass="w-full max-w-md bg-white rounded-2xl overflow-hidden shadow-2xl">
+    
+    <form [formGroup]="subjectForm" (ngSubmit)="onSubmit()" class="p-6 space-y-4">
+      <!-- Subject Name -->
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên môn học</label>
+        <input type="text" formControlName="tenMonHoc" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white">
+        <div *ngIf="subjectForm.get('tenMonHoc')?.touched && subjectForm.get('tenMonHoc')?.invalid" class="mt-1 text-[10px] text-red-500 font-bold">
+          Tên môn học không được để trống.
+        </div>
+      </div>
+
+      <!-- Subject Code -->
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mã môn học</label>
+        <input type="text" formControlName="maMon" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white">
+        <div *ngIf="subjectForm.get('maMon')?.touched && subjectForm.get('maMon')?.invalid" class="mt-1 text-[10px] text-red-500 font-bold">
+          Mã môn học không được để trống.
+        </div>
+      </div>
+
+      <!-- Color Selection (Hex Code) -->
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mã màu đại diện (HEX)</label>
+        <div class="flex gap-2.5">
+          <input type="text" formControlName="mauSac" class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white">
+          <input type="color" formControlName="mauSac" class="w-12 h-[38px] border-0 p-0 rounded-xl overflow-hidden cursor-pointer flex-shrink-0">
+        </div>
+        <div *ngIf="subjectForm.get('mauSac')?.touched && subjectForm.get('mauSac')?.invalid" class="mt-1 text-[10px] text-red-500 font-bold">
+          Mã màu phải đúng định dạng HEX (ví dụ: #6366F1).
+        </div>
+      </div>
+
+      <!-- Icon Class name -->
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Biểu tượng (Icon Class)</label>
+        <input type="text" formControlName="icon" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white">
+        <div *ngIf="subjectForm.get('icon')?.touched && subjectForm.get('icon')?.invalid" class="mt-1 text-[10px] text-red-500 font-bold">
+          Biểu tượng không được để trống.
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mô tả thêm</label>
+        <textarea formControlName="moTa" rows="3" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:border-brand-500 focus:bg-white"></textarea>
+      </div>
+
+      <!-- Submit Actions -->
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" (click)="displayDialog = false" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50">Hủy</button>
+        <button type="submit" [disabled]="submitLoading" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/10">Lưu</button>
+      </div>
+    </form>
+  </p-dialog>
+
+</div>

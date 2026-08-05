@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Angular build & cache
+.angular/
+dist/
+
+# .NET / Visual Studio
+.vs/
+.dotnet_home/
+.dotnet_home /
+.dotnet_temp/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Environment & Logs
+*.log
+*.tmp
+ng_build_output.txt
+backend_build.log
+frontend_build.log
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

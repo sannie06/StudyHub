@@ -1,0 +1,525 @@
+@{
+    ViewData["Title"] = "Quản lý người dùng - Admin Panel";
+}
+
+<!-- Title and Subtitle -->
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1" style="font-size: 1.8rem;">Quản lý người dùng</h2>
+        <p class="text-secondary mb-0">Quản lý toàn bộ tài khoản người dùng trong hệ thống.</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <!-- Stat 1 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-users fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-bold">Tổng người dùng</span>
+                <h4 class="fw-bold mb-0">1.250</h4>
+                <span class="text-secondary" style="font-size: 0.72rem;">Tất cả tài khoản</span>
+            </div>
+        </div>
+    </div>
+    <!-- Stat 2 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3">
+            <div class="bg-success bg-opacity-10 text-success rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-user-check fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-bold">Đang hoạt động</span>
+                <h4 class="fw-bold mb-0">1.200</h4>
+                <span class="text-success fw-bold" style="font-size: 0.72rem;">96% tài khoản</span>
+            </div>
+        </div>
+    </div>
+    <!-- Stat 3 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3">
+            <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-user-slash fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-bold">Đã khóa</span>
+                <h4 class="fw-bold mb-0">50</h4>
+                <span class="text-danger fw-bold" style="font-size: 0.72rem;">4% tài khoản</span>
+            </div>
+        </div>
+    </div>
+    <!-- Stat 4 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3">
+            <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-user-shield fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-bold">Quản trị viên</span>
+                <h4 class="fw-bold mb-0">5</h4>
+                <span class="text-secondary" style="font-size: 0.72rem;">0.4% tài khoản</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Area Split: Left List, Right Profile Details Panel -->
+<div class="row g-4 mb-4">
+    <!-- Users list block (8 columns) -->
+    <div class="col-xl-8 col-lg-12">
+        <div class="glass-card h-100 p-3">
+            
+            <!-- Filters Bar -->
+            <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="position-relative" style="width: 220px;">
+                        <i class="fa-solid fa-magnifying-glass text-secondary" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size:0.8rem;"></i>
+                        <input type="text" class="glass-control p-1 ps-4" style="font-size:0.85rem;" placeholder="Tìm kiếm người dùng..." id="userSearchInput" onkeyup="filterUserTable()" />
+                    </div>
+                    <select class="glass-control p-1 border" style="width: auto; font-size:0.85rem;">
+                        <option>Tất cả vai trò</option>
+                        <option>Sinh viên</option>
+                        <option>Quản trị viên</option>
+                    </select>
+                    <select class="glass-control p-1 border" style="width: auto; font-size:0.85rem;">
+                        <option>Tất cả trạng thái</option>
+                        <option>Đang hoạt động</option>
+                        <option>Đã khóa</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-secondary-custom btn-sm px-3" onclick="location.reload()"><i class="fa-solid fa-arrows-rotate me-1"></i> Làm mới</button>
+                    <button class="btn btn-primary-custom btn-sm px-3" onclick="Swal.fire('Thêm người dùng', 'Form thêm tài khoản mới...', 'info')"><i class="fa-solid fa-plus me-1"></i> Thêm người dùng</button>
+                </div>
+            </div>
+
+            <!-- Table of users -->
+            <div class="table-responsive">
+                <table class="glass-table table align-middle" id="userTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Mã người dùng</th>
+                            <th>Họ và tên</th>
+                            <th>Email</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Row 1 -->
+                        <tr class="user-row" onclick="viewUserDetails('SV0001', 'Nguyễn Văn An', 'nguyenvanan@gmail.com', 'Sinh viên', 'Đang hoạt động', '01/06/2024')">
+                            <td>1</td>
+                            <td><strong>SV0001</strong></td>
+                            <td>Nguyễn Văn An</td>
+                            <td>nguyenvanan@gmail.com</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">Sinh viên</span></td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">Đang hoạt động</span></td>
+                            <td>01/06/2024</td>
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <a href="#" class="text-primary me-2" onclick="viewUserDetails('SV0001', 'Nguyễn Văn An', 'nguyenvanan@gmail.com', 'Sinh viên', 'Đang hoạt động', '01/06/2024')"><i class="fa-regular fa-eye"></i></a>
+                                <a href="#" class="text-secondary me-2"><i class="fa-regular fa-edit"></i></a>
+                                <a href="#" class="text-danger me-2" onclick="lockUserAccount('SV0001')"><i class="fa-solid fa-lock"></i></a>
+                                <a href="#" class="text-secondary"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+                            </td>
+                        </tr>
+                        <!-- Row 2 -->
+                        <tr class="user-row active bg-light" onclick="viewUserDetails('SV0002', 'Trần Thị Bình', 'tranthibinh@gmail.com', 'Sinh viên', 'Đang hoạt động', '01/06/2024')">
+                            <td>2</td>
+                            <td><strong>SV0002</strong></td>
+                            <td>Trần Thị Bình</td>
+                            <td>tranthibinh@gmail.com</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">Sinh viên</span></td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">Đang hoạt động</span></td>
+                            <td>01/06/2024</td>
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <a href="#" class="text-primary me-2" onclick="viewUserDetails('SV0002', 'Trần Thị Bình', 'tranthibinh@gmail.com', 'Sinh viên', 'Đang hoạt động', '01/06/2024')"><i class="fa-regular fa-eye"></i></a>
+                                <a href="#" class="text-secondary me-2"><i class="fa-regular fa-edit"></i></a>
+                                <a href="#" class="text-danger me-2" onclick="lockUserAccount('SV0002')"><i class="fa-solid fa-lock"></i></a>
+                                <a href="#" class="text-secondary"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+                            </td>
+                        </tr>
+                        <!-- Row 3 -->
+                        <tr class="user-row" onclick="viewUserDetails('SV0003', 'Lê Quốc Cường', 'lequoccuong@gmail.com', 'Sinh viên', 'Đang hoạt động', '31/05/2024')">
+                            <td>3</td>
+                            <td><strong>SV0003</strong></td>
+                            <td>Lê Quốc Cường</td>
+                            <td>lequoccuong@gmail.com</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">Sinh viên</span></td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">Đang hoạt động</span></td>
+                            <td>31/05/2024</td>
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <a href="#" class="text-primary me-2" onclick="viewUserDetails('SV0003', 'Lê Quốc Cường', 'lequoccuong@gmail.com', 'Sinh viên', 'Đang hoạt động', '31/05/2024')"><i class="fa-regular fa-eye"></i></a>
+                                <a href="#" class="text-secondary me-2"><i class="fa-regular fa-edit"></i></a>
+                                <a href="#" class="text-danger me-2" onclick="lockUserAccount('SV0003')"><i class="fa-solid fa-lock"></i></a>
+                                <a href="#" class="text-secondary"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+                            </td>
+                        </tr>
+                        <!-- Row 4 -->
+                        <tr class="user-row" onclick="viewUserDetails('SV0004', 'Phạm Minh Duy', 'phamminhduy@gmail.com', 'Sinh viên', 'Đã khóa', '31/05/2024')">
+                            <td>4</td>
+                            <td><strong>SV0004</strong></td>
+                            <td>Phạm Minh Duy</td>
+                            <td>phamminhduy@gmail.com</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">Sinh viên</span></td>
+                            <td><span class="badge bg-danger bg-opacity-10 text-danger">Đã khóa</span></td>
+                            <td>31/05/2024</td>
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <a href="#" class="text-primary me-2" onclick="viewUserDetails('SV0004', 'Phạm Minh Duy', 'phamminhduy@gmail.com', 'Sinh viên', 'Đã khóa', '31/05/2024')"><i class="fa-regular fa-eye"></i></a>
+                                <a href="#" class="text-secondary me-2"><i class="fa-regular fa-edit"></i></a>
+                                <a href="#" class="text-success me-2" onclick="unlockUserAccount('SV0004')"><i class="fa-solid fa-lock-open"></i></a>
+                                <a href="#" class="text-secondary"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+                            </td>
+                        </tr>
+                        <!-- Row 5 -->
+                        <tr class="user-row" onclick="viewUserDetails('AD0001', 'Admin System', 'admin@studyhub.com', 'Quản trị viên', 'Đang hoạt động', '01/06/2024')">
+                            <td>5</td>
+                            <td><strong>AD0001</strong></td>
+                            <td>Admin System</td>
+                            <td>admin@studyhub.com</td>
+                            <td><span class="badge bg-warning bg-opacity-10 text-warning">Quản trị viên</span></td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">Đang hoạt động</span></td>
+                            <td>01/06/2024</td>
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <a href="#" class="text-primary me-2" onclick="viewUserDetails('AD0001', 'Admin System', 'admin@studyhub.com', 'Quản trị viên', 'Đang hoạt động', '01/06/2024')"><i class="fa-regular fa-eye"></i></a>
+                                <a href="#" class="text-secondary me-2"><i class="fa-regular fa-edit"></i></a>
+                                <a href="#" class="text-danger me-2" onclick="lockUserAccount('AD0001')"><i class="fa-solid fa-lock"></i></a>
+                                <a href="#" class="text-secondary"><i class="fa-solid fa-ellipsis-vertical"></i></a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Footer Pagination -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between mt-3 pt-2 border-top gap-2" style="font-size: 0.85rem;">
+                <div class="text-secondary">Hiển thị 1 đến 5 trong tổng số 1.250 người dùng</div>
+                <div class="d-flex align-items-center gap-2">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm m-0">
+                            <li class="page-item disabled"><a class="page-link" href="#"><i class="fa-solid fa-chevron-left"></i></a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                            <li class="page-item"><a class="page-link" href="#">125</a></li>
+                            <li class="page-item"><a class="page-link" href="#"><i class="fa-solid fa-chevron-right"></i></a></li>
+                        </ul>
+                    </nav>
+                    <select class="glass-control p-1 border" style="width: auto; font-size:0.8rem;">
+                        <option>10 / trang</option>
+                        <option>20 / trang</option>
+                        <option>50 / trang</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Right Side Details Panel (4 columns) -->
+    <div class="col-xl-4 col-lg-12">
+        <!-- Details Card -->
+        <div class="glass-card mb-4 p-3">
+            <div class="card-title-custom mb-3">
+                <span class="text-dark">Thông tin chi tiết</span>
+                <i class="fa-solid fa-ellipsis cursor-pointer"></i>
+            </div>
+            
+            <!-- User Photo Circle & Info block -->
+            <div class="d-flex flex-column align-items-center text-center mb-4">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80" id="detailAvatar" style="width:90px; height:90px; border-radius:50%; object-fit:cover;" class="border p-1 mb-2" />
+                <h5 class="fw-bold text-dark mb-0" id="detailName">Trần Thị Bình</h5>
+                <span class="badge bg-primary bg-opacity-10 text-primary mt-1" id="detailRoleBadge">Sinh viên</span>
+            </div>
+
+            <!-- List metadata fields -->
+            <div class="d-flex flex-column gap-2 small border-bottom pb-3 mb-3">
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Mã người dùng</span>
+                    <strong class="text-dark" id="detailId">SV0002</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Họ và tên</span>
+                    <strong class="text-dark" id="detailFullName">Trần Thị Bình</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Email</span>
+                    <strong class="text-dark" id="detailEmail">tranthibinh@gmail.com</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Số điện thoại</span>
+                    <strong class="text-dark" id="detailPhone">0123 456 789</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Trạng thái</span>
+                    <span class="badge bg-success bg-opacity-10 text-success fw-bold" id="detailStatusBadge">Đang hoạt động</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Ngày tạo tài khoản</span>
+                    <strong class="text-dark" id="detailCreateDate">01/06/2024 10:15</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Đăng nhập lần cuối</span>
+                    <strong class="text-dark" id="detailLastLogin">01/06/2024 09:45</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Ghi chú</span>
+                    <span class="text-secondary" id="detailNotes">-</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions Grid -->
+            <div class="mb-3">
+                <div class="small fw-bold text-secondary uppercase mb-2" style="font-size:0.7rem;">Thao tác nhanh</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary btn-sm w-100 py-2" onclick="Swal.fire('Chỉnh sửa', 'Chỉnh sửa tài khoản...', 'info')"><i class="fa-solid fa-edit me-1"></i> Chỉnh sửa</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-warning btn-sm w-100 py-2 text-dark" onclick="Swal.fire('Mật khẩu', 'Đặt lại mật khẩu về mặc định...', 'warning')"><i class="fa-solid fa-key me-1"></i> Đặt lại MK</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-danger btn-sm w-100 py-2" id="quickLockBtn" onclick="toggleLockCurrentAccount()"><i class="fa-solid fa-lock me-1"></i> Khóa account</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-info btn-sm w-100 py-2" onclick="Swal.fire('Phân quyền', 'Chỉnh sửa vai trò và quyền hạn...', 'info')"><i class="fa-solid fa-shield me-1"></i> Phân quyền</button>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button class="btn btn-outline-danger btn-sm w-100 py-2" onclick="deleteUserAccount()"><i class="fa-solid fa-trash me-1"></i> Xóa tài khoản</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Logs list -->
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small fw-bold text-secondary uppercase" style="font-size:0.7rem;">Lịch sử hoạt động</span>
+                    <a href="#" class="text-primary small text-decoration-none" style="font-size:0.75rem;">Xem tất cả</a>
+                </div>
+                <div class="d-flex flex-column gap-2" style="font-size: 0.75rem;" id="activityLogsBlock">
+                    <div class="d-flex justify-content-between p-1 bg-light rounded border px-2">
+                        <div>
+                            <div class="fw-bold text-dark">Đăng nhập hệ thống</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">01/06/2024 09:45:12</span>
+                        </div>
+                        <span class="text-secondary align-self-center">113.161.12.45</span>
+                    </div>
+                    <div class="d-flex justify-content-between p-1 bg-light rounded border px-2">
+                        <div>
+                            <div class="fw-bold text-dark">Tạo nhóm học tập</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">01/06/2024 09:30:25</span>
+                        </div>
+                        <span class="text-secondary align-self-center">113.161.12.45</span>
+                    </div>
+                    <div class="d-flex justify-content-between p-1 bg-light rounded border px-2">
+                        <div>
+                            <div class="fw-bold text-dark">Sử dụng AI Assistant</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">01/06/2024 09:15:40</span>
+                        </div>
+                        <span class="text-secondary align-self-center">113.161.12.45</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Info banner banner -->
+<div class="alert alert-info border d-flex gap-2 align-items-start" style="border-radius:12px;">
+    <i class="fa-solid fa-circle-info fs-5 mt-1"></i>
+    <div>
+        <h6 class="fw-bold mb-1">Hướng dẫn quản lý người dùng</h6>
+        <ul class="m-0 ps-3 small">
+            <li>Nhấp vào hàng của bất kỳ người dùng nào trong danh sách để hiển thị thông tin chi tiết và lịch sử hoạt động ở bảng bên phải.</li>
+            <li>Sử dụng các nút thao tác nhanh để thay đổi trạng thái, vai trò, hoặc đặt lại mật khẩu nhanh chóng.</li>
+            <li>Có thể sử dụng ô tìm kiếm để lọc người dùng theo mã SV, email, hoặc tên.</li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Details panel interactive update
+        function viewUserDetails(id, name, email, role, status, date) {
+            $('#detailId').text(id);
+            $('#detailName').text(name);
+            $('#detailFullName').text(name);
+            $('#detailEmail').text(email);
+            $('#detailRoleBadge').text(role);
+            $('#detailCreateDate').text(date + ' 10:15');
+            $('#detailStatusBadge').text(status);
+            
+            // Set avatar mock
+            let avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80"; // Default Trần Thị Bình
+            if (id === 'SV0001') avatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80";
+            if (id === 'SV0003') avatarUrl = "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=120&q=80";
+            if (id === 'SV0004') avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80";
+            if (id === 'AD0001') avatarUrl = "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80";
+            $('#detailAvatar').attr('src', avatarUrl);
+
+            // Set role classes
+            if (role === 'Sinh viên') {
+                $('#detailRoleBadge').removeClass('bg-warning text-warning').addClass('bg-primary text-primary');
+            } else {
+                $('#detailRoleBadge').removeClass('bg-primary text-primary').addClass('bg-warning text-warning');
+            }
+
+            // Set status classes
+            if (status === 'Đang hoạt động') {
+                $('#detailStatusBadge').removeClass('bg-danger text-danger').addClass('bg-success text-success').text('Đang hoạt động');
+                $('#quickLockBtn').html('<i class="fa-solid fa-lock me-1"></i> Khóa account').removeClass('btn-outline-success').addClass('btn-outline-danger');
+            } else {
+                $('#detailStatusBadge').removeClass('bg-success text-success').addClass('bg-danger text-danger').text('Đã khóa');
+                $('#quickLockBtn').html('<i class="fa-solid fa-lock-open me-1"></i> Mở khóa').removeClass('btn-outline-danger').addClass('btn-outline-success');
+            }
+
+            // Set active table row visual feedback
+            $('#userTable tbody tr').removeClass('active bg-light');
+            
+            // Find row containing the ID
+            $('#userTable tbody tr').each(function() {
+                if ($(this).find('td:nth-child(2)').text() === id) {
+                    $(this).addClass('active bg-light');
+                }
+            });
+            
+            // Update logs mock
+            let logsHtml = `
+                <div class="d-flex justify-content-between p-1 bg-light rounded border px-2">
+                    <div>
+                        <div class="fw-bold text-dark">Sử dụng hệ thống</div>
+                        <span class="text-secondary" style="font-size:0.65rem;">${date} 09:45:12</span>
+                    </div>
+                    <span class="text-secondary align-self-center">113.161.12.45</span>
+                </div>
+                <div class="d-flex justify-content-between p-1 bg-light rounded border px-2">
+                    <div>
+                        <div class="fw-bold text-dark">Tra cứu tài liệu</div>
+                        <span class="text-secondary" style="font-size:0.65rem;">${date} 09:30:25</span>
+                    </div>
+                    <span class="text-secondary align-self-center">113.161.12.45</span>
+                </div>
+            `;
+            $('#activityLogsBlock').html(logsHtml);
+        }
+
+        // Lock/Unlock triggers
+        function lockUserAccount(userId) {
+            Swal.fire({
+                title: 'Khóa tài khoản?',
+                text: `Bạn có chắc chắn muốn khóa tài khoản người dùng ${userId}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Khóa ngay',
+                cancelButtonText: 'Hủy bỏ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Đã khóa!', 'Tài khoản người dùng đã bị tạm ngưng.', 'success');
+                    // update status in UI table
+                    updateTableUserStatus(userId, 'Đã khóa');
+                }
+            });
+        }
+
+        function unlockUserAccount(userId) {
+            Swal.fire({
+                title: 'Mở khóa tài khoản?',
+                text: `Kích hoạt lại tài khoản cho người dùng ${userId}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Mở khóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Đã mở khóa!', 'Tài khoản người dùng đã có thể sử dụng bình thường.', 'success');
+                    updateTableUserStatus(userId, 'Đang hoạt động');
+                }
+            });
+        }
+
+        function toggleLockCurrentAccount() {
+            let currentId = $('#detailId').text();
+            let currentStatus = $('#detailStatusBadge').text();
+            if (currentStatus === 'Đang hoạt động') {
+                lockUserAccount(currentId);
+            } else {
+                unlockUserAccount(currentId);
+            }
+        }
+
+        function updateTableUserStatus(userId, status) {
+            $('#userTable tbody tr').each(function() {
+                if ($(this).find('td:nth-child(2)').text() === userId) {
+                    if (status === 'Đang hoạt động') {
+                        $(this).find('td:nth-child(6)').html('<span class="badge bg-success bg-opacity-10 text-success">Đang hoạt động</span>');
+                        $(this).find('.fa-lock-open').removeClass('fa-lock-open').addClass('fa-lock').parent().removeClass('text-success').addClass('text-danger').attr('onclick', `lockUserAccount('${userId}')`);
+                    } else {
+                        $(this).find('td:nth-child(6)').html('<span class="badge bg-danger bg-opacity-10 text-danger">Đã khóa</span>');
+                        $(this).find('.fa-lock').removeClass('fa-lock').addClass('fa-lock-open').parent().removeClass('text-danger').addClass('text-success').attr('onclick', `unlockUserAccount('${userId}')`);
+                    }
+                    
+                    // refresh current details view if active
+                    if ($('#detailId').text() === userId) {
+                        let name = $(this).find('td:nth-child(3)').text();
+                        let email = $(this).find('td:nth-child(4)').text();
+                        let role = $(this).find('td:nth-child(5)').text();
+                        let date = $(this).find('td:nth-child(7)').text();
+                        viewUserDetails(userId, name, email, role, status, date);
+                    }
+                }
+            });
+        }
+
+        function deleteUserAccount() {
+            let currentId = $('#detailId').text();
+            Swal.fire({
+                title: 'Xóa tài khoản vĩnh viễn?',
+                text: `Hành động này không thể hoàn tác! Bạn chắc chắn muốn xóa tài khoản ${currentId}?`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa vĩnh viễn',
+                cancelButtonText: 'Quay lại'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Đã xóa!', 'Tài khoản người dùng đã được xóa khỏi hệ thống.', 'success');
+                    
+                    // remove row from table
+                    $('#userTable tbody tr').each(function() {
+                        if ($(this).find('td:nth-child(2)').text() === currentId) {
+                            $(this).remove();
+                        }
+                    });
+                    
+                    // switch details back to default Trần Thị Bình SV0002
+                    viewUserDetails('SV0002', 'Trần Thị Bình', 'tranthibinh@gmail.com', 'Sinh viên', 'Đang hoạt động', '01/06/2024');
+                }
+            });
+        }
+
+        // Live table search filtering
+        function filterUserTable() {
+            var searchVal = $('#userSearchInput').val().toLowerCase();
+            $('#userTable tbody tr').each(function() {
+                var text = $(this).text().toLowerCase();
+                if (text.indexOf(searchVal) > -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    </script>
+}

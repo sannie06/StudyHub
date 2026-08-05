@@ -1,0 +1,397 @@
+<div class="flex-1 p-6 space-y-6 overflow-y-auto">
+
+  <!-- ═══════════════════════════════════════
+       PAGE HEADER & TOOLBAR ACTIONS
+       ═══════════════════════════════════════ -->
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Quản lý lịch học – lịch thi</h1>
+      <p class="text-sm text-gray-500 mt-1">Xem, quản lý và theo dõi lịch học, lịch thi của bạn</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button (click)="promptCreateEvent()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-90 transition-all"
+              style="background:#5B4DFF;">
+        <i class="pi pi-plus text-xs"></i> Tạo lịch mới
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm">
+        <i class="pi pi-upload text-xs"></i> Nhập từ file
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TIMETABLE CONTROLS BAR
+       ═══════════════════════════════════════ -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4 flex-wrap">
+
+    <!-- Left Controls: Range & Arrows -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 bg-white">
+        <i class="pi pi-calendar text-xs text-gray-400"></i>
+        <span>Tuần này</span>
+        <i class="pi pi-chevron-down text-[10px] text-gray-400"></i>
+      </div>
+      <div class="flex items-center gap-1">
+        <button class="w-8 h-8 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
+          <i class="pi pi-chevron-left text-xs"></i>
+        </button>
+        <button class="w-8 h-8 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600">
+          <i class="pi pi-chevron-right text-xs"></i>
+        </button>
+      </div>
+      <span class="text-xs font-bold text-gray-800">20/05/2024 - 26/05/2024</span>
+    </div>
+
+    <!-- View Tabs: Tuần, Tháng, Ngày -->
+    <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+      <button (click)="currentViewTab = 'week'"
+              class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              [style]="currentViewTab==='week' ? 'background:#5B4DFF;color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#6b7280;'">
+        Tuần
+      </button>
+      <button (click)="currentViewTab = 'month'"
+              class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              [style]="currentViewTab==='month' ? 'background:#5B4DFF;color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#6b7280;'">
+        Tháng
+      </button>
+      <button (click)="currentViewTab = 'day'"
+              class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              [style]="currentViewTab==='day' ? 'background:#5B4DFF;color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#6b7280;'">
+        Ngày
+      </button>
+    </div>
+
+    <!-- Right Filters -->
+    <div class="flex items-center gap-2">
+      <select class="border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-600 bg-white outline-none cursor-pointer">
+        <option>Tất cả môn học</option>
+      </select>
+      <select class="border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-600 bg-white outline-none cursor-pointer">
+        <option>Tất cả loại lịch</option>
+      </select>
+      <button class="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 bg-white hover:bg-gray-50">
+        <i class="pi pi-filter text-xs"></i> Bộ lọc
+      </button>
+      <button class="p-2 border border-gray-200 rounded-xl text-gray-600 bg-white hover:bg-gray-50">
+        <i class="pi pi-cog text-xs"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MAIN CONTENT GRID & RIGHT SIDEBAR
+       ═══════════════════════════════════════ -->
+  <div class="flex gap-6 items-start">
+
+    <!-- LEFT COLUMN (Timetable + Event Detail + Bottom Stats) -->
+    <div class="flex-1 min-w-0 space-y-6">
+
+      <!-- WEEKLY TIMETABLE GRID -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+        <!-- Grid Header: Time Column + 7 Days -->
+        <div class="timetable-grid border-b border-gray-100 bg-gray-50/50">
+          <div class="p-3 text-center text-xs font-bold text-gray-400 border-r border-gray-100">
+
+          </div>
+          <div *ngFor="let d of weekDays"
+               class="p-3 text-center border-r border-gray-100 last:border-r-0 flex flex-col items-center justify-center gap-1">
+            <span class="text-xs font-bold text-gray-500 uppercase">{{ d.day }}</span>
+            <span *ngIf="!d.isToday" class="text-xs font-bold text-gray-800">{{ d.date }}</span>
+            <span *ngIf="d.isToday"
+                  class="w-7 h-7 rounded-full text-xs font-extrabold text-white flex items-center justify-center shadow-sm"
+                  style="background:#5B4DFF;">
+              23/05
+            </span>
+          </div>
+        </div>
+
+        <!-- Timetable Body Grid -->
+        <div class="relative overflow-x-auto">
+          <div class="timetable-grid relative min-w-[700px]">
+
+            <!-- Time Labels (Left Column) -->
+            <div class="border-r border-gray-100 bg-gray-50/30 select-none">
+              <div *ngFor="let t of timeSlots"
+                   class="h-[52px] px-2 text-[11px] font-bold text-gray-400 flex items-start pt-1.5 justify-end">
+                {{ t }}
+              </div>
+            </div>
+
+            <!-- 7 Day Columns (Grid Lines) -->
+            <div *ngFor="let d of weekDays; let colIndex = index"
+                 class="relative border-r border-gray-100 last:border-r-0 min-h-[728px]">
+              <!-- Hourly horizontal grid lines -->
+              <div *ngFor="let t of timeSlots"
+                   class="h-[52px] border-b border-gray-100/60 last:border-b-0"></div>
+
+              <!-- Events placed on this day -->
+              <ng-container *ngFor="let ev of events">
+                <div *ngIf="ev.dayIndex === colIndex"
+                     (click)="selectEvent(ev)"
+                     class="absolute left-1 right-1 rounded-xl p-2 border transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 z-10 overflow-hidden flex flex-col justify-between"
+                     [class]="ev.colorClass"
+                     [style]="getEventStyle(ev)">
+                  <div>
+                    <div class="flex items-center gap-1.5 mb-1">
+                      <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [style.background]="ev.dotColor"></span>
+                      <p class="text-xs font-extrabold truncate leading-snug">{{ ev.title }}</p>
+                    </div>
+                    <p class="text-[10px] opacity-80 font-medium pl-3 truncate">{{ ev.room }}</p>
+                  </div>
+                  <p class="text-[10px] opacity-75 font-semibold pl-3 mt-1">{{ ev.time }}</p>
+                </div>
+              </ng-container>
+            </div>
+
+            <!-- Current Time Indicator (Red line at 11:30) -->
+            <div class="absolute left-0 right-0 top-[286px] pointer-events-none z-20 flex items-center">
+              <div class="w-[60px] flex justify-end pr-1">
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold text-white bg-rose-500 shadow-sm">11:30</span>
+              </div>
+              <div class="flex-1 h-[2px] bg-rose-500"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EVENT DETAIL CARD (Show when selected)
+           ═══════════════════════════════════════ -->
+      <div *ngIf="selectedEvent" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <!-- Header Card -->
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-bold text-gray-900">Chi tiết lịch: {{ selectedEvent.title }}</h3>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50">
+              <i class="pi pi-pencil text-xs"></i> Sửa
+            </button>
+            <button (click)="deleteCurrentEvent()" class="flex items-center gap-1.5 px-3 py-1.5 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold hover:bg-rose-50">
+              <i class="pi pi-trash text-xs"></i> Xóa
+            </button>
+            <button (click)="closeDetailCard()" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 ml-1">
+              <i class="pi pi-times text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Detail Grid (6 items) -->
+        <div class="grid grid-cols-6 gap-4 text-xs">
+          <div>
+            <p class="text-gray-400 font-medium mb-1">Loại lịch</p>
+            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-100 text-orange-600 inline-block">{{ selectedEvent.type }}</span>
+          </div>
+          <div>
+            <p class="text-gray-400 font-medium mb-1">Thời gian</p>
+            <p class="font-bold text-gray-900">{{ selectedEvent.fullDate || selectedEvent.time }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 font-medium mb-1">Môn học</p>
+            <p class="font-bold text-gray-900">{{ selectedEvent.title }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 font-medium mb-1">Phòng học</p>
+            <p class="font-bold text-gray-900">{{ selectedEvent.room }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 font-medium mb-1">Giảng viên</p>
+            <p class="font-bold text-gray-900">{{ selectedEvent.teacher || 'Chưa cập nhật' }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 font-medium mb-1">Ghi chú</p>
+            <p class="font-bold text-gray-900">{{ selectedEvent.note || 'Không có' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           SECTION THỐNG KÊ LỊCH HỌC
+           ═══════════════════════════════════════ -->
+      <div class="space-y-3">
+        <h3 class="text-base font-bold text-gray-900">Thống kê lịch học</h3>
+
+        <div class="grid grid-cols-5 gap-4 items-stretch">
+
+          <!-- KPI 1: Tổng lịch học -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between">
+            <p class="text-xs font-semibold text-gray-500">Tổng lịch học</p>
+            <div class="flex items-center justify-between mt-2">
+              <div>
+                <span class="text-2xl font-extrabold text-gray-900">18</span>
+                <span class="text-xs text-gray-400 block">Buổi học</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                <i class="pi pi-calendar text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 2: Tổng lịch thi -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between">
+            <p class="text-xs font-semibold text-gray-500">Tổng lịch thi</p>
+            <div class="flex items-center justify-between mt-2">
+              <div>
+                <span class="text-2xl font-extrabold text-gray-900">5</span>
+                <span class="text-xs text-gray-400 block">Bài thi</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <i class="pi pi-bookmark text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 3: Lịch trong tuần này -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between">
+            <p class="text-xs font-semibold text-gray-500">Lịch trong tuần này</p>
+            <div class="flex items-center justify-between mt-2">
+              <div>
+                <span class="text-2xl font-extrabold text-gray-900">12</span>
+                <span class="text-xs text-gray-400 block">Buổi</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                <i class="pi pi-calendar-plus text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 4: Lịch sắp tới -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between">
+            <p class="text-xs font-semibold text-gray-500">Lịch sắp tới</p>
+            <div class="flex items-center justify-between mt-2">
+              <div>
+                <span class="text-2xl font-extrabold text-gray-900">4</span>
+                <span class="text-xs text-gray-400 block">Buổi</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                <i class="pi pi-clock text-lg"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donut Chart Tổng quan -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="relative flex-shrink-0" style="width:70px;height:70px;">
+              <svg class="donut-svg w-full h-full" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" stroke-width="14"
+                        stroke-dasharray="180 68" stroke-dashoffset="0"/>
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" stroke-width="14"
+                        stroke-dasharray="50 198" stroke-dashoffset="-180"/>
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f59e0b" stroke-width="14"
+                        stroke-dasharray="20 228" stroke-dashoffset="-230"/>
+              </svg>
+            </div>
+            <div class="space-y-1 text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+                <span class="text-gray-600">Lịch học: 18 (72%)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                <span class="text-gray-600">Lịch thi: 5 (20%)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
+                <span class="text-gray-600">Lịch khác: 2 (8%)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         RIGHT SIDEBAR (320px)
+         ═══════════════════════════════════════ -->
+    <div class="flex-shrink-0 space-y-5" style="width:320px;">
+
+      <!-- WIDGET 1: LỊCH SẮP TỚI -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold text-gray-900">Lịch sắp tới</h3>
+          <a href="javascript:void(0)" class="text-xs font-semibold" style="color:#5B4DFF;">Xem tất cả</a>
+        </div>
+        <p class="text-xs font-semibold text-gray-400 mb-3">Hôm nay - Thứ 5, 23/05</p>
+
+        <div class="space-y-3">
+          <div *ngFor="let item of upcomingSchedules"
+               class="p-3 rounded-xl border border-gray-100 border-l-4 hover:shadow-sm transition-all"
+               [class]="item.borderClass">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-gray-500">{{ item.time }}</span>
+              <span class="w-2 h-2 rounded-full" [class]="item.dotClass"></span>
+            </div>
+            <p class="text-xs font-bold text-gray-900 mt-1">{{ item.title }}</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">{{ item.room }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET 2: LỊCH THI SẮP TỚI -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-gray-900">Lịch thi sắp tới</h3>
+          <a href="javascript:void(0)" class="text-xs font-semibold" style="color:#5B4DFF;">Xem tất cả</a>
+        </div>
+
+        <div class="space-y-3">
+          <div *ngFor="let exam of upcomingExams"
+               class="p-3 rounded-xl border border-gray-100 hover:shadow-sm transition-all">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-gray-900">{{ exam.date }}</span>
+              <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold" [class]="exam.badgeClass">{{ exam.countdown }}</span>
+            </div>
+            <p class="text-xs font-bold text-gray-900 mt-1">{{ exam.title }}</p>
+            <p class="text-[11px] text-gray-400 mt-0.5">{{ exam.timeRoom }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET 3: AI ASSISTANT -->
+      <div class="rounded-2xl p-4 border border-purple-100 space-y-3" style="background:#F4F2FF;">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center bg-white shadow-xs">
+            <i class="pi pi-android text-sm" style="color:#5B4DFF;"></i>
+          </div>
+          <h3 class="text-sm font-bold text-gray-900">AI Assistant</h3>
+        </div>
+
+        <!-- Alert Message Banner -->
+        <div class="bg-white/80 rounded-xl p-3 border border-purple-100 text-xs text-gray-800 font-medium leading-relaxed shadow-xs">
+          Bạn có <span class="font-bold text-purple-700">2 lịch thi trong 6 ngày tới</span>. Hãy ôn tập sớm để đạt kết quả tốt nhất!
+        </div>
+
+        <!-- Today's Tips Bullet Points -->
+        <div class="space-y-2 text-xs text-gray-700 font-medium">
+          <p class="font-bold text-gray-900">Gợi ý hôm nay</p>
+          <div class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 flex-shrink-0"></span>
+            <span>Ôn tập: <span class="font-bold text-gray-900">Cơ sở dữ liệu</span> (Thi: 29/05)</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 flex-shrink-0"></span>
+            <span>Hoàn thành bài tập CSDL</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 flex-shrink-0"></span>
+            <span>Xem lại slide chương 4, 5</span>
+          </div>
+        </div>
+
+        <!-- Action Link -->
+        <a href="javascript:void(0)" class="inline-flex items-center gap-1 text-xs font-bold pt-1" style="color:#5B4DFF;">
+          Xem kế hoạch học tập <i class="pi pi-arrow-right text-[10px]"></i>
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,547 @@
+@{
+    ViewData["Title"] = "Bảng điều khiển sinh viên";
+}
+
+<style>
+    .custom-schedule-card {
+        background: #ffffff !important;
+        border: 1px solid #f1f5f9 !important;
+        border-radius: 24px !important;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02) !important;
+        padding: 36px 40px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .custom-schedule-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 30px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .schedule-list {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .schedule-row {
+        display: flex;
+        align-items: start;
+    }
+
+    .schedule-time-col {
+        width: 120px;
+        flex-shrink: 0;
+        color: #475569;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: -0.1px;
+    }
+
+    .schedule-dot-col {
+        width: 36px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 20px;
+    }
+
+    .schedule-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .schedule-dot.purple {
+        background-color: #6366f1;
+    }
+
+    .schedule-dot.green {
+        background-color: #10b981;
+    }
+
+    .schedule-dot.yellow {
+        background-color: #f59e0b;
+    }
+
+    .schedule-dot.blue {
+        background-color: #3b82f6;
+    }
+
+    .schedule-info-col {
+        flex-grow: 1;
+    }
+
+    .schedule-subject-name {
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 15.5px;
+        line-height: 20px;
+        letter-spacing: -0.1px;
+    }
+
+    .schedule-room-name {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 400;
+        margin-top: 5px;
+        line-height: 16px;
+    }
+</style>
+
+
+<!-- Dashboard Heading -->
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1" style="font-size: 1.8rem; color: #0f172a;">Xin chào, Nguyễn Minh Anh! 👋</h2>
+        <p class="text-secondary mb-0" style="font-size: 0.95rem;">Chúc bạn một ngày học tập hiệu quả và đạt được nhiều thành công!</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end align-items-center">
+        <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white border border-secondary border-opacity-15 text-dark rounded-3" style="font-size: 0.88rem; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px; justify-content: space-between;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-regular fa-calendar text-secondary"></i>
+                <span class="text-dark">Thứ Sáu, 24/05/2024</span>
+            </div>
+            <i class="fa-solid fa-chevron-down text-secondary" style="font-size: 0.75rem;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <!-- Stat Item 1 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3" style="padding: 1.25rem !important;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #eff6ff; color: #2563eb; flex-shrink: 0;">
+                <i class="fa-solid fa-clipboard-check fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-medium d-block" style="font-size: 0.82rem;">Tổng công việc</span>
+                <h3 class="fw-bold mb-0" style="font-size: 1.6rem; color: #0f172a;">15</h3>
+                <span class="text-secondary" style="font-size: 0.72rem;">+2 so với tuần trước</span>
+            </div>
+        </div>
+    </div>
+    <!-- Stat Item 2 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3" style="padding: 1.25rem !important;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #ecfdf5; color: #10b981; flex-shrink: 0;">
+                <i class="fa-solid fa-circle-check fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-medium d-block" style="font-size: 0.82rem;">Công việc hoàn thành</span>
+                <h3 class="fw-bold mb-0" style="font-size: 1.6rem; color: #0f172a;">10</h3>
+                <span class="text-success fw-bold" style="font-size: 0.72rem;">66.7% hoàn thành</span>
+            </div>
+        </div>
+    </div>
+    <!-- Stat Item 3 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3" style="padding: 1.25rem !important;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #fff7ed; color: #f59e0b; flex-shrink: 0;">
+                <i class="fa-solid fa-clock-rotate-left fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-medium d-block" style="font-size: 0.82rem;">Deadline sắp tới</span>
+                <h3 class="fw-bold mb-0" style="font-size: 1.6rem; color: #0f172a;">3</h3>
+                <span class="text-warning fw-bold" style="font-size: 0.72rem;">Trong 3 ngày tới</span>
+            </div>
+        </div>
+    </div>
+    <!-- Stat Item 4 -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card d-flex align-items-center gap-3" style="padding: 1.25rem !important;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #fef2f2; color: #ef4444; flex-shrink: 0;">
+                <i class="fa-solid fa-book-open fs-5"></i>
+            </div>
+            <div>
+                <span class="text-secondary small fw-medium d-block" style="font-size: 0.82rem;">Số giờ học hôm nay</span>
+                <h3 class="fw-bold mb-0" style="font-size: 1.6rem; color: #0f172a;">4.5</h3>
+                <span class="text-success fw-bold" style="font-size: 0.72rem;">+1.5h so với hôm qua</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Priority Tasks, Schedule, Pomodoro Mini -->
+<div class="row g-4 mb-4">
+    <!-- Priority Tasks -->
+    <div class="col-lg-5">
+        <div class="glass-card h-100 d-flex flex-column justify-content-between" style="min-height: 360px;">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-bold text-dark" style="font-size: 1.05rem;">Công việc ưu tiên hôm nay</span>
+                    <a href="/Task" class="small text-decoration-none" style="color: #2563eb !important; font-weight: 600;">Xem tất cả</a>
+                </div>
+                <div class="d-flex flex-column mb-3">
+                    <!-- Task 1 -->
+                    <div class="d-flex align-items-center justify-content-between py-3" style="border-bottom: 1px solid #f1f5f9;">
+                        <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+                            <input type="checkbox" class="form-check-input flex-shrink-0" style="cursor:pointer;" onchange="completeTaskAlert(this)" />
+                            <span class="fw-bold text-dark d-inline-block" style="font-size: 0.92rem; min-w: 0 !important; flex-shrink: 1 !important; vertical-align: middle;">Hoàn thành báo cáo đồ án</span>
+                            <span class="badge rounded-pill flex-shrink-0" style="font-size: 0.68rem; padding: 4px 10px; background-color: #f1f5f9; color: #64748b; font-weight: 500;">Đồ án tốt nghiệp</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 flex-shrink-0 ms-3">
+                            <span class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">24/05/2024</span>
+                            <span class="badge-custom" style="background-color: #fef2f2 !important; color: #ef4444 !important;">Cao</span>
+                        </div>
+                    </div>
+                    <!-- Task 2 -->
+                    <div class="d-flex align-items-center justify-content-between py-3" style="border-bottom: 1px solid #f1f5f9;">
+                        <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+                            <input type="checkbox" class="form-check-input flex-shrink-0" style="cursor:pointer;" onchange="completeTaskAlert(this)" />
+                            <span class="fw-bold text-dark d-inline-block" style="font-size: 0.92rem; min-w: 0 !important; flex-shrink: 1 !important; vertical-align: middle;">Ôn tập môn Cơ sở dữ liệu</span>
+                            <span class="badge rounded-pill flex-shrink-0" style="font-size: 0.68rem; padding: 4px 10px; background-color: #f1f5f9; color: #64748b; font-weight: 500;">Cơ sở dữ liệu</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 flex-shrink-0 ms-3">
+                            <span class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">24/05/2024</span>
+                            <span class="badge-custom" style="background-color: #fff7ed !important; color: #f97316 !important;">Trung bình</span>
+                        </div>
+                    </div>
+                    <!-- Task 3 -->
+                    <div class="d-flex align-items-center justify-content-between py-3" style="border-bottom: 1px solid #f1f5f9;">
+                        <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+                            <input type="checkbox" class="form-check-input flex-shrink-0" style="cursor:pointer;" onchange="completeTaskAlert(this)" />
+                            <span class="fw-bold text-dark d-inline-block" style="font-size: 0.92rem; min-w: 0 !important; flex-shrink: 1 !important; vertical-align: middle;">Lab Java buổi 7</span>
+                            <span class="badge rounded-pill flex-shrink-0" style="font-size: 0.68rem; padding: 4px 10px; background-color: #f1f5f9; color: #64748b; font-weight: 500;">Lập trình Java</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 flex-shrink-0 ms-3">
+                            <span class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">25/05/2024</span>
+                            <span class="badge-custom" style="background-color: #fff7ed !important; color: #f97316 !important;">Trung bình</span>
+                        </div>
+                    </div>
+                    <!-- Task 4 -->
+                    <div class="d-flex align-items-center justify-content-between py-3">
+                        <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+                            <input type="checkbox" class="form-check-input flex-shrink-0" style="cursor:pointer;" onchange="completeTaskAlert(this)" />
+                            <span class="fw-bold text-dark d-inline-block" style="font-size: 0.92rem; min-w: 0 !important; flex-shrink: 1 !important; vertical-align: middle;">Đọc tài liệu tham khảo</span>
+                            <span class="badge rounded-pill flex-shrink-0" style="font-size: 0.68rem; padding: 4px 10px; background-color: #f1f5f9; color: #64748b; font-weight: 500;">Tiếng Anh</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3 flex-shrink-0 ms-3">
+                            <span class="text-secondary" style="font-size: 0.75rem; font-weight: 500;">26/05/2024</span>
+                            <span class="badge-custom" style="background-color: #f0fdf4 !important; color: #22c55e !important;">Thấp</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn w-100 py-2 d-flex align-items-center justify-content-center gap-2" style="background-color: rgba(37, 99, 235, 0.02) !important; color: #2563eb !important; border-radius: 12px !important; border: 1px dashed #93c5fd !important; font-weight: 600; box-shadow: none; height: 44px;" onclick="location.href='/Task'">
+                <i class="fa-solid fa-plus" style="font-size: 0.85rem;"></i> Thêm công việc mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Today's Schedule -->
+    <div class="col-lg-4">
+        <div class="custom-schedule-card h-100" style="min-height: 360px;">
+            <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 36px !important;">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0; font-family: 'Inter', sans-serif; letter-spacing: -0.3px;">Lịch học hôm nay</h3>
+                <a href="/Schedule" style="font-size: 0.85rem; font-weight: 500; color: #3b82f6; text-decoration: none; letter-spacing: -0.1px;">Xem lịch</a>
+            </div>
+            <div class="schedule-list">
+                <!-- Class 1 -->
+                <div class="schedule-row">
+                    <div class="schedule-time-col">08:00 - 09:50</div>
+                    <div class="schedule-dot-col">
+                        <span class="schedule-dot purple"></span>
+                    </div>
+                    <div class="schedule-info-col">
+                        <div class="schedule-subject-name">Lập trình Java</div>
+                        <div class="schedule-room-name">Phòng A101</div>
+                    </div>
+                </div>
+                <!-- Class 2 -->
+                <div class="schedule-row">
+                    <div class="schedule-time-col">10:00 - 11:50</div>
+                    <div class="schedule-dot-col">
+                        <span class="schedule-dot green"></span>
+                    </div>
+                    <div class="schedule-info-col">
+                        <div class="schedule-subject-name">Cơ sở dữ liệu</div>
+                        <div class="schedule-room-name">Phòng A203</div>
+                    </div>
+                </div>
+                <!-- Class 3 -->
+                <div class="schedule-row">
+                    <div class="schedule-time-col">13:00 - 14:50</div>
+                    <div class="schedule-dot-col">
+                        <span class="schedule-dot yellow"></span>
+                    </div>
+                    <div class="schedule-info-col">
+                        <div class="schedule-subject-name">Phân tích thiết kế HT</div>
+                        <div class="schedule-room-name">Phòng B105</div>
+                    </div>
+                </div>
+                <!-- Class 4 -->
+                <div class="schedule-row">
+                    <div class="schedule-time-col">15:00 - 16:50</div>
+                    <div class="schedule-dot-col">
+                        <span class="schedule-dot blue"></span>
+                    </div>
+                    <div class="schedule-info-col">
+                        <div class="schedule-subject-name">Tiếng Anh chuyên ngành</div>
+                        <div class="schedule-room-name">Phòng C204</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pomodoro Focus Widget -->
+    <div class="col-lg-3">
+        <div class="glass-card h-100 d-flex flex-column justify-content-between text-center" style="min-height: 360px;">
+            <div class="card-title-custom text-start mb-2">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-stopwatch me-1" style="color: #6366f1;"></i> Pomodoro / Focus</span>
+                <a href="/Pomodoro" class="small text-decoration-none" style="color: #2563eb !important; font-weight: 600;">Cài đặt</a>
+            </div>
+            
+            <div class="d-flex flex-column align-items-center my-1">
+                <div class="position-relative d-flex align-items-center justify-content-center" style="width: 140px; height: 140px;">
+                    <svg style="transform: rotate(-90deg); width: 140px; height: 140px; position:absolute;">
+                        <circle cx="70" cy="70" r="58" stroke="#f1f5f9" stroke-width="5" fill="transparent" />
+                        <circle cx="70" cy="70" r="58" stroke="#6366f1" stroke-width="5" fill="transparent" stroke-dasharray="364" stroke-dashoffset="91" stroke-linecap="round" />
+                    </svg>
+                    <div class="text-center d-flex flex-column align-items-center justify-content-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+                        <div class="fw-bold text-dark" style="font-size: 2rem; line-height: 1.1; letter-spacing: -0.5px;">25:00</div>
+                        <span class="text-secondary" style="font-size: 0.72rem; font-weight: 500;">Bắt đầu tập trung!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between text-start border-top pt-2 mt-2" style="border-color: #f1f5f9 !important;">
+                <div>
+                    <span class="text-secondary d-block" style="font-size: 0.72rem;">Phiên hôm nay</span>
+                    <strong class="text-dark small">3 / 8</strong>
+                </div>
+                <div class="text-end">
+                    <span class="text-secondary d-block" style="font-size: 0.72rem;">Tổng thời gian</span>
+                    <strong class="text-dark small">1h 15m</strong>
+                </div>
+            </div>
+
+            <button class="btn w-100 py-2 mt-2" style="background-color: #6366f1 !important; color: white !important; border: none; border-radius: 12px; font-weight: 600; height: 44px;" onclick="location.href='/Pomodoro'">
+                Bắt đầu
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Bar Chart and Bottom widgets -->
+<div class="row g-4 mb-4">
+    <!-- Chart Column -->
+    <div class="col-lg-3">
+        <div class="glass-card h-100">
+            <div class="card-title-custom mb-3">
+                <span class="fw-bold text-dark">Hiệu suất học tập</span>
+                <div class="d-flex align-items-center gap-1 px-3 py-1 bg-white border border-secondary border-opacity-10 text-secondary rounded-pill" style="font-size: 0.78rem; font-weight: 500; cursor: pointer;">
+                    <span>Tuần này</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i>
+                </div>
+            </div>
+            <div style="height: 180px; position: relative;">
+                <canvas id="weeklyBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Widget -->
+    <div class="col-lg-3">
+        <div class="glass-card h-100 d-flex flex-column justify-content-between">
+            <div class="card-title-custom mb-2">
+                <span class="fw-bold text-dark">AI Assistant</span>
+                <a href="/AIAssistant" class="small text-decoration-none" style="color: #2563eb !important; font-weight: 600;">Xem thêm</a>
+            </div>
+            <div class="d-flex gap-2.5 align-items-start p-3" style="background-color: #f5f3ff; border: none; border-radius: 14px;">
+                <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 34px; height: 34px; background-color: #e0e7ff; color: #4f46e5; flex-shrink: 0; font-size: 1rem;">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <p class="mb-0 text-dark" style="font-size: 0.76rem; line-height: 1.45;">
+                    Bạn có 3 deadline trong tuần này. Hãy ưu tiên hoàn thành <strong>"Báo cáo đồ án"</strong> trước ngày mai để đảm bảo tiến độ nhé!
+                </p>
+            </div>
+            <button class="btn w-100 py-2 mt-2 bg-white" style="font-size: 0.85rem; font-weight: 600; border: 1.5px solid #6366f1 !important; color: #6366f1 !important; border-radius: 10px; height: 44px;" onclick="location.href='/AIAssistant'">
+                Trò chuyện với AI
+            </button>
+        </div>
+    </div>
+
+    <!-- Study Groups Widget -->
+    <div class="col-lg-3">
+        <div class="glass-card h-100">
+            <div class="card-title-custom mb-2">
+                <span class="fw-bold text-dark">Nhóm học tập</span>
+                <a href="/StudyGroup" class="small text-decoration-none" style="color: #2563eb !important; font-weight: 600;">Xem tất cả</a>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                <!-- Group 1 -->
+                <div class="d-flex align-items-center justify-content-between py-2" style="border-bottom: 1px solid #f1f5f9;">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background-color: #eff6ff; color: #3b82f6; flex-shrink: 0; font-size: 0.85rem;">
+                            <i class="fa-regular fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">Đồ án tốt nghiệp</div>
+                            <span class="fw-bold" style="font-size: 0.72rem; color: #3b82f6 !important;">5 tin nhắn mới</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Group 2 -->
+                <div class="d-flex align-items-center justify-content-between py-2" style="border-bottom: 1px solid #f1f5f9;">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background-color: #ecfdf5; color: #10b981; flex-shrink: 0; font-size: 0.85rem;">
+                            <i class="fa-regular fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">Nhóm Cơ sở dữ liệu</div>
+                            <span class="fw-bold text-success" style="font-size: 0.72rem;">2 tin nhắn mới</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Group 3 -->
+                <div class="d-flex align-items-center justify-content-between py-2">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background-color: #fff7ed; color: #f59e0b; flex-shrink: 0; font-size: 0.85rem;">
+                            <i class="fa-regular fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">Team Java</div>
+                            <span class="text-secondary" style="font-size: 0.72rem;">Không có tin nhắn mới</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Notifications Widget -->
+    <div class="col-lg-3">
+        <div class="glass-card h-100">
+            <div class="card-title-custom mb-3">
+                <span class="fw-bold text-dark">Thông báo gần đây</span>
+                <a href="#" class="small text-decoration-none" style="color: #2563eb !important; font-weight: 600;">Xem tất cả</a>
+            </div>
+            <div class="d-flex flex-column gap-2" style="font-size: 0.78rem;">
+                <!-- Notif 1 -->
+                <div class="d-flex align-items-center gap-2.5 pb-2" style="border-bottom: 1px solid #f1f5f9;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background-color: #fef2f2; color: #ef4444; flex-shrink: 0; font-size: 0.85rem;">
+                        <i class="fa-regular fa-calendar"></i>
+                    </div>
+                    <div>
+                        <div class="text-dark fw-medium" style="font-size: 0.82rem; line-height: 1.25;">Deadline "Báo cáo đồ án" còn 1 ngày</div>
+                        <span class="text-secondary" style="font-size:0.68rem;">10 phút trước</span>
+                    </div>
+                </div>
+                <!-- Notif 2 -->
+                <div class="d-flex align-items-center gap-2.5 pb-2" style="border-bottom: 1px solid #f1f5f9;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background-color: #eff6ff; color: #3b82f6; flex-shrink: 0; font-size: 0.85rem;">
+                        <i class="fa-regular fa-message"></i>
+                    </div>
+                    <div>
+                        <div class="text-dark fw-medium" style="font-size: 0.82rem; line-height: 1.25;">Nhóm Đồ án tốt nghiệp có 5 tin nhắn mới</div>
+                        <span class="text-secondary" style="font-size:0.68rem;">30 phút trước</span>
+                    </div>
+                </div>
+                <!-- Notif 3 -->
+                <div class="d-flex align-items-center gap-2.5 pb-2" style="border-bottom: 1px solid #f1f5f9;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px; background-color: #f5f3ff; color: #7c3aed; flex-shrink: 0; font-size: 0.75rem;">
+                        AI
+                    </div>
+                    <div>
+                        <div class="text-dark fw-medium" style="font-size: 0.82rem; line-height: 1.25;">AI đã đề xuất điều chỉnh kế hoạch học tập</div>
+                        <span class="text-secondary" style="font-size:0.68rem;">1 giờ trước</span>
+                    </div>
+                </div>
+                <!-- Notif 4 -->
+                <div class="d-flex align-items-center gap-2.5">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background-color: #fff7ed; color: #f59e0b; flex-shrink: 0; font-size: 0.85rem;">
+                        <i class="fa-regular fa-file-lines"></i>
+                    </div>
+                    <div>
+                        <div class="text-dark fw-medium" style="font-size: 0.82rem; line-height: 1.25;">Lịch học ngày mai có thay đổi</div>
+                        <span class="text-secondary" style="font-size:0.68rem;">3 giờ trước</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer section -->
+<div class="row mt-4 mb-2">
+    <div class="col-12 text-center">
+        <p class="text-secondary" style="font-size: 0.8rem;">© 2024 StudyHub - Hệ thống hỗ trợ học tập và quản lý đời sống sinh viên tích hợp AI</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Bar Chart Configuration
+            const ctx = document.getElementById('weeklyBarChart').getContext('2d');
+            const weeklyBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                    datasets: [{
+                        label: 'Số giờ học',
+                        data: [2.5, 5.0, 3.2, 4.8, 4.5, 4.0, 3.0],
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6,
+                        maxBarThickness: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    family: 'Inter',
+                                    size: 10
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: {
+                                    family: 'Inter',
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        function completeTaskAlert(checkbox) {
+            if (checkbox.checked) {
+                Swal.fire({
+                    title: 'Hoàn thành công việc!',
+                    text: 'Chúc mừng bạn đã hoàn thành nhiệm vụ này.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                $(checkbox).closest('.d-flex').find('.fw-bold').css('text-decoration', 'line-through').css('color', '#94a3b8');
+            } else {
+                $(checkbox).closest('.d-flex').find('.fw-bold').css('text-decoration', 'none').css('color', '#0f172a');
+            }
+        }
+    </script>
+}

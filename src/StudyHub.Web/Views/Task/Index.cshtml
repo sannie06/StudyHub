@@ -1,0 +1,469 @@
+@{
+    ViewData["Title"] = "Kanban Board";
+}
+
+<!-- Heading -->
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1" style="font-size: 1.8rem;">Kanban Board</h2>
+        <p class="text-secondary mb-0">Kéo thả công việc để cập nhật trạng thái nhanh chóng.</p>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="glass-card p-3 mb-4">
+    <div class="row g-3 align-items-center justify-content-between">
+        <div class="col-xl-3 col-md-4">
+            <div class="position-relative">
+                <i class="fa-solid fa-magnifying-glass text-secondary" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);"></i>
+                <input type="text" class="glass-control p-2 ps-5" placeholder="Tìm kiếm task trong board..." id="searchInput" />
+            </div>
+        </div>
+        <div class="col-xl-7 col-md-8 d-flex flex-wrap gap-2 justify-content-md-end">
+            <select class="glass-control p-2 border" style="width: auto;">
+                <option>Môn học: Tất cả</option>
+            </select>
+            <select class="glass-control p-2 border" style="width: auto;">
+                <option>Ưu tiên: Tất cả</option>
+            </select>
+            <select class="glass-control p-2 border" style="width: auto;">
+                <option>Tag: Tất cả</option>
+            </select>
+            <button class="btn btn-secondary-custom p-2"><i class="fa-solid fa-filter me-1"></i> Bộ lọc</button>
+            <button class="btn btn-secondary-custom p-2"><i class="fa-solid fa-sliders me-1"></i> Tùy chỉnh</button>
+            <button class="btn btn-primary-custom p-2 px-3" data-bs-toggle="modal" data-bs-target="#addTaskModal"><i class="fa-solid fa-plus me-1"></i> Tạo task mới</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main 3-Column + Right Widget Layout -->
+<div class="row g-4">
+    <!-- Kanban Columns (Left 9 columns) -->
+    <div class="col-lg-9 col-12" style="min-width: 0;">
+        <div class="kanban-board-container" style="min-height: calc(100vh - 280px);">
+            
+            <!-- Column 1: Cần thực hiện -->
+            <div class="kanban-column" id="col-todo" ondragover="allowDrop(event)" ondrop="drop(event, 'col-todo')">
+                <div class="column-header">
+                    <span class="column-title"><i class="fa-regular fa-circle text-primary"></i> Cần thực hiện</span>
+                    <span class="column-count text-primary bg-primary bg-opacity-10" id="count-todo" style="padding: 2px 8px; border-radius:10px;">7</span>
+                </div>
+                <div class="column-cards" id="cards-todo">
+                    <!-- Card 1 -->
+                    <div class="kanban-card" id="task-1" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">PTPM</span>
+                            <span class="badge-custom badge-high">Cao</span>
+                        </div>
+                        <div class="card-title">Làm báo cáo UML</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 30/06/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="kanban-card" id="task-2" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">Java</span>
+                            <span class="badge-custom badge-medium">Trung bình</span>
+                        </div>
+                        <div class="card-title">Ôn tập Java OOP</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 28/06/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="kanban-card" id="task-3" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">Web</span>
+                            <span class="badge-custom badge-low">Thấp</span>
+                        </div>
+                        <div class="card-title">Đọc tài liệu ReactJS</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 05/07/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="kanban-card" id="task-4" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">PTPM</span>
+                            <span class="badge-custom badge-high">Cao</span>
+                        </div>
+                        <div class="card-title">Chuẩn bị thuyết trình</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 02/07/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2 border-top bg-white rounded-bottom">
+                    <button class="btn btn-link text-primary text-decoration-none w-100 text-start py-1" onclick="$('#addTaskModal').modal('show')"><i class="fa-solid fa-plus me-1"></i> Thêm task</button>
+                </div>
+            </div>
+
+            <!-- Column 2: Đang thực hiện -->
+            <div class="kanban-column" id="col-progress" ondragover="allowDrop(event)" ondrop="drop(event, 'col-progress')">
+                <div class="column-header">
+                    <span class="column-title"><i class="fa-solid fa-spinner text-warning"></i> Đang thực hiện</span>
+                    <span class="column-count text-warning bg-warning bg-opacity-10" id="count-progress" style="padding: 2px 8px; border-radius:10px;">6</span>
+                </div>
+                <div class="column-cards" id="cards-progress">
+                    <!-- Card 5 -->
+                    <div class="kanban-card" id="task-5" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">Cơ sở dữ liệu</span>
+                            <span class="badge-custom badge-high">Cao</span>
+                        </div>
+                        <div class="card-title">Bài tập thiết kế CSDL</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 25/06/2024</div>
+                            <div class="d-flex gap-1">
+                                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 6 -->
+                    <div class="kanban-card" id="task-6" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">Giải thuật</span>
+                            <span class="badge-custom badge-medium">Trung bình</span>
+                        </div>
+                        <div class="card-title">Ôn tập thuật toán</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 29/06/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                    <!-- Card 7 -->
+                    <div class="kanban-card" id="task-7" draggable="true" ondragstart="drag(event)">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">PTPM</span>
+                            <span class="badge-custom badge-low">Thấp</span>
+                        </div>
+                        <div class="card-title">Xây dựng Use Case Diagram</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 20/06/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2 border-top bg-white rounded-bottom">
+                    <button class="btn btn-link text-primary text-decoration-none w-100 text-start py-1" onclick="$('#addTaskModal').modal('show')"><i class="fa-solid fa-plus me-1"></i> Thêm task</button>
+                </div>
+            </div>
+
+            <!-- Column 3: Hoàn thành -->
+            <div class="kanban-column" id="col-done" ondragover="allowDrop(event)" ondrop="drop(event, 'col-done')">
+                <div class="column-header">
+                    <span class="column-title"><i class="fa-solid fa-circle-check text-success"></i> Hoàn thành</span>
+                    <span class="column-count text-success bg-success bg-opacity-10" id="count-done" style="padding: 2px 8px; border-radius:10px;">5</span>
+                </div>
+                <div class="column-cards" id="cards-done">
+                    <!-- Card 8 -->
+                    <div class="kanban-card" id="task-8" draggable="true" ondragstart="drag(event)" style="opacity: 0.8; border-color: #cbd5e1;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">Cấu trúc dữ liệu</span>
+                            <span class="badge-custom badge-low">Thấp</span>
+                        </div>
+                        <div class="card-title text-decoration-line-through text-secondary"><i class="fa-solid fa-circle-check text-success me-1"></i> Nộp bài tập tuần 1</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 15/06/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                    <!-- Card 9 -->
+                    <div class="kanban-card" id="task-9" draggable="true" ondragstart="drag(event)" style="opacity: 0.8; border-color: #cbd5e1;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="card-tag">Kỹ năng</span>
+                            <span class="badge-custom badge-low">Thấp</span>
+                        </div>
+                        <div class="card-title text-decoration-line-through text-secondary"><i class="fa-solid fa-circle-check text-success me-1"></i> Làm slide bài thuyết trình</div>
+                        <div class="card-meta">
+                            <div><i class="fa-regular fa-calendar me-1"></i> 18/06/2024</div>
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2 border-top bg-white rounded-bottom">
+                    <button class="btn btn-link text-primary text-decoration-none w-100 text-start py-1" onclick="$('#addTaskModal').modal('show')"><i class="fa-solid fa-plus me-1"></i> Thêm task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side Widgets (Right 3 columns) -->
+    <div class="col-lg-3 col-12">
+        <!-- Overall Progress Widget -->
+        <div class="glass-card mb-4">
+            <div class="card-title-custom">
+                <span>Tiến độ tổng thể</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-center my-3">
+                <div class="position-relative d-flex align-items-center justify-content-center" style="width: 130px; height: 130px;">
+                    <canvas id="overallProgressDonut"></canvas>
+                    <div class="position-absolute text-center" style="transform: translateY(-2px);">
+                        <h4 class="fw-bold mb-0 text-dark">18</h4>
+                        <span class="text-secondary" style="font-size:0.7rem;">Tổng task</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-2 text-start small border-top pt-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-secondary"><span class="rounded-circle d-inline-block me-1" style="width:8px; height:8px; background:#4f46e5;"></span> Cần thực hiện</span>
+                    <strong class="text-dark">7 (39%)</strong>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-secondary"><span class="rounded-circle d-inline-block me-1" style="width:8px; height:8px; background:#f59e0b;"></span> Đang thực hiện</span>
+                    <strong class="text-dark">6 (33%)</strong>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-secondary"><span class="rounded-circle d-inline-block me-1" style="width:8px; height:8px; background:#10b981;"></span> Hoàn thành</span>
+                    <strong class="text-dark">5 (28%)</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Assistant recommendations -->
+        <div class="glass-card mb-4">
+            <div class="card-title-custom">
+                <span class="text-primary"><i class="fa-solid fa-robot"></i> AI Assistant</span>
+            </div>
+            <div class="small fw-bold text-secondary mb-2 uppercase" style="font-size:0.7rem;">Gợi ý ưu tiên cho bạn</div>
+            <div class="d-flex flex-column gap-2 mb-3" style="font-size:0.8rem;">
+                <div class="p-2 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="fw-bold text-dark">1. Bài tập thiết kế CSDL</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size:0.6rem;">Cao</span>
+                    </div>
+                    <span class="text-secondary d-block" style="font-size:0.7rem;">Hạn chót: 25/06</span>
+                </div>
+                <div class="p-2 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="fw-bold text-dark">2. Làm báo cáo UML</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size:0.6rem;">Cao</span>
+                    </div>
+                    <span class="text-secondary d-block" style="font-size:0.7rem;">Hạn chót: 30/06</span>
+                </div>
+                <div class="p-2 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="fw-bold text-dark">3. Ôn tập Java OOP</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size:0.6rem;">T.Bình</span>
+                    </div>
+                    <span class="text-secondary d-block" style="font-size:0.7rem;">Hạn chót: 28/06</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary-custom btn-sm w-100" onclick="Swal.fire('AI Recommendations', 'Hệ thống gợi ý việc dựa trên độ khẩn cấp của deadline và thói quen học tập của bạn.', 'info')">Xem tất cả gợi ý</button>
+        </div>
+
+        <!-- Deadlines Warnings -->
+        <div class="glass-card">
+            <div class="card-title-custom">
+                <span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo deadline</span>
+            </div>
+            <div class="d-flex flex-column gap-3 small" style="font-size: 0.8rem;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-dark">Bài tập thiết kế CSDL</div>
+                        <span class="text-secondary" style="font-size:0.72rem;">Hạn chót: Hôm nay 25/06</span>
+                    </div>
+                    <span class="badge bg-danger text-white rounded-pill p-1 px-2" style="font-size:0.65rem;">Quá hạn</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-dark">Ôn tập Java OOP</div>
+                        <span class="text-secondary" style="font-size:0.72rem;">Hạn chót: 28/06</span>
+                    </div>
+                    <span class="badge bg-warning text-dark rounded-pill p-1 px-2" style="font-size:0.65rem; background:#fef3c7;">Còn 1 ngày</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-bold text-dark">Làm báo cáo UML</div>
+                        <span class="text-secondary" style="font-size:0.72rem;">Hạn chót: 30/06</span>
+                    </div>
+                    <span class="badge bg-warning text-dark rounded-pill p-1 px-2" style="font-size:0.65rem; background:#fef3c7;">Còn 2 ngày</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary-custom btn-sm w-100 mt-3" onclick="location.href='/Schedule'">Xem tất cả</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm thẻ mới -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-2" style="border-radius: 16px; background:#fff; border: 1px solid #e2e8f0;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="addTaskModalLabel">Thêm thẻ nhiệm vụ mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTaskForm">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Tiêu đề nhiệm vụ</label>
+                        <input type="text" class="glass-control" placeholder="Nhập tiêu đề..." id="newTaskTitle" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label class="form-label-custom">Mức độ ưu tiên</label>
+                                <select class="glass-control" id="newTaskPriority">
+                                    <option value="Thấp">Thấp</option>
+                                    <option value="Trung bình" selected>Trung bình</option>
+                                    <option value="Cao">Cao</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label class="form-label-custom">Phân loại (Tag)</label>
+                                <input type="text" class="glass-control" placeholder="Ví dụ: PTPM, Java" id="newTaskTag" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Hạn hoàn thành</label>
+                        <input type="date" class="glass-control" id="newTaskDeadline" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary-custom" onclick="createNewTask()">Tạo thẻ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Overall progress Donut Chart Configuration
+            const ctx = document.getElementById('overallProgressDonut').getContext('2d');
+            const donutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [7, 6, 5],
+                        backgroundColor: ['#4f46e5', '#f59e0b', '#10b981'],
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+
+        // HTML5 Drag and Drop Functions
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text/plain", ev.target.id);
+        }
+
+        function drop(ev, columnId) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text/plain");
+            var card = document.getElementById(data);
+            var targetColumnContainer = document.getElementById("cards-" + columnId.replace("col-", ""));
+            
+            if (targetColumnContainer) {
+                targetColumnContainer.appendChild(card);
+                
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true,
+                    background: '#ffffff',
+                    color: '#0f172a'
+                });
+                
+                let colName = "";
+                if (columnId === "col-todo") colName = "Cần thực hiện";
+                if (columnId === "col-progress") colName = "Đang thực hiện";
+                if (columnId === "col-done") colName = "Hoàn thành";
+                
+                if (columnId === "col-done") {
+                    $(card).css('opacity', '0.8');
+                    $(card).find('.card-title').addClass('text-decoration-line-through text-secondary');
+                } else {
+                    $(card).css('opacity', '1');
+                    $(card).find('.card-title').removeClass('text-decoration-line-through text-secondary');
+                }
+
+                Toast.fire({
+                    icon: 'success',
+                    title: `Đã di chuyển công việc sang cột "${colName}"`
+                });
+
+                updateColumnCounters();
+            }
+        }
+
+        function updateColumnCounters() {
+            $('#count-todo').text($('#cards-todo .kanban-card').length);
+            $('#count-progress').text($('#cards-progress .kanban-card').length);
+            $('#count-done').text($('#cards-done .kanban-card').length);
+        }
+
+        // Create new task programmatically
+        let taskIdCounter = 10;
+        function createNewTask() {
+            var title = $('#newTaskTitle').val();
+            var priority = $('#newTaskPriority').val();
+            var tag = $('#newTaskTag').val() || "Chung";
+            var deadline = $('#newTaskDeadline').val() || "Chưa đặt";
+            
+            if (title.trim() === '') {
+                Swal.fire('Lỗi', 'Vui lòng điền tiêu đề nhiệm vụ!', 'error');
+                return;
+            }
+
+            let priorityBadgeClass = "badge-low";
+            if (priority === "Trung bình") priorityBadgeClass = "badge-medium";
+            if (priority === "Cao") priorityBadgeClass = "badge-high";
+
+            let newCardHtml = `
+                <div class="kanban-card" id="task-${taskIdCounter}" draggable="true" ondragstart="drag(event)">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="card-tag">${tag}</span>
+                        <span class="badge-custom ${priorityBadgeClass}">${priority}</span>
+                    </div>
+                    <div class="card-title">${title}</div>
+                    <div class="card-meta">
+                        <div><i class="fa-regular fa-calendar me-1"></i> ${deadline}</div>
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 22px; height: 22px; border-radius: 50%;" />
+                    </div>
+                </div>
+            `;
+
+            $('#cards-todo').append(newCardHtml);
+            $('#addTaskModal').modal('hide');
+            
+            // Clear inputs
+            $('#newTaskTitle').val('');
+            $('#newTaskTag').val('');
+            $('#newTaskDeadline').val('');
+
+            Swal.fire('Thành công!', 'Đã tạo thẻ nhiệm vụ mới!', 'success');
+            
+            taskIdCounter++;
+            updateColumnCounters();
+        }
+    </script>
+}

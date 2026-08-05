@@ -1,0 +1,207 @@
+@{
+    ViewData["Title"] = "Lịch học - Lịch thi";
+}
+<style>
+.sched-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.sched-toolbar{display:flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:.6rem 1rem;margin-bottom:1rem;flex-wrap:wrap}
+.sched-main{display:grid;grid-template-columns:1fr 300px;gap:1rem}
+.cal-wrap{background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden}
+.cal-days-header{display:grid;grid-template-columns:60px repeat(7,1fr);border-bottom:1px solid #e5e7eb}
+.cal-day-head{padding:.6rem .25rem;text-align:center;font-size:.78rem;font-weight:600;color:#6b7280;border-left:1px solid #e5e7eb}
+.cal-day-head.today{background:#eff6ff;color:#2563eb}
+.cal-body{display:flex;height:780px;overflow-y:auto}
+.time-col{width:60px;flex-shrink:0;position:relative}
+.time-label{position:absolute;right:8px;font-size:.7rem;color:#9ca3af;transform:translateY(-50%)}
+.days-grid{flex:1;display:grid;grid-template-columns:repeat(7,1fr);position:relative;background-image:repeating-linear-gradient(to bottom,#e5e7eb 0,1px,transparent 1px,60px)}
+.day-col{position:relative;border-left:1px solid #e5e7eb}
+.day-col.today-col{background:rgba(37,99,235,.03)}
+.cal-event{position:absolute;left:3px;right:3px;border-radius:6px;padding:4px 6px;font-size:.7rem;cursor:pointer;overflow:hidden;border-left:3px solid}
+.cal-event:hover{filter:brightness(.95);z-index:10}
+.ev-name{font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-room{opacity:.8;font-size:.65rem}
+.now-line{position:absolute;left:0;right:0;height:2px;background:#ef4444;z-index:5}
+.now-line::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:#ef4444}
+/* Sidebar */
+.sched-sidebar{display:flex;flex-direction:column;gap:1rem}
+.side-card{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:1rem}
+.side-card h6{font-size:.85rem;font-weight:700;margin-bottom:.75rem;display:flex;justify-content:space-between}
+.side-card h6 a{font-size:.75rem;color:#7c3aed;font-weight:500;text-decoration:none}
+.upcoming-item{display:flex;gap:.5rem;align-items:flex-start;padding:.4rem 0;border-bottom:1px solid #f3f4f6}
+.upcoming-item:last-child{border:none}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.upcoming-item .time{font-size:.72rem;color:#6b7280}
+.upcoming-item .name{font-size:.8rem;font-weight:600;color:#1f2937}
+.exam-item{padding:.5rem 0;border-bottom:1px solid #f3f4f6}
+.exam-item:last-child{border:none}
+.exam-date{font-size:.72rem;color:#6b7280}
+.exam-name{font-size:.8rem;font-weight:600;color:#1f2937;margin:.1rem 0}
+.exam-badge{font-size:.68rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;background:#fef3c7;color:#d97706}
+.ai-box{background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid #ddd6fe;border-radius:12px;padding:1rem}
+.ai-box h6{font-size:.85rem;font-weight:700;color:#4f46e5;margin-bottom:.5rem}
+.ai-box p{font-size:.78rem;color:#6b7280;margin-bottom:.5rem}
+.ai-box ul{padding-left:1rem;font-size:.75rem;color:#374151;margin-bottom:.5rem}
+.ai-box a{font-size:.78rem;color:#4f46e5;font-weight:600;text-decoration:none}
+/* Toolbar */
+.tb-btn{border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:.35rem .75rem;font-size:.8rem;cursor:pointer;color:#374151;transition:all .15s}
+.tb-btn.active,.tb-btn:hover{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.tb-select{border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:.35rem .6rem;font-size:.78rem;color:#374151;cursor:pointer}
+.tb-nav-btn{width:28px;height:28px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+/* Detail Panel */
+.detail-panel{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:1rem;margin-top:1rem}
+.detail-panel h6{font-size:.9rem;font-weight:700;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center}
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:1rem;background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:1rem;margin-top:1rem;align-items:center}
+.stat-item{text-align:center}
+.stat-num{font-size:1.6rem;font-weight:800;color:#1f2937}
+.stat-label{font-size:.72rem;color:#6b7280}
+.stat-icon{font-size:1.2rem;color:#a78bfa;margin-top:.25rem}
+</style>
+
+<div class="sched-header">
+    <div>
+        <h4 class="fw-bold mb-1">Quản lý lịch học – lịch thi</h4>
+        <p class="text-secondary mb-0" style="font-size:.85rem">Xem, quản lý và theo dõi lịch học, lịch thi của bạn</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn-primary-custom"><i class="fa-solid fa-plus me-1"></i> Tạo lịch mới</button>
+        <button class="btn-secondary-custom"><i class="fa-solid fa-file-import me-1"></i> Nhập từ file</button>
+    </div>
+</div>
+
+<div class="sched-toolbar">
+    <span style="font-size:.78rem;font-weight:600;color:#374151">Tuần này</span>
+    <button class="tb-nav-btn"><i class="fa-solid fa-chevron-left" style="font-size:.65rem"></i></button>
+    <button class="tb-nav-btn"><i class="fa-solid fa-chevron-right" style="font-size:.65rem"></i></button>
+    <span style="font-size:.78rem;color:#6b7280;padding:0 .25rem">20/05/2024 – 26/05/2024</span>
+    <div class="ms-auto d-flex gap-2 flex-wrap">
+        <button class="tb-btn active">Tuần</button>
+        <button class="tb-btn">Tháng</button>
+        <button class="tb-btn">Ngày</button>
+        <select class="tb-select"><option>Tất cả môn học</option></select>
+        <select class="tb-select"><option>Tất cả loại lịch</option></select>
+        <button class="tb-btn"><i class="fa-solid fa-filter me-1"></i>Bộ lọc</button>
+    </div>
+</div>
+
+<div class="sched-main">
+    <div class="cal-wrap">
+        <div class="cal-days-header">
+            <div class="cal-day-head"></div>
+            <div class="cal-day-head"><div>T2</div><div>20/05</div></div>
+            <div class="cal-day-head"><div>T3</div><div>21/05</div></div>
+            <div class="cal-day-head"><div>T4</div><div>22/05</div></div>
+            <div class="cal-day-head today"><div style="background:#2563eb;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;margin:0 auto">T5</div><div>23/05</div></div>
+            <div class="cal-day-head"><div>T6</div><div>24/05</div></div>
+            <div class="cal-day-head"><div>T7</div><div>25/05</div></div>
+            <div class="cal-day-head"><div>CN</div><div>26/05</div></div>
+        </div>
+        <div class="cal-body">
+            <div class="time-col" style="position:relative;min-height:780px">
+                @foreach(var h in new[]{6,7,8,9,10,11,12,13,14,15,16,17,18,19}){
+                    <div class="time-label" style="top:@((h-6)*60)px">@h.ToString("D2"):00</div>
+                }
+            </div>
+            <div class="days-grid" style="min-height:780px">
+                <div class="day-col">
+                    <div class="cal-event" style="top:120px;height:120px;background:#fdf2f8;border-left-color:#ec4899;color:#9d174d"><div class="ev-name">Cấu trúc dữ liệu</div><div class="ev-room">P.A101 · 08:00–10:00</div></div>
+                    <div class="cal-event" style="top:450px;height:90px;background:#fdf2f8;border-left-color:#ec4899;color:#9d174d"><div class="ev-name">Kỹ năng mềm</div><div class="ev-room">P.C301 · 13:30–15:00</div></div>
+                    <div class="cal-event" style="top:720px;height:90px;background:#eff6ff;border-left-color:#3b82f6;color:#1e40af"><div class="ev-name">Ôn tập CSDL</div><div class="ev-room">Thư viện P.D401</div></div>
+                </div>
+                <div class="day-col">
+                    <div class="cal-event" style="top:90px;height:120px;background:#eff6ff;border-left-color:#3b82f6;color:#1e40af"><div class="ev-name">Toán rời rạc</div><div class="ev-room">P.B201 · 07:30–09:30</div></div>
+                    <div class="cal-event" style="top:450px;height:120px;background:#eef2ff;border-left-color:#6366f1;color:#3730a3"><div class="ev-name">Lập trình Web</div><div class="ev-room">P.B201 · 13:30–15:30</div></div>
+                    <div class="cal-event" style="top:720px;height:120px;background:#eef2ff;border-left-color:#6366f1;color:#3730a3"><div class="ev-name">CLB Lập trình</div><div class="ev-room">Phòng Lap 2</div></div>
+                </div>
+                <div class="day-col">
+                    <div class="cal-event" style="top:120px;height:120px;background:#fff7ed;border-left-color:#f97316;color:#9a3412"><div class="ev-name">Cơ sở dữ liệu</div><div class="ev-room">P.C301 · 08:00–10:00</div></div>
+                    <div class="cal-event" style="top:450px;height:120px;background:#fffbeb;border-left-color:#f59e0b;color:#92400e"><div class="ev-name">Xác suất thống kê</div><div class="ev-room">P.C301 · 13:30–15:30</div></div>
+                </div>
+                <div class="day-col today-col">
+                    <div class="now-line" style="top:330px"></div>
+                    <div class="cal-event" style="top:120px;height:120px;background:#eff6ff;border-left-color:#2563eb;color:#1e40af" onclick="showDetail()"><div class="ev-name">Lập trình Java</div><div class="ev-room">P.A101 · 08:00–10:00</div></div>
+                    <div class="cal-event" style="top:450px;height:120px;background:#f0fdfa;border-left-color:#14b8a6;color:#134e4a"><div class="ev-name">Công nghệ phần mềm</div><div class="ev-room">P.A101 · 13:30–15:30</div></div>
+                    <div class="cal-event" style="top:720px;height:60px;background:#fff7ed;border-left-color:#f97316;color:#9a3412"><div class="ev-name">Thảo luận nhóm</div><div class="ev-room">Phòng B202</div></div>
+                </div>
+                <div class="day-col">
+                    <div class="cal-event" style="top:90px;height:120px;background:#fff1f2;border-left-color:#f43f5e;color:#9f1239"><div class="ev-name">Hệ điều hành</div><div class="ev-room">P.C301 · 07:30–09:30</div></div>
+                    <div class="cal-event" style="top:450px;height:90px;background:#faf5ff;border-left-color:#a855f7;color:#6b21a8"><div class="ev-name">Tiếng Anh chuyên ngành</div><div class="ev-room">13:30–15:00</div></div>
+                </div>
+                <div class="day-col">
+                    <div class="cal-event" style="top:180px;height:120px;background:#f0fdf4;border-left-color:#22c55e;color:#14532d"><div class="ev-name">Mạng máy tính</div><div class="ev-room">P.B201 · 09:00–11:00</div></div>
+                </div>
+                <div class="day-col"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sched-sidebar">
+        <div class="side-card">
+            <h6>Lịch sắp tới <a href="#">Xem tất cả</a></h6>
+            <div style="font-size:.72rem;color:#9ca3af;margin-bottom:.5rem">Hôm nay – Thứ 5, 23/05</div>
+            <div class="upcoming-item"><div class="dot" style="background:#2563eb"></div><div><div class="time">08:00 – 10:00</div><div class="name">Lập trình Java</div><div style="font-size:.7rem;color:#9ca3af">P.A101</div></div></div>
+            <div class="upcoming-item"><div class="dot" style="background:#14b8a6"></div><div><div class="time">13:30 – 15:30</div><div class="name">Công nghệ phần mềm</div><div style="font-size:.7rem;color:#9ca3af">P.A101</div></div></div>
+            <div class="upcoming-item"><div class="dot" style="background:#f97316"></div><div><div class="time">18:00 – 19:00</div><div class="name">Thảo luận nhóm</div><div style="font-size:.7rem;color:#9ca3af">Phòng B202</div></div></div>
+        </div>
+        <div class="side-card">
+            <h6>Lịch thi sắp tới <a href="#">Xem tất cả</a></h6>
+            <div class="exam-item"><div class="exam-date">29/05/2024</div><div class="exam-name">Cơ sở dữ liệu</div><div style="font-size:.7rem;color:#6b7280">08:00–10:00 | Phòng thi A201</div><span class="exam-badge">6 ngày</span></div>
+            <div class="exam-item"><div class="exam-date">03/06/2024</div><div class="exam-name">Cấu trúc dữ liệu</div><div style="font-size:.7rem;color:#6b7280">13:30–15:30 | Phòng thi B101</div><span class="exam-badge" style="background:#dcfce7;color:#15803d">11 ngày</span></div>
+            <div class="exam-item"><div class="exam-date">07/06/2024</div><div class="exam-name">Hệ điều hành</div><div style="font-size:.7rem;color:#6b7280">08:00–10:00 | Phòng thi A301</div><span class="exam-badge" style="background:#fce7f3;color:#be185d">15 ngày</span></div>
+        </div>
+        <div class="ai-box">
+            <h6><i class="fa-solid fa-robot me-1"></i> AI Assistant</h6>
+            <p>Bạn có 2 lịch thi trong 6 ngày tới. Hãy ôn tập sớm để đạt kết quả tốt nhé!</p>
+            <ul>
+                <li>Ôn tập: Cơ sở dữ liệu (Thi: 29/05)</li>
+                <li>Hoàn thành bài tập CSDL</li>
+                <li>Xem lại slide chương 4, 5</li>
+            </ul>
+            <a href="#">Xem kế hoạch học tập →</a>
+        </div>
+    </div>
+</div>
+
+<div class="detail-panel" id="detailPanel" style="display:none">
+    <h6>Chi tiết lịch: Lập trình Java <span class="dot" style="background:#2563eb;display:inline-block"></span>
+        <div class="d-flex gap-2">
+            <button class="tb-btn"><i class="fa-solid fa-pen me-1"></i>Sửa</button>
+            <button class="tb-btn" style="color:#ef4444;border-color:#fca5a5"><i class="fa-solid fa-trash me-1"></i>Xóa</button>
+            <button class="tb-btn" onclick="hideDetail()">✕</button>
+        </div>
+    </h6>
+    <table class="table table-sm" style="font-size:.82rem">
+        <thead><tr><th>Loại lịch</th><th>Thời gian</th><th>Môn học</th><th>Phòng học</th><th>Giảng viên</th><th>Ghi chú</th></tr></thead>
+        <tbody><tr><td><span style="color:#2563eb;font-weight:600">Lịch học</span></td><td>08:00–10:00, Thứ 5, 23/05/2024</td><td>Lập trình Java</td><td>P.A101</td><td>Nguyễn Văn An</td><td>Mang theo laptop</td></tr></tbody>
+    </table>
+</div>
+
+<div class="stats-row">
+    <div class="stat-item"><div class="stat-num">18</div><div class="stat-label">Tổng lịch học</div><div class="stat-icon"><i class="fa-solid fa-book-open"></i></div><div style="font-size:.7rem;color:#6b7280">Buổi học</div></div>
+    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">Tổng lịch thi</div><div class="stat-icon"><i class="fa-solid fa-file-pen"></i></div><div style="font-size:.7rem;color:#6b7280">Bài thi</div></div>
+    <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Lịch trong tuần này</div><div class="stat-icon"><i class="fa-solid fa-calendar-week"></i></div><div style="font-size:.7rem;color:#6b7280">Buổi</div></div>
+    <div class="stat-item"><div class="stat-num">4</div><div class="stat-label">Lịch sắp tới</div><div class="stat-icon"><i class="fa-solid fa-clock"></i></div><div style="font-size:.7rem;color:#6b7280">Buổi</div></div>
+    <div style="width:120px;display:flex;align-items:center;justify-content:center">
+        <canvas id="statChart" width="110" height="110"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function showDetail(){document.getElementById('detailPanel').style.display='block'}
+function hideDetail(){document.getElementById('detailPanel').style.display='none'}
+// Donut chart
+(function(){
+  var c=document.getElementById('statChart'),ctx=c.getContext('2d');
+  var data=[72,20,8],colors=['#7c3aed','#22c55e','#f59e0b'];
+  var total=100,start=-Math.PI/2,r=45,cx=55,cy=55;
+  data.forEach(function(v,i){
+    var slice=v/total*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+slice);
+    ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();
+    start+=slice;
+  });
+  ctx.beginPath();ctx.arc(cx,cy,28,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
+})();
+</script>
+}

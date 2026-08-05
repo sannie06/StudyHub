@@ -1,0 +1,411 @@
+@{
+    ViewData["Title"] = "Nhóm học tập cộng tác";
+}
+
+<!-- Group Header -->
+<div class="glass-card p-3 mb-4">
+    <div class="row g-3 align-items-center justify-content-between">
+        <div class="col-md-8 d-flex align-items-center gap-3">
+            <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; font-size: 1.5rem;">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h4 class="fw-bold mb-0 text-dark">DATN Nhóm 1</h4>
+                    <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.72rem; cursor:pointer;" onclick="navigator.clipboard.writeText('DATN001'); Swal.fire('Đã sao chép!', 'Mã nhóm: DATN001', 'success')">
+                        Mã nhóm: DATN001 <i class="fa-regular fa-copy ms-1"></i>
+                    </span>
+                </div>
+                <p class="text-secondary small mb-0">Nhóm phát triển phần mềm quản lý thư viện 📚 • 12 thành viên • Trưởng nhóm: Nguyễn Văn A</p>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end d-flex gap-2 justify-content-md-end">
+            <button class="btn btn-secondary-custom btn-sm px-3" onclick="Swal.fire('Mời thành viên', 'Chia sẻ mã nhóm DATN001 cho bạn bè để họ cùng tham gia nhé.', 'info')"><i class="fa-solid fa-user-plus me-1"></i> Mời thành viên</button>
+            <button class="btn btn-secondary-custom btn-sm px-2"><i class="fa-solid fa-ellipsis"></i></button>
+            <button class="btn btn-primary-custom btn-sm px-3" onclick="Swal.fire('Tạo cuộc họp', 'Cuộc họp nhóm trên Google Meet đang được khởi tạo...', 'success')"><i class="fa-solid fa-video me-1"></i> Tạo cuộc họp</button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Bar -->
+<div class="mb-4">
+    <ul class="nav nav-tabs border-bottom">
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Tổng quan</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active fw-bold text-primary border-bottom border-primary" href="#" style="border-width: 3px;">Chat</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Tài liệu</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Task nhóm</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Lịch họp</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Thành viên</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Cài đặt</a>
+        </li>
+    </ul>
+</div>
+
+<!-- Sublayout: Chat, Group Tasks Progress, Members & Meetings -->
+<div class="row g-4">
+    
+    <!-- Column 1: Chat Workspace (6 columns) -->
+    <div class="col-xl-6 col-lg-12">
+        <div class="glass-card p-0 d-flex flex-column" style="height: calc(100vh - 280px); min-height: 480px;">
+            
+            <!-- Pinned Message -->
+            <div class="bg-primary bg-opacity-10 text-primary p-2 px-3 border-bottom d-flex align-items-center justify-content-between" style="font-size: 0.8rem;">
+                <div>
+                    <i class="fa-solid fa-thumbtack me-2"></i>
+                    <strong>Tin nhắn ghim:</strong> Họp nhóm vào 20:00 tối nay để thống nhất giao diện nhé mọi người!
+                </div>
+                <a href="#" class="text-primary fw-bold text-decoration-none">Xem chi tiết</a>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="chat-messages p-3 flex-grow-1" id="chatArea">
+                <div class="text-center text-secondary small my-2">Hôm nay</div>
+                
+                <!-- Message 1 -->
+                <div class="chat-message ai">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-dark mb-1">Nguyễn Văn A <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">09:15</span></div>
+                        <div class="message-bubble">
+                            Mọi người làm tới đâu rồi ạ? Hôm nay mình họp để review tiến độ nhé.
+                            <div class="mt-1 d-flex gap-1" style="font-size:0.75rem;">
+                                <span class="badge bg-light text-dark border rounded-pill px-2">👍 2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 2 -->
+                <div class="chat-message ai">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-dark mb-1">Trần Thị B <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">09:16</span></div>
+                        <div class="message-bubble">
+                            Em làm xong phần thiết kế database rồi ạ.
+                            <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between mt-2" style="width: 220px; font-size: 0.8rem;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-file-code text-primary fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark text-truncate" style="max-width:140px;">database_design.sql</div>
+                                        <span class="text-secondary" style="font-size:0.7rem;">2.4 MB</span>
+                                    </div>
+                                </div>
+                                <a href="#" class="text-primary"><i class="fa-solid fa-download"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 3 -->
+                <div class="chat-message ai">
+                    <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-dark mb-1">Lê Văn C <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">09:18</span></div>
+                        <div class="message-bubble">
+                            Em đang làm giao diện trang chủ, dự kiến chiều nay sẽ xong.
+                            <div class="mt-1 d-flex gap-1" style="font-size:0.75rem;">
+                                <span class="badge bg-light text-dark border rounded-pill px-2">👍 1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 4 (User self message) -->
+                <div class="chat-message user">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-end text-dark mb-1">Bạn <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">09:20</span></div>
+                        <div class="message-bubble">
+                            Ok mọi người, chiều nay 8h chúng ta họp nhé!
+                            <div class="mt-1 d-flex gap-1 justify-content-end" style="font-size:0.75rem;">
+                                <span class="badge bg-light text-dark border rounded-pill px-2">❤️ 2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message 5 -->
+                <div class="chat-message ai">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-dark mb-1">Phạm Minh D <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">09:21</span></div>
+                        <div class="message-bubble text-dark">
+                            Em sẽ chuẩn bị bản demo tính năng tìm kiếm.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Chat Footer Input -->
+            <div class="chat-input-area border-top p-3 d-flex align-items-center gap-2">
+                <button class="btn btn-light rounded-circle text-secondary" style="width:40px; height:40px;" onclick="Swal.fire('Tải tệp', 'Chọn file để đăng lên nhóm.', 'info')"><i class="fa-solid fa-paperclip"></i></button>
+                <button class="btn btn-light rounded-circle text-secondary" style="width:40px; height:40px;"><i class="fa-regular fa-face-smile"></i></button>
+                <button class="btn btn-light rounded-circle text-secondary" style="width:40px; height:40px;"><i class="fa-regular fa-images"></i></button>
+                <input type="text" class="form-control border rounded-pill px-3" placeholder="Nhập tin nhắn..." id="chatInput" onkeypress="handleChatEnter(event)" />
+                <button class="btn btn-primary-custom rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:40px; height:40px;" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane text-white" style="font-size:0.95rem;"></i></button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Column 2: Tasks Progress (3 columns) -->
+    <div class="col-xl-3 col-lg-6">
+        <div class="glass-card h-100 p-3">
+            <div class="card-title-custom mb-3">
+                <span class="text-dark">TIẾN ĐỘ TASK NHÓM</span>
+                <i class="fa-solid fa-plus text-primary cursor-pointer" onclick="Swal.fire('Thêm công việc', 'Thêm công việc nhóm mới...', 'info')"></i>
+            </div>
+            
+            <!-- Progress circle display -->
+            <div class="d-flex align-items-center gap-3 bg-light p-2 rounded border mb-3">
+                <div class="position-relative d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <svg style="transform: rotate(-90deg); width:50px; height:50px; position:absolute;">
+                        <circle cx="25" cy="25" r="21" stroke="#f1f5f9" stroke-width="4" fill="transparent" />
+                        <circle cx="25" cy="25" r="21" stroke="#10b981" stroke-width="4" fill="transparent" stroke-dasharray="132" stroke-dashoffset="46" stroke-linecap="round" />
+                    </svg>
+                    <span class="fw-bold text-success" style="font-size:0.8rem;">65%</span>
+                </div>
+                <div>
+                    <div class="small fw-bold text-dark">Nhóm đang tiến hành</div>
+                    <span class="text-secondary" style="font-size: 0.75rem;">13/20 task hoàn thành</span>
+                </div>
+            </div>
+
+            <!-- Categories Accordion / Lists -->
+            <div class="d-flex flex-column gap-3 small">
+                <!-- Cần làm -->
+                <div>
+                    <div class="fw-bold text-dark d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
+                        <span>Cần làm (5)</span>
+                        <i class="fa-solid fa-chevron-down text-secondary"></i>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="p-2 border rounded bg-white">
+                            <div class="fw-bold text-dark text-truncate">Thiết kế giao diện đăng nhập</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1" style="font-size:0.7rem;">
+                                <span class="text-secondary"><i class="fa-regular fa-user"></i> Lê Văn C</span>
+                                <span class="badge bg-danger bg-opacity-10 text-danger">Cao</span>
+                            </div>
+                        </div>
+                        <div class="p-2 border rounded bg-white">
+                            <div class="fw-bold text-dark text-truncate">Viết tài liệu yêu cầu</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1" style="font-size:0.7rem;">
+                                <span class="text-secondary"><i class="fa-regular fa-user"></i> Phạm Minh D</span>
+                                <span class="badge bg-warning bg-opacity-10 text-warning">T.Bình</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Đang làm -->
+                <div>
+                    <div class="fw-bold text-dark d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
+                        <span>Đang làm (3)</span>
+                        <i class="fa-solid fa-chevron-down text-secondary"></i>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="p-2 border rounded bg-white">
+                            <div class="fw-bold text-dark text-truncate">Thiết kế database</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1" style="font-size:0.7rem;">
+                                <span class="text-secondary"><i class="fa-regular fa-user"></i> Trần Thị B</span>
+                                <span class="badge bg-danger bg-opacity-10 text-danger">Cao</span>
+                            </div>
+                        </div>
+                        <div class="p-2 border rounded bg-white">
+                            <div class="fw-bold text-dark text-truncate">Giao diện trang chủ</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1" style="font-size:0.7rem;">
+                                <span class="text-secondary"><i class="fa-regular fa-user"></i> Lê Văn C</span>
+                                <span class="badge bg-warning bg-opacity-10 text-warning">T.Bình</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hoàn thành -->
+                <div>
+                    <div class="fw-bold text-dark d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
+                        <span>Hoàn thành (5)</span>
+                        <i class="fa-solid fa-chevron-down text-secondary"></i>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="p-2 border rounded bg-white bg-opacity-50 text-secondary">
+                            <div class="text-decoration-line-through text-truncate">Phân tích yêu cầu</div>
+                            <span class="text-secondary" style="font-size:0.7rem;"><i class="fa-solid fa-circle-check text-success me-1"></i> Nguyễn Văn A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Column 3: Members & Upcoming Meetings & AI Group (3 columns) -->
+    <div class="col-xl-3 col-lg-6">
+        <!-- Members List -->
+        <div class="glass-card mb-4 p-3">
+            <div class="card-title-custom mb-3">
+                <span class="text-dark">THÀNH VIÊN (12)</span>
+                <a href="#" class="text-primary small text-decoration-none">Xem tất cả</a>
+            </div>
+            <div class="d-flex flex-column gap-2 small">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40&q=80" style="width:26px; height:26px; border-radius:50%;" />
+                        <div>
+                            <div class="fw-bold text-dark">Nguyễn Văn A</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">Nhóm trưởng</span>
+                        </div>
+                    </div>
+                    <span class="text-success small fw-bold"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Online</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=40&q=80" style="width:26px; height:26px; border-radius:50%;" />
+                        <div>
+                            <div class="fw-bold text-dark">Trần Thị B</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">Thành viên</span>
+                        </div>
+                    </div>
+                    <span class="text-success small fw-bold"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Online</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=40&q=80" style="width:26px; height:26px; border-radius:50%;" />
+                        <div>
+                            <div class="fw-bold text-dark">Lê Văn C</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">Thành viên</span>
+                        </div>
+                    </div>
+                    <span class="text-warning small fw-bold"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Đang bận</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=40&q=80" style="width:26px; height:26px; border-radius:50%;" />
+                        <div>
+                            <div class="fw-bold text-dark">Phạm Minh D</div>
+                            <span class="text-secondary" style="font-size:0.65rem;">Thành viên</span>
+                        </div>
+                    </div>
+                    <span class="text-success small fw-bold"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Online</span>
+                </div>
+            </div>
+            <a href="#" class="text-primary d-block text-center mt-3 small fw-bold text-decoration-none">+7 thành viên khác</a>
+        </div>
+
+        <!-- Meetings List -->
+        <div class="glass-card mb-4 p-3">
+            <div class="card-title-custom mb-3">
+                <span class="text-dark">LỊCH HỌP SẮP TỚI</span>
+                <a href="#" class="text-primary small text-decoration-none">Xem tất cả</a>
+            </div>
+            <div class="d-flex flex-column gap-3 small">
+                <!-- Meeting 1 -->
+                <div class="p-2 border rounded bg-light">
+                    <div class="fw-bold text-dark text-truncate">Họp review tiến độ</div>
+                    <div class="text-secondary mb-2" style="font-size:0.7rem;"><i class="fa-regular fa-clock me-1"></i> Hôm nay, 20:00 - 21:00</div>
+                    <button class="btn btn-primary-custom btn-sm w-100 py-1" style="font-size: 0.72rem;" onclick="Swal.fire('Tham gia họp', 'Đang chuyển hướng sang Google Meet...', 'success')">Tham gia</button>
+                </div>
+                <!-- Meeting 2 -->
+                <div class="p-2 border rounded bg-light">
+                    <div class="fw-bold text-dark text-truncate">Họp thống nhất giao diện</div>
+                    <div class="text-secondary mb-2" style="font-size:0.7rem;"><i class="fa-regular fa-clock me-1"></i> 30/06/2024, 20:00 - 21:00</div>
+                    <button class="btn btn-secondary-custom btn-sm w-100 py-1" style="font-size: 0.72rem;" onclick="Swal.fire('Tham gia họp', 'Cuộc họp chưa đến giờ bắt đầu.', 'info')">Tham gia</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Assistant Group Analysis -->
+        <div class="glass-card p-3">
+            <div class="card-title-custom">
+                <span class="text-primary"><i class="fa-solid fa-robot"></i> AI Assistant</span>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size:0.6rem;">Beta</span>
+            </div>
+            <div class="small fw-bold text-secondary uppercase mb-2" style="font-size:0.7rem;">Phân tích tiến độ nhóm</div>
+            <div class="d-flex flex-column gap-2 mb-3" style="font-size:0.76rem; line-height:1.4;">
+                <div class="d-flex gap-2">
+                    <i class="fa-solid fa-circle-check text-success mt-1"></i>
+                    <span class="text-dark">Tiến độ nhóm hiện đạt 65%, đang ở mức tốt.</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <i class="fa-solid fa-circle-check text-success mt-1"></i>
+                    <span class="text-dark">3 task sắp đến hạn trong 2 ngày tới.</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-danger mt-1"></i>
+                    <span class="text-dark">Thành viên Lê Văn C đang quá tải 3 task cùng lúc.</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <i class="fa-solid fa-lightbulb text-warning mt-1"></i>
+                    <span class="text-dark">Đề xuất họp nhóm trong tuần này để thống nhất.</span>
+                </div>
+            </div>
+            <button class="btn btn-primary-custom btn-sm w-100" onclick="Swal.fire('AI Team Analysis', 'Theo phân tích tiến độ, nhóm cần phân chia lại các đầu việc của Lê Văn C cho Phạm Minh D để đảm bảo đúng tiến độ hoàn thành đồ án.', 'info')">Xem chi tiết phân tích</button>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        function sendChatMessage() {
+            var msg = $('#chatInput').val();
+            if (msg.trim() === '') return;
+
+            let myMsgHtml = `
+                <div class="chat-message user">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-end text-dark mb-1">Bạn <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">Vừa xong</span></div>
+                        <div class="message-bubble">
+                            ${msg}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#chatArea').append(myMsgHtml);
+            $('#chatInput').val('');
+            
+            // Scroll to bottom
+            var chatArea = document.getElementById("chatArea");
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Mock reply after 1s
+            setTimeout(() => {
+                let replyHtml = `
+                    <div class="chat-message ai">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                        <div>
+                            <div class="small fw-bold text-dark mb-1">Nguyễn Văn A <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">Vừa xong</span></div>
+                            <div class="message-bubble">
+                                Nhất trí nhé! Mình sẽ tạo Google Meet và gửi link cho mọi người sau.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#chatArea').append(replyHtml);
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }, 1000);
+        }
+
+        function handleChatEnter(e) {
+            if (e.which === 13) {
+                sendChatMessage();
+            }
+        }
+    </script>
+}

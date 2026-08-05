@@ -1,0 +1,376 @@
+@{
+    ViewData["Title"] = "AI Assistant";
+}
+
+<!-- Heading -->
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1" style="font-size: 1.8rem;">AI Assistant</h2>
+        <p class="text-secondary mb-0">Trợ lý AI cá nhân đồng hành cùng việc học của bạn</p>
+    </div>
+</div>
+
+<!-- Tabs Bar & Actions -->
+<div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
+    <ul class="nav nav-tabs border-bottom m-0">
+        <li class="nav-item">
+            <a class="nav-link active fw-bold text-primary border-bottom border-primary" href="#" style="border-width: 3px;">Chat với AI</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Phân tích học tập</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Đề xuất cá nhân</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-secondary" href="#">Trợ giúp</a>
+        </li>
+    </ul>
+    <button class="btn btn-primary-custom btn-sm px-3" onclick="Swal.fire('Cuộc trò chuyện mới', 'Đang khởi tạo phiên chat mới với AI...', 'success')"><i class="fa-solid fa-plus me-1"></i> Cuộc trò chuyện mới</button>
+</div>
+
+<!-- Three Column Layout -->
+<div class="row g-4">
+    
+    <!-- Column 1: History & Hints (3 columns) -->
+    <div class="col-xl-3 col-lg-12">
+        <!-- History -->
+        <div class="glass-card mb-4 p-3">
+            <div class="small fw-bold text-secondary uppercase mb-2" style="font-size:0.7rem;">LỊCH SỬ HỘI THOẠI</div>
+            <div class="position-relative mb-3">
+                <i class="fa-solid fa-magnifying-glass text-secondary" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size:0.8rem;"></i>
+                <input type="text" class="glass-control p-1 ps-4" style="font-size:0.8rem;" placeholder="Tìm kiếm hội thoại..." />
+            </div>
+            <div class="d-flex flex-column gap-2" style="font-size:0.8rem;">
+                <a href="#" class="p-2 border rounded bg-light text-decoration-none d-flex align-items-center justify-content-between" style="border-left: 3px solid var(--primary) !important;">
+                    <div class="text-truncate" style="max-width:140px; font-weight:600; color:var(--primary);"><i class="fa-regular fa-comment me-1"></i> Lập kế hoạch ôn thi Java</div>
+                    <span class="text-secondary" style="font-size:0.65rem;">10:30</span>
+                </a>
+                <a href="#" class="p-2 border rounded bg-white text-decoration-none d-flex align-items-center justify-content-between text-dark">
+                    <div class="text-truncate" style="max-width:140px;"><i class="fa-regular fa-comment me-1"></i> Tóm tắt tài liệu Cơ sở dữ liệu</div>
+                    <span class="text-secondary" style="font-size:0.65rem;">09:15</span>
+                </a>
+                <a href="#" class="p-2 border rounded bg-white text-decoration-none d-flex align-items-center justify-content-between text-dark">
+                    <div class="text-truncate" style="max-width:140px;"><i class="fa-regular fa-comment me-1"></i> Phân tích tiến độ học tập</div>
+                    <span class="text-secondary" style="font-size:0.65rem;">Hôm qua</span>
+                </a>
+                <a href="#" class="p-2 border rounded bg-white text-decoration-none d-flex align-items-center justify-content-between text-dark">
+                    <div class="text-truncate" style="max-width:140px;"><i class="fa-regular fa-comment me-1"></i> Gợi ý bài tập DSA</div>
+                    <span class="text-secondary" style="font-size:0.65rem;">Hôm qua</span>
+                </a>
+            </div>
+            <a href="#" class="text-primary d-block text-center mt-3 small fw-bold text-decoration-none">Xem tất cả <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i></a>
+        </div>
+
+        <!-- Quick Hints -->
+        <div class="glass-card p-3">
+            <div class="small fw-bold text-secondary uppercase mb-2" style="font-size:0.7rem;">GỢI Ý NHANH</div>
+            <div class="d-flex flex-column gap-2" style="font-size: 0.8rem;">
+                <button class="btn btn-light border text-start p-2 d-flex justify-content-between align-items-center" onclick="sendPrompt('Lập kế hoạch học tập')">
+                    <span>Lập kế hoạch học tập</span> <i class="fa-solid fa-chevron-right text-secondary" style="font-size:0.7rem;"></i>
+                </button>
+                <button class="btn btn-light border text-start p-2 d-flex justify-content-between align-items-center" onclick="sendPrompt('Tóm tắt tài liệu / PDF')">
+                    <span>Tóm tắt tài liệu / PDF</span> <i class="fa-solid fa-chevron-right text-secondary" style="font-size:0.7rem;"></i>
+                </button>
+                <button class="btn btn-light border text-start p-2 d-flex justify-content-between align-items-center" onclick="sendPrompt('Sắp xếp thời gian học')">
+                    <span>Sắp xếp thời gian học</span> <i class="fa-solid fa-chevron-right text-secondary" style="font-size:0.7rem;"></i>
+                </button>
+                <button class="btn btn-light border text-start p-2 d-flex justify-content-between align-items-center" onclick="sendPrompt('Phân tích tiến độ học tập')">
+                    <span>Phân tích tiến độ học tập</span> <i class="fa-solid fa-chevron-right text-secondary" style="font-size:0.7rem;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2: Main AI Chat (6 columns) -->
+    <div class="col-xl-6 col-lg-12">
+        <div class="glass-card p-0 d-flex flex-column" style="height: calc(100vh - 280px); min-height: 480px;">
+            
+            <div class="chat-header p-3 border-bottom d-flex align-items-center gap-2">
+                <i class="fa-solid fa-robot text-primary fs-4"></i>
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">StudyHub AI Assistant</h6>
+                    <span class="text-secondary" style="font-size:0.75rem;">Trợ lý học tập trực tuyến 24/7</span>
+                </div>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="chat-messages p-3 flex-grow-1" id="chatArea" style="background:#f8fafc;">
+                
+                <!-- AI Greeting -->
+                <div class="chat-message ai">
+                    <div class="bg-light text-primary border rounded-circle d-flex align-items-center justify-content-center" style="width:36px; height:36px; flex-shrink:0;">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold text-dark mb-1">AI Assistant <span class="text-secondary fw-normal ms-1" style="font-size:0.7rem;">10:30</span></div>
+                        <div class="message-bubble text-dark">
+                            Xin chào Minh Anh! 👋 Mình có thể giúp gì cho việc học của bạn hôm nay?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Prompt -->
+                <div class="chat-message user">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-end text-dark mb-1">Bạn <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">10:30</span></div>
+                        <div class="message-bubble">
+                            Tôi cần một kế hoạch ôn thi Java trong 7 ngày tới. Hãy giúp tôi lên lịch chi tiết.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Response with Schedule Table Card -->
+                <div class="chat-message ai">
+                    <div class="bg-light text-primary border rounded-circle d-flex align-items-center justify-content-center" style="width:36px; height:36px; flex-shrink:0;">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="small fw-bold text-dark mb-1">AI Assistant <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">10:30</span></div>
+                        <div class="message-bubble text-dark" style="max-width: 480px;">
+                            Dưới đây là kế hoạch ôn thi Java trong 7 ngày được thiết kế riêng cho bạn dựa trên tiến độ hiện tại:
+                            
+                            <!-- Day by Day Plan Table Card -->
+                            <div class="p-3 border rounded bg-white mt-3 mb-2" style="font-size: 0.8rem;">
+                                <div class="fw-bold text-dark border-bottom pb-2 mb-2"><i class="fa-regular fa-calendar-days text-primary me-1"></i> KẾ HOẠCH ÔN THI JAVA - 7 NGÀY</div>
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex justify-content-between border-bottom pb-1">
+                                        <div><strong>Ngày 1: OOP & Class</strong><br/><span class="text-secondary" style="font-size:0.75rem;">Class, Object, Inheritance, Polymorphism</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 2-3 giờ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1">
+                                        <div><strong>Ngày 2: Collection Framework</strong><br/><span class="text-secondary" style="font-size:0.75rem;">List, Set, Map, Iterator, Generics</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 2-3 giờ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1">
+                                        <div><strong>Ngày 3: Exception & File IO</strong><br/><span class="text-secondary" style="font-size:0.75rem;">Try-catch, Custom Exception, File, Serialization</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 2-3 giờ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1">
+                                        <div><strong>Ngày 4: JDBC & Database</strong><br/><span class="text-secondary" style="font-size:0.75rem;">JDBC, Connection, Statement, ResultSet</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 2-3 giờ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1">
+                                        <div><strong>Ngày 5: Multithreading</strong><br/><span class="text-secondary" style="font-size:0.75rem;">Thread, Runnable, Synchronization</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 2-3 giờ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1">
+                                        <div><strong>Ngày 6: Bài tập tổng hợp</strong><br/><span class="text-secondary" style="font-size:0.75rem;">Làm bài tập tổng hợp các chủ đề đã học</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 3-4 giờ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <div><strong>Ngày 7: Ôn tập & Mock Test</strong><br/><span class="text-secondary" style="font-size:0.75rem;">Ôn tập lý thuyết + làm đề thi thử</span></div>
+                                        <span class="text-secondary"><i class="fa-regular fa-clock"></i> 3-4 giờ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>💡 <strong>Mẹo học tập:</strong> Kết hợp Pomodoro 25-5 để đạt hiệu quả tốt nhất!</div>
+                            
+                            <!-- Prompt helper buttons -->
+                            <div class="d-flex gap-2 flex-wrap mt-3 border-top pt-2">
+                                <button class="btn btn-light border btn-sm" onclick="Swal.fire('Tạo lịch học', 'Đã đồng bộ kế hoạch ôn thi vào Lịch học của bạn.', 'success')"><i class="fa-solid fa-plus-circle text-primary"></i> Tạo lịch học</button>
+                                <button class="btn btn-light border btn-sm" onclick="Swal.fire('Điều chỉnh', 'Hãy nhập các yêu cầu chỉnh sửa của bạn...', 'info')"><i class="fa-solid fa-sliders text-secondary"></i> Điều chỉnh kế hoạch</button>
+                                <button class="btn btn-light border btn-sm" onclick="Swal.fire('Xuất PDF', 'Đang tạo bản PDF kế hoạch ôn thi...', 'success')"><i class="fa-solid fa-file-pdf text-danger"></i> Tải xuống PDF</button>
+                                <button class="btn btn-light border btn-sm"><i class="fa-regular fa-thumbs-up"></i></button>
+                                <button class="btn btn-light border btn-sm"><i class="fa-regular fa-thumbs-down"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Input area -->
+            <div class="chat-input-area border-top p-3 d-flex align-items-center gap-2">
+                <button class="btn btn-light rounded-circle text-secondary" style="width:40px; height:40px;"><i class="fa-solid fa-paperclip"></i></button>
+                <button class="btn btn-light rounded-circle text-secondary" style="width:40px; height:40px;"><i class="fa-regular fa-image"></i></button>
+                <button class="btn btn-light rounded-circle text-secondary" style="width:40px; height:40px;"><i class="fa-solid fa-microphone"></i></button>
+                <input type="text" class="form-control border rounded-pill px-3" placeholder="Nhập câu hỏi của bạn cho AI..." id="chatInput" onkeypress="handleChatEnter(event)" />
+                <button class="btn btn-primary-custom rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:40px; height:40px;" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane text-white" style="font-size:0.95rem;"></i></button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Column 3: Stats & Recommendations (3 columns) -->
+    <div class="col-xl-3 col-lg-12">
+        <!-- Performance Analytics -->
+        <div class="glass-card mb-4 p-3">
+            <div class="card-title-custom mb-3">
+                <span class="text-dark">PHÂN TÍCH HỌC TẬP</span>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3 bg-light p-2 rounded border mb-3">
+                <div class="position-relative d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; flex-shrink: 0;">
+                    <svg style="transform: rotate(-90deg); width:50px; height:50px; position:absolute;">
+                        <circle cx="25" cy="25" r="21" stroke="#f1f5f9" stroke-width="4" fill="transparent" />
+                        <circle cx="25" cy="25" r="21" stroke="#10b981" stroke-width="4" fill="transparent" stroke-dasharray="132" stroke-dashoffset="24" stroke-linecap="round" />
+                    </svg>
+                    <span class="fw-bold text-success" style="font-size:0.8rem;">82%</span>
+                </div>
+                <div>
+                    <div class="small fw-bold text-dark">Hiệu suất học tập</div>
+                    <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.65rem;">🟢 Tốt</span>
+                    <span class="text-secondary d-block" style="font-size: 0.65rem;">Tăng 12% so với tuần trước</span>
+                </div>
+            </div>
+
+            <div class="row g-2 text-center" style="font-size:0.75rem;">
+                <div class="col-6">
+                    <div class="p-2 border rounded bg-white">
+                        <strong class="text-dark d-block">35</strong>
+                        <span class="text-secondary" style="font-size:0.65rem;">Công việc</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 border rounded bg-white">
+                        <strong class="text-success d-block">28</strong>
+                        <span class="text-secondary" style="font-size:0.65rem;">Hoàn thành</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 border rounded bg-white">
+                        <strong class="text-danger d-block">2</strong>
+                        <span class="text-secondary" style="font-size:0.65rem;">Quá hạn</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 border rounded bg-white">
+                        <strong class="text-warning d-block">7</strong>
+                        <span class="text-secondary" style="font-size:0.65rem;">Ngày liên tiếp</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Areas for improvement -->
+        <div class="glass-card mb-4 p-3">
+            <div class="card-title-custom mb-2">
+                <span class="text-dark">MÔN HỌC CẦN CẢI THIỆN</span>
+            </div>
+            <div class="d-flex flex-column gap-3 small">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">Java Programming</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size:0.65rem;">Yếu</span>
+                    </div>
+                    <div class="progress" style="height:6px;">
+                        <div class="progress-bar bg-danger" style="width:45%;"></div>
+                    </div>
+                    <span class="text-secondary d-block mt-1" style="font-size:0.68rem;">Tiến độ: 45%</span>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">Cơ sở dữ liệu</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size:0.65rem;">Trung bình</span>
+                    </div>
+                    <div class="progress" style="height:6px;">
+                        <div class="progress-bar bg-warning" style="width:65%;"></div>
+                    </div>
+                    <span class="text-secondary d-block mt-1" style="font-size:0.68rem;">Tiến độ: 65%</span>
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">Cấu trúc dữ liệu và GT</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size:0.65rem;">Trung bình</span>
+                    </div>
+                    <div class="progress" style="height:6px;">
+                        <div class="progress-bar bg-warning" style="width:70%;"></div>
+                    </div>
+                    <span class="text-secondary d-block mt-1" style="font-size:0.68rem;">Tiến độ: 70%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Proposals -->
+        <div class="glass-card p-3">
+            <div class="card-title-custom mb-3">
+                <span class="text-dark">ĐỀ XUẤT TỪ AI</span>
+            </div>
+            <div class="d-flex flex-column gap-2 small">
+                <div class="p-2 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong class="text-dark">Ưu tiên hôm nay</strong>
+                            <div class="text-secondary" style="font-size:0.75rem;">Hoàn thành bài tập JDBC</div>
+                        </div>
+                        <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size:0.6rem;">Quan trọng</span>
+                    </div>
+                </div>
+                <div class="p-2 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong class="text-dark">Pomodoro đề xuất</strong>
+                            <div class="text-secondary" style="font-size:0.75rem;">Học Java 2 phiên (50 phút)</div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size:0.6rem;">Tối ưu</span>
+                    </div>
+                </div>
+            </div>
+            <a href="#" class="text-primary d-block text-center mt-3 small fw-bold text-decoration-none">Xem tất cả đề xuất <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i></a>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        function sendChatMessage() {
+            var msg = $('#chatInput').val();
+            if (msg.trim() === '') return;
+
+            let myMsgHtml = `
+                <div class="chat-message user">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=40&q=80" style="width: 36px; height: 36px; border-radius: 50%;" />
+                    <div>
+                        <div class="small fw-bold text-end text-dark mb-1">Bạn <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">Vừa xong</span></div>
+                        <div class="message-bubble">
+                            ${msg}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#chatArea').append(myMsgHtml);
+            $('#chatInput').val('');
+            
+            // Scroll to bottom
+            var chatArea = document.getElementById("chatArea");
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Call to local controller mimicking AI response
+            setTimeout(() => {
+                $.post('/AIAssistant/SendMessage', { message: msg }, function (res) {
+                    let aiMsgHtml = `
+                        <div class="chat-message ai">
+                            <div class="bg-light text-primary border rounded-circle d-flex align-items-center justify-content-center" style="width:36px; height:36px; flex-shrink:0;">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div>
+                                <div class="small fw-bold text-dark mb-1">AI Assistant <span class="text-secondary fw-normal ms-1" style="font-size: 0.7rem;">Vừa xong</span></div>
+                                <div class="message-bubble text-dark">
+                                    ${res.reply}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $('#chatArea').append(aiMsgHtml);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                });
+            }, 800);
+        }
+
+        function handleChatEnter(e) {
+            if (e.which === 13) {
+                sendChatMessage();
+            }
+        }
+
+        function sendPrompt(text) {
+            $('#chatInput').val(text);
+            sendChatMessage();
+        }
+    </script>
+}

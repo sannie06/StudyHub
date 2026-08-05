@@ -1,0 +1,565 @@
+<div class="min-h-screen bg-[#F8FAFC] p-6 space-y-6 overflow-y-auto font-sans antialiased text-slate-800">
+
+  <!-- ═══════════════════════════════════════
+       PAGE HEADER & TOOLBAR ACTIONS
+       ═══════════════════════════════════════ -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Lịch thi</h1>
+      <p class="text-xs font-normal text-slate-500 mt-1">Xem, quản lý và theo dõi lịch thi của bạn</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button routerLink="/calendar/create"
+              class="h-10 px-4 rounded-xl text-xs font-semibold text-white shadow-xs hover:opacity-95 transition-all cursor-pointer flex items-center gap-2"
+              style="background:#5B4DFF;">
+        <i class="pi pi-plus text-xs"></i>
+        <span>Tạo lịch mới</span>
+      </button>
+      <button class="h-10 px-4 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs cursor-pointer transition-all flex items-center gap-2">
+        <i class="pi pi-upload text-xs text-slate-400"></i>
+        <span>Nhập từ file</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TIMETABLE CONTROLS BAR
+       ═══════════════════════════════════════ -->
+  <div class="bg-white rounded-2xl border border-slate-200/60 shadow-xs p-4 flex items-center justify-between gap-4 flex-wrap">
+
+    <!-- Left Controls: Range & Arrows -->
+    <div class="flex items-center gap-3">
+      <button (click)="goToCurrentWeek()"
+              class="h-10 px-3.5 flex items-center gap-2 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-700 bg-white cursor-pointer hover:border-slate-300 transition-all shadow-xs">
+        <i class="pi pi-calendar text-xs text-slate-400"></i>
+        <span>Tuần này</span>
+        <i class="pi pi-chevron-down text-[10px] text-slate-400"></i>
+      </button>
+      <div class="flex items-center gap-1">
+        <button (click)="previousWeek()"
+                title="Tuần trước"
+                class="w-9 h-9 rounded-xl border border-slate-200/80 flex items-center justify-center hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer shadow-xs">
+          <i class="pi pi-chevron-left text-xs"></i>
+        </button>
+        <button (click)="nextWeek()"
+                title="Tuần sau"
+                class="w-9 h-9 rounded-xl border border-slate-200/80 flex items-center justify-center hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer shadow-xs">
+          <i class="pi pi-chevron-right text-xs"></i>
+        </button>
+      </div>
+      <div (click)="openDatePicker(datePickerInput)"
+           class="relative cursor-pointer group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-indigo-50/80 border border-slate-200/80 hover:border-indigo-300 transition-all shadow-2xs"
+           title="Click để chọn ngày trực tiếp">
+        <span class="text-xs font-semibold text-slate-800 tracking-tight flex items-center gap-2">
+          <i class="pi pi-calendar-plus text-xs text-[#5B4DFF] group-hover:scale-110 transition-transform"></i>
+          <span>{{ weekRangeLabel }}</span>
+          <i class="pi pi-chevron-down text-[10px] text-slate-400"></i>
+        </span>
+        <input #datePickerInput
+               type="date"
+               (change)="onDateSelected($event)"
+               (input)="onDateSelected($event)"
+               class="absolute inset-0 opacity-0 pointer-events-none w-full h-full z-0"/>
+      </div>
+    </div>
+
+    <!-- View Tabs: Tuần, Tháng, Ngày -->
+    <div class="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/40">
+      <button (click)="currentViewTab = 'week'"
+              class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              [style]="currentViewTab==='week' ? 'background:#5B4DFF;color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#64748b;'">
+        Tuần
+      </button>
+      <button (click)="currentViewTab = 'month'"
+              class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              [style]="currentViewTab==='month' ? 'background:#5B4DFF;color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#64748b;'">
+        Tháng
+      </button>
+      <button (click)="currentViewTab = 'day'"
+              class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              [style]="currentViewTab==='day' ? 'background:#5B4DFF;color:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#64748b;'">
+        Ngày
+      </button>
+    </div>
+
+    <!-- Right Filters -->
+    <div class="flex items-center gap-2">
+      <!-- Subject Custom Dropdown -->
+      <div class="relative custom-filter-dropdown">
+        <button (click)="toggleSubjectDropdown($event)"
+                class="h-10 px-3.5 border border-slate-200/80 rounded-xl text-xs bg-white hover:bg-slate-50 transition-all flex items-center justify-between shadow-xs cursor-pointer gap-2 hover:border-indigo-300">
+          <div class="flex items-center gap-1.5 overflow-hidden">
+            <span *ngIf="selectedSubjectFilter === 'all'" class="text-xs font-medium text-slate-700">
+              Môn học / Tag: Tất cả
+            </span>
+            <span *ngIf="selectedSubjectFilter !== 'all'" class="px-2.5 h-6 rounded-full text-xs font-bold inline-flex items-center truncate"
+                  [ngStyle]="getTagBadgeStyle(getSubjectColor(selectedSubjectFilter))">
+              {{ selectedSubjectFilter }}
+            </span>
+          </div>
+          <i class="pi pi-chevron-down text-[10px] text-slate-400 transition-transform duration-200" [class.rotate-180]="isSubjectDropdownOpen"></i>
+        </button>
+
+        <div *ngIf="isSubjectDropdownOpen"
+             class="absolute right-0 mt-2 w-64 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+          <div (click)="selectSubject('all')"
+               class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-all">
+            <span class="px-2.5 h-6 rounded-full text-xs font-bold inline-flex items-center bg-slate-100 text-slate-700">
+              Tất cả môn học
+            </span>
+            <i *ngIf="selectedSubjectFilter === 'all'" class="pi pi-check text-xs font-bold" style="color:#5B4DFF;"></i>
+          </div>
+
+          <div class="h-px bg-slate-100 my-1"></div>
+
+          <div class="max-h-52 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
+            <div *ngFor="let tag of subjectTags"
+                 (click)="selectSubject(tag.name)"
+                 class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-all">
+              <span class="px-2.5 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                    [ngStyle]="getTagBadgeStyle(tag.color)">
+                {{ tag.name }}
+              </span>
+              <i *ngIf="selectedSubjectFilter === tag.name" class="pi pi-check text-xs font-bold" style="color:#5B4DFF;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Type Custom Dropdown -->
+      <div class="relative custom-filter-dropdown">
+        <button (click)="toggleTypeDropdown($event)"
+                class="h-10 px-3.5 border border-slate-200/80 rounded-xl text-xs bg-white hover:bg-slate-50 transition-all flex items-center justify-between shadow-xs cursor-pointer gap-2 hover:border-indigo-300">
+          <div class="flex items-center gap-1.5">
+            <span *ngIf="selectedTypeFilter === 'all'" class="text-xs font-medium text-slate-700">
+              Loại lịch: Tất cả
+            </span>
+            <span *ngIf="selectedTypeFilter !== 'all'" class="px-2.5 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                  [class]="getSelectedTypeOption().badgeBg + ' ' + getSelectedTypeOption().badgeText">
+              {{ getSelectedTypeOption().label }}
+            </span>
+          </div>
+          <i class="pi pi-chevron-down text-[10px] text-slate-400 transition-transform duration-200" [class.rotate-180]="isTypeDropdownOpen"></i>
+        </button>
+
+        <div *ngIf="isTypeDropdownOpen"
+             class="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+          <div *ngFor="let opt of typeOptions"
+               (click)="selectType(opt.value)"
+               class="flex items-center justify-between px-3 py-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-all">
+            <span class="px-2.5 h-6 rounded-full text-xs font-bold inline-flex items-center"
+                  [class]="opt.badgeBg + ' ' + opt.badgeText">
+              {{ opt.label }}
+            </span>
+            <i *ngIf="selectedTypeFilter === opt.value" class="pi pi-check text-xs font-bold" style="color:#5B4DFF;"></i>
+          </div>
+        </div>
+      </div>
+
+      <button (click)="resetFilters()"
+              class="h-10 flex items-center gap-1.5 px-3.5 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 cursor-pointer transition-all shadow-xs">
+        <i class="pi pi-refresh text-xs text-slate-400"></i>
+        <span>Đặt lại</span>
+      </button>
+      <button class="w-10 h-10 border border-slate-200/80 rounded-xl text-slate-600 bg-white hover:bg-slate-50 flex items-center justify-center cursor-pointer transition-all">
+        <i class="pi pi-cog text-xs text-slate-400"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MAIN CONTENT GRID & RIGHT SIDEBAR
+       ═══════════════════════════════════════ -->
+  <div class="flex gap-6 items-start">
+
+    <!-- LEFT COLUMN (Timetable Grid + Selected Event Card) -->
+    <div class="flex-1 min-w-0 space-y-6">
+
+      <!-- WEEKLY TIMETABLE GRID CARD (When currentViewTab === 'week') -->
+      <div *ngIf="currentViewTab === 'week'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden flex flex-col max-h-[620px]">
+
+        <!-- 1. Fixed Grid Header: Time Column + 7 Days (Pinned at top) -->
+        <div class="timetable-grid border-b border-slate-100 bg-slate-50/50 shrink-0">
+          <div class="p-3 text-center text-xs font-semibold text-slate-400 border-r border-slate-100">
+            <!-- Blank time header -->
+          </div>
+          <div *ngFor="let d of weekDays; let i = index"
+               class="p-3 text-center border-r border-slate-100 last:border-r-0 flex flex-col items-center justify-center gap-0.5">
+            <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider" [class.text-[#5B4DFF]]="i === 6">{{ d.day }}</span>
+            <span class="text-xs font-semibold text-slate-800" [class.text-[#5B4DFF]]="i === 6">{{ d.date }}</span>
+          </div>
+        </div>
+
+        <!-- 2. Scrollable Timetable Body Grid Container -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar overflow-x-auto">
+          <div class="timetable-grid relative min-w-[700px] min-h-[1248px]">
+
+            <!-- Time Labels (Left Column) -->
+            <div class="border-r border-slate-100 bg-slate-50/30 select-none">
+              <div *ngFor="let t of timeSlots"
+                   class="h-[52px] px-2 text-[11px] font-medium text-slate-400 flex items-start pt-1.5 justify-end border-b border-slate-100/60">
+                {{ t }}
+              </div>
+            </div>
+
+            <!-- 7 Day Columns (Grid Lines) -->
+            <div *ngFor="let d of weekDays; let colIndex = index"
+                 class="relative border-r border-slate-100 last:border-r-0 min-h-[1248px]">
+              <!-- Hourly horizontal grid lines -->
+              <div *ngFor="let t of timeSlots"
+                   class="h-[52px] border-b border-slate-100/60"></div>
+
+              <!-- Events placed on this day -->
+              <ng-container *ngFor="let ev of filteredEvents">
+                <div *ngIf="ev.dayIndex === colIndex"
+                     (click)="selectEvent(ev, $event)"
+                     class="absolute left-1.5 right-1.5 rounded-2xl p-2.5 border transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 z-10 overflow-hidden space-y-0.5"
+                     [class]="ev.colorClass"
+                     [style]="getEventStyle(ev)">
+                  <div class="flex items-center gap-1.5 font-bold truncate">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" [style.background]="ev.dotColor"></span>
+                    <span class="truncate text-slate-900 text-[11px]">{{ ev.title }}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-600 pl-3.5">{{ ev.time }}</div>
+                  <div class="text-[10px] text-slate-500 pl-3.5 truncate" *ngIf="ev.room">{{ ev.room }}</div>
+                </div>
+              </ng-container>
+            </div>
+
+            <!-- Current Time Indicator (Purple line at 11:30) -->
+            <div class="absolute left-0 right-0 top-[598px] pointer-events-none z-20 flex items-center">
+              <div class="w-[60px] flex justify-end pr-1">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-white shadow-xs" style="background:#5B4DFF;">11:30</span>
+              </div>
+              <div class="flex-1 h-[2px]" style="background:#5B4DFF;"></div>
+              <div class="w-2 h-2 rounded-full -ml-1" style="background:#5B4DFF;"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MONTHLY TIMETABLE GRID CARD (When currentViewTab === 'month') -->
+      <div *ngIf="currentViewTab === 'month'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden">
+        <!-- Grid Header: 7 Days of the Week (THỨ 2 to CHỦ NHẬT) -->
+        <div class="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
+          <div *ngFor="let hDay of monthHeaderDays" class="p-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-100 last:border-r-0">
+            {{ hDay }}
+          </div>
+        </div>
+
+        <!-- 35 Day Cells Grid -->
+        <div class="grid grid-cols-7 bg-slate-100/40 gap-px">
+          <div *ngFor="let cell of monthDaysMatrix"
+               class="min-h-[140px] p-2 bg-white flex flex-col justify-between transition-colors hover:bg-slate-50/60"
+               [class.bg-slate-50]="!cell.isCurrentMonth">
+            
+            <!-- Cell Top Header (Date Number) -->
+            <div class="flex items-center justify-between mb-1.5 shrink-0">
+              <span *ngIf="!cell.isToday"
+                    class="text-xs font-bold"
+                    [class.text-slate-800]="cell.isCurrentMonth"
+                    [class.text-slate-300]="!cell.isCurrentMonth">
+                {{ cell.dateNum }}
+              </span>
+              <span *ngIf="cell.isToday"
+                    class="w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-bold shadow-xs"
+                    style="background:#5B4DFF;">
+                {{ cell.dateNum }}
+              </span>
+            </div>
+
+            <!-- Cell Events List -->
+            <div class="space-y-1.5 flex-1 overflow-y-auto max-h-[110px] custom-scrollbar">
+              <div *ngFor="let ev of cell.events"
+                   (click)="selectEvent(ev, $event)"
+                   class="p-2.5 rounded-xl border text-[11px] font-medium leading-normal cursor-pointer transition-all shadow-2xs hover:shadow-md hover:-translate-y-0.5 space-y-1 overflow-hidden"
+                   [style.background]="ev.bgColor"
+                   [style.borderColor]="ev.borderColor">
+                <div class="flex items-center gap-1.5 font-bold truncate">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" [style.background]="ev.dotColor"></span>
+                  <span class="truncate text-slate-900 font-bold text-[11px]">{{ ev.title }}</span>
+                </div>
+                <div class="flex items-center gap-1 text-[10px] text-slate-600 pl-3.5 font-medium">
+                  <i class="pi pi-clock text-[9px] opacity-75"></i>
+                  <span>{{ ev.time }}</span>
+                </div>
+                <div class="flex items-center gap-1 text-[10px] text-slate-500 pl-3.5 truncate font-normal" *ngIf="ev.room">
+                  <i class="pi pi-map-marker text-[9px] opacity-75"></i>
+                  <span class="truncate">{{ ev.room }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- DAY TIMETABLE GRID CARD (When currentViewTab === 'day') -->
+      <div *ngIf="currentViewTab === 'day'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden flex flex-col max-h-[620px]">
+        <!-- 1. Fixed Single Day Header Block (GMT+07 + Large Date Number) -->
+        <div class="grid grid-cols-[70px_1fr] border-b border-slate-100 bg-slate-50/50 shrink-0">
+          <div class="p-3 text-center text-xs font-semibold text-slate-400 border-r border-slate-100 flex items-center justify-center">
+            GMT+07
+          </div>
+          <div class="p-3 text-center flex flex-col items-center justify-center">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ getDayHeaderLabel().dayName }}</span>
+            <span class="text-2xl font-extrabold text-slate-900 my-0.5">{{ getDayHeaderLabel().dayNum }}</span>
+            <span class="text-[11px] font-medium text-slate-500">{{ getDayHeaderLabel().monthYear }}</span>
+          </div>
+        </div>
+
+        <!-- 2. Scrollable Day Timetable Body Grid Container -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar overflow-x-auto">
+          <div class="grid grid-cols-[70px_1fr] relative min-w-[600px]">
+
+            <!-- Time Labels (Left Column) -->
+            <div class="border-r border-slate-100 bg-slate-50/30 select-none">
+              <div *ngFor="let t of dayTimeSlots"
+                   class="h-[56px] px-2 text-[11px] font-medium text-slate-400 flex items-start pt-1.5 justify-end border-b border-slate-100/60">
+                {{ t }}
+              </div>
+            </div>
+
+            <!-- Single Day Column (Grid Lines + Events) -->
+            <div class="relative min-h-[1344px]">
+              <!-- Hourly horizontal grid lines -->
+              <div *ngFor="let t of dayTimeSlots"
+                   class="h-[56px] border-b border-slate-100/60"></div>
+
+              <!-- Events placed on this day -->
+              <ng-container *ngFor="let ev of dayEvents">
+                <div (click)="selectEvent(ev, $event)"
+                     class="absolute left-3 right-3 rounded-2xl p-3 border transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 z-10 overflow-hidden space-y-0.5"
+                     [class]="ev.colorClass"
+                     [style]="getEventStyle(ev)">
+                  <div class="flex items-center gap-1.5 font-bold truncate">
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="ev.dotColor"></span>
+                    <span class="truncate text-slate-900 text-xs">{{ ev.title }}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-600 pl-4">{{ ev.time }}</div>
+                  <div class="text-[11px] text-slate-500 pl-4 truncate" *ngIf="ev.room">{{ ev.room }}</div>
+                </div>
+              </ng-container>
+
+              <!-- Current Time Indicator (Purple line at 11:30) -->
+              <div class="absolute left-0 right-0 top-[644px] pointer-events-none z-20 flex items-center">
+                <div class="flex-1 h-[2px]" style="background:#5B4DFF;"></div>
+                <div class="w-2.5 h-2.5 rounded-full -ml-1" style="background:#5B4DFF;"></div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EVENT DETAIL CARD (Bottom Left - Selected Event)
+           ═══════════════════════════════════════ -->
+      <div *ngIf="selectedEvent" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs p-5 space-y-4">
+        <!-- Header Card -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-semibold text-slate-900">Chi tiết lịch: {{ selectedEvent.title }}</h3>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700">{{ selectedEvent.type }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button (click)="editCurrentEvent()" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer">
+              <i class="pi pi-pencil text-xs text-slate-400"></i> Sửa
+            </button>
+            <button (click)="deleteCurrentEvent()" class="flex items-center gap-1.5 px-3 py-1.5 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold hover:bg-rose-50 transition-all cursor-pointer">
+              <i class="pi pi-trash text-xs"></i> Xóa
+            </button>
+            <button (click)="closeDetailCard()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 ml-1 transition-all cursor-pointer">
+              <i class="pi pi-times text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Detail Grid (5 Info Columns) -->
+        <div class="grid grid-cols-5 gap-4 text-xs pt-1">
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+              <i class="pi pi-clock text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-normal text-slate-400">Thời gian</p>
+              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.fullDate || selectedEvent.time }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+              <i class="pi pi-map-marker text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-normal text-slate-400">Địa điểm / Phòng</p>
+              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.room }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+              <i class="pi pi-file-edit text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-normal text-slate-400">Hình thức</p>
+              <p class="text-xs font-semibold text-slate-800 mt-0.5">Trực tiếp</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+              <i class="pi pi-user text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-normal text-slate-400">Giảng viên</p>
+              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.teacher || 'Giảng viên bộ môn' }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+              <i class="pi pi-file text-xs"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-normal text-slate-400">Ghi chú</p>
+              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.note || 'Không có ghi chú' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         RIGHT SIDEBAR (320px Stacked Widgets)
+         ═══════════════════════════════════════ -->
+    <div class="shrink-0 space-y-5" style="width:320px;">
+
+      <!-- WIDGET 1: LỊCH SẮP TỚI -->
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-xs p-5">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="text-sm font-semibold text-slate-900">Lịch sắp tới</h3>
+          <a href="javascript:void(0)" class="text-xs font-semibold hover:underline" style="color:#5B4DFF;">Xem tất cả</a>
+        </div>
+        <p class="text-xs font-normal text-slate-400 mb-6">Hôm nay - {{ getDayHeaderLabel().dayName }}, {{ getDayHeaderLabel().dayNum }}/{{ (baseDate.getMonth()+1).toString().padStart(2, '0') }}</p>
+
+        <!-- Empty State Illustration -->
+        <div *ngIf="dayEvents.length === 0" class="py-6 flex flex-col items-center justify-center text-center space-y-3">
+          <div class="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
+            <i class="pi pi-calendar text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-700">Không có lịch học / thi ngày này</p>
+            <p class="text-[11px] font-normal text-slate-400 mt-1">Chúc bạn một ngày học tập hiệu quả!</p>
+          </div>
+        </div>
+
+        <!-- Day Events List -->
+        <div *ngIf="dayEvents.length > 0" class="space-y-3">
+          <div *ngFor="let ev of dayEvents.slice(0, 3)" class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900 truncate">
+              <span class="w-2 h-2 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+              <span class="truncate">{{ ev.title }}</span>
+            </div>
+            <p class="text-[11px] text-slate-600 pl-4">{{ ev.time }}</p>
+            <p class="text-[11px] text-slate-500 pl-4 truncate" *ngIf="ev.room">{{ ev.room }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET 2: THỐNG KÊ (DONUT CHART) -->
+      <div class="bg-white rounded-2xl border border-slate-200/60 shadow-xs p-5 space-y-4">
+        <h3 class="text-sm font-semibold text-slate-900">{{ currentViewTab === 'day' ? 'Thống kê ngày' : 'Thống kê' }}</h3>
+
+        <div class="flex items-center gap-4">
+          <!-- Donut SVG -->
+          <div class="relative shrink-0 flex items-center justify-center" style="width:96px;height:96px;">
+            <svg class="donut-svg w-full h-full" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#6366F1" stroke-width="12"
+                      [attr.stroke-dasharray]="(currentViewTab === 'day' ? (dayExamPercent * 2.38) : 75) + ' ' + (238 - (currentViewTab === 'day' ? (dayExamPercent * 2.38) : 75))" stroke-dashoffset="0"/>
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10B981" stroke-width="12"
+                      [attr.stroke-dasharray]="(currentViewTab === 'day' ? (dayClassPercent * 2.38) : 114) + ' ' + (238 - (currentViewTab === 'day' ? (dayClassPercent * 2.38) : 114))" [attr.stroke-dashoffset]="'-' + (currentViewTab === 'day' ? (dayExamPercent * 2.38) : 75)"/>
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#94A3B8" stroke-width="12"
+                      [attr.stroke-dasharray]="(currentViewTab === 'day' ? (dayOtherPercent * 2.38) : 39) + ' ' + (238 - (currentViewTab === 'day' ? (dayOtherPercent * 2.38) : 39))" [attr.stroke-dashoffset]="'-' + ((currentViewTab === 'day' ? (dayExamPercent * 2.38) : 75) + (currentViewTab === 'day' ? (dayClassPercent * 2.38) : 114))"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span class="text-[10px] font-medium text-slate-400 leading-none">Tổng số lịch</span>
+              <span class="text-lg font-semibold text-slate-900 leading-tight mt-0.5">{{ currentViewTab === 'day' ? dayTotalCount : 12 }}</span>
+            </div>
+          </div>
+
+          <!-- Legend list -->
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+              <span class="text-slate-600 font-normal">Thi: <span class="font-semibold text-slate-900">{{ currentViewTab === 'day' ? dayExamCount : 4 }} ({{ currentViewTab === 'day' ? dayExamPercent : 33 }}%)</span></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+              <span class="text-slate-600 font-normal">Học: <span class="font-semibold text-slate-900">{{ currentViewTab === 'day' ? dayClassCount : 6 }} ({{ currentViewTab === 'day' ? dayClassPercent : 50 }}%)</span></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+              <span class="text-slate-600 font-normal">Khác: <span class="font-semibold text-slate-900">{{ currentViewTab === 'day' ? dayOtherCount : 2 }} ({{ currentViewTab === 'day' ? dayOtherPercent : 17 }}%)</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIDGET 3: AI ASSISTANT -->
+      <div class="rounded-2xl p-5 border border-purple-100 space-y-4" style="background:#F4F5FF;">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center bg-white shadow-xs">
+              <i class="pi pi-android text-sm" style="color:#5B4DFF;"></i>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900">AI Assistant</h3>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold text-purple-700 bg-purple-100/80">Beta</span>
+        </div>
+
+        <!-- Alert Message Banner -->
+        <div class="bg-white/90 rounded-xl p-3.5 border border-purple-100 text-xs text-slate-700 font-medium leading-relaxed shadow-xs">
+          <ng-container *ngIf="currentViewTab === 'day'">
+            Hôm nay bạn có <span class="font-semibold text-purple-700">{{ dayTotalCount }} lịch</span>. Hãy chuẩn bị kỹ và học tập hiệu quả nhé!
+          </ng-container>
+          <ng-container *ngIf="currentViewTab !== 'day'">
+            Bạn có <span class="font-semibold text-purple-700">2 lịch thi trong 6 ngày tới</span>. Hãy ôn tập sớm để đạt kết quả tốt nhất!
+          </ng-container>
+        </div>
+
+        <!-- Today's Tips Bullet Points -->
+        <div class="space-y-2.5 text-xs text-slate-700 font-medium pt-1">
+          <p class="font-semibold text-slate-900">Gợi ý hôm nay</p>
+          <div class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></span>
+            <span>Ôn tập: <span class="font-semibold text-slate-900">Cơ sở dữ liệu</span> (Thi: 28/05)</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></span>
+            <span>Hoàn thành bài tập CSDL</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0"></span>
+            <span>Xem lại slide chương 4, 5</span>
+          </div>
+        </div>
+
+        <!-- Action Link -->
+        <div class="pt-1">
+          <a href="javascript:void(0)" class="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline" style="color:#5B4DFF;">
+            <span>Xem kế hoạch học tập</span>
+            <i class="pi pi-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

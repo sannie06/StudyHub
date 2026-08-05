@@ -1,0 +1,870 @@
+<!-- ═══════════════════════════════════════
+     MAIN BODY CONTAINER (min-h-screen bg-[#F8FAFC])
+     ═══════════════════════════════════════ -->
+<div class="min-h-screen bg-[#F8FAFC] p-6 md:p-8 space-y-6 overflow-y-auto font-sans antialiased">
+
+  <!-- MAIN PAGE WRAPPER -->
+  <div class="space-y-6">
+
+    <!-- ───────────────────────────────────────────────────────
+         1. VIEW: DANH SÁCH CÔNG VIỆC (TASK LIST)
+         ─────────────────────────────────────────────────────── -->
+
+    <!-- ═══ CREATE TASK FORM VIEW (replaces list view completely when active) ═══ -->
+    <ng-container *ngIf="showCreateTask">
+      <div class="pb-32 space-y-6">
+        <!-- PAGE HEADER -->
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+          <div>
+            <h1 class="text-2xl font-semibold text-gray-900 flex items-center gap-2.5">
+              <i class="pi" [ngClass]="isEditMode ? 'pi-pencil text-indigo-500' : 'pi-plus-circle text-indigo-500'"></i>
+              {{ isEditMode ? 'Chỉnh sửa công việc' : 'Tạo công việc mới' }}
+            </h1>
+            <p class="text-xs text-gray-400 mt-1 font-normal">Quản lý công việc &rsaquo; {{ isEditMode ? 'Cập nhật thông tin' : 'Điền chi tiết công việc' }}</p>
+          </div>
+          <button (click)="cancelCreateTask()"
+                  class="flex items-center gap-2 border border-gray-200/80 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer">
+            <i class="pi pi-arrow-left text-xs"></i> Quay lại danh sách
+          </button>
+        </div>
+
+        <!-- 2-COLUMN FORM CONTAINER -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 bg-white p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgba(15,23,42,0.03)] border border-gray-100 overflow-visible relative">
+
+          <!-- ── LEFT COLUMN: BASIC INFO ── -->
+          <div class="space-y-6 relative">
+            <h3 class="text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 flex items-center gap-2">
+              <i class="pi pi-info-circle text-indigo-500 text-xs"></i> Thông tin cơ bản
+            </h3>
+
+            <!-- Title -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-2">Tiêu đề công việc <span class="text-rose-500">*</span></label>
+              <input type="text" [(ngModel)]="newTask.title" placeholder="Nhập tiêu đề công việc cụ thể..."
+                     class="border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 py-3 w-full text-sm outline-none transition-all placeholder-gray-400 font-normal"/>
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-2">Mô tả chi tiết</label>
+              <textarea [(ngModel)]="newTask.desc" placeholder="Thêm ghi chú, yêu cầu hoặc hướng dẫn chi tiết..."
+                        class="border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl p-4 w-full text-sm h-36 outline-none resize-none transition-all placeholder-gray-400 font-normal leading-relaxed"></textarea>
+            </div>
+
+            <!-- Subject Custom Select Component -->
+            <div class="relative">
+              <label class="block text-xs font-medium text-gray-700 mb-2">Môn học / Nhãn</label>
+
+              <!-- Trigger Button -->
+              <button type="button"
+                      (click)="toggleSubjectDropdown($event)"
+                      class="w-full h-11 px-4 flex items-center justify-between border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm bg-white cursor-pointer transition-all hover:border-indigo-300 shadow-xs">
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <ng-container *ngIf="selectedSubjectTag; else noSubject">
+                    <span class="px-3 h-6 rounded-full text-xs font-medium inline-flex items-center"
+                          [ngStyle]="getTagBadgeStyle(selectedSubjectTag.color)">
+                      {{ selectedSubjectTag.name }}
+                    </span>
+                  </ng-container>
+                  <ng-template #noSubject>
+                    <span class="text-gray-400 text-xs font-normal">-- Chọn môn học --</span>
+                  </ng-template>
+                </div>
+                <i class="pi pi-chevron-down text-xs text-gray-400 transition-transform duration-200"
+                   [class.rotate-180]="isSubjectDropdownOpen"></i>
+              </button>
+
+              <!-- Dropdown Menu (Floating z-50) -->
+              <div *ngIf="isSubjectDropdownOpen"
+                   class="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 animate-in fade-in zoom-in-95 duration-150">
+                <div class="max-h-48 overflow-y-auto space-y-1 pr-0.5 custom-scrollbar">
+                  <div *ngFor="let tag of dynamicSubjectTags"
+                       (click)="selectSubjectTag(tag, $event)"
+                       class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-all group">
+                    <span class="px-3 h-6 rounded-full text-xs font-medium inline-flex items-center"
+                          [ngStyle]="getTagBadgeStyle(tag.color)">
+                      {{ tag.name }}
+                    </span>
+
+                    <div class="relative">
+                      <button type="button"
+                              (click)="toggleTagMoreOptions($event, tag.id)"
+                              class="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="pi pi-ellipsis-v text-xs"></i>
+                      </button>
+
+                      <div *ngIf="activeMoreOptionsTagId === tag.id"
+                           class="absolute right-0 top-8 z-50 w-32 bg-white border border-gray-100 rounded-xl shadow-xl py-1 space-y-0.5">
+                        <button type="button"
+                                (click)="openEditTagModal($event, tag)"
+                                class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                          <i class="pi pi-pencil text-[10px]"></i> Chỉnh sửa
+                        </button>
+                        <button type="button"
+                                (click)="deleteTag($event, tag.id)"
+                                class="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors font-medium">
+                          <i class="pi pi-trash text-[10px]"></i> Xóa tag
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button"
+                        (click)="openCreateTagModal($event)"
+                        class="w-full bg-indigo-50/60 text-indigo-600 p-2.5 rounded-xl font-medium text-xs flex items-center justify-center gap-1.5 border border-dashed border-indigo-200 mt-2 hover:bg-indigo-100/70 transition-all cursor-pointer">
+                  <i class="pi pi-plus text-xs"></i>
+                  <span>Tạo tag mới</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── RIGHT COLUMN: CONFIG ── -->
+          <div class="space-y-6">
+            <h3 class="text-sm font-semibold text-gray-800 border-b border-gray-100 pb-3 flex items-center gap-2">
+              <i class="pi pi-sliders-h text-indigo-500 text-xs"></i> Cấu hình & Thời gian
+            </h3>
+
+            <!-- Priority -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-2">Mức độ ưu tiên</label>
+              <div class="flex items-center gap-2.5">
+                <button (click)="newTask.priority='high'"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer"
+                        [class]="newTask.priority==='high' ? 'bg-rose-50 text-rose-600 border-rose-300 ring-2 ring-rose-100' : 'bg-gray-50/60 text-gray-600 border-gray-200/60 hover:bg-gray-100/60'">
+                  Cao
+                </button>
+                <button (click)="newTask.priority='medium'"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer"
+                        [class]="newTask.priority==='medium' ? 'bg-amber-50 text-amber-600 border-amber-300 ring-2 ring-amber-100' : 'bg-gray-50/60 text-gray-600 border-gray-200/60 hover:bg-gray-100/60'">
+                  Trung bình
+                </button>
+                <button (click)="newTask.priority='low'"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer"
+                        [class]="newTask.priority==='low' ? 'bg-emerald-50 text-emerald-600 border-emerald-300 ring-2 ring-emerald-100' : 'bg-gray-50/60 text-gray-600 border-gray-200/60 hover:bg-gray-100/60'">
+                  Thấp
+                </button>
+              </div>
+            </div>
+
+            <!-- Timeline Datepicker -->
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-2">Thời gian hoàn thành</label>
+              <div class="bg-gray-50/50 border border-gray-100 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-2.5 h-2.5 rounded-full bg-[#6366F1] shrink-0 ring-4 ring-indigo-100"></div>
+                  <div class="flex-1">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-normal">Ngày bắt đầu</label>
+                    <input type="date" [(ngModel)]="newTask.startDate"
+                           class="border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl px-3.5 py-2 w-full text-xs outline-none bg-white transition-all font-normal"/>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center gap-1 pt-0.5">
+                    <div class="w-0.5 h-4 bg-gray-200 ml-[4px]"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0 ring-4 ring-rose-100"></div>
+                  <div class="flex-1">
+                    <label class="block text-[11px] text-gray-400 mb-1 font-normal">Hạn chót</label>
+                    <input type="date" [(ngModel)]="newTask.dueDate"
+                           class="border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl px-3.5 py-2 w-full text-xs outline-none bg-white transition-all font-normal"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Custom Select Component -->
+            <div class="relative">
+              <label class="block text-xs font-medium text-gray-700 mb-2">Trạng thái hiện tại</label>
+
+              <!-- Trigger Button -->
+              <button type="button"
+                      (click)="toggleStatusDropdown($event)"
+                      class="w-full h-11 px-4 flex items-center justify-between border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl text-sm bg-white cursor-pointer transition-all hover:border-indigo-300 shadow-xs">
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <span class="px-3 h-6 rounded-full text-xs font-medium inline-flex items-center"
+                        [class]="getSelectedStatusOption().badgeClass">
+                    {{ getSelectedStatusOption().label }}
+                  </span>
+                </div>
+                <i class="pi pi-chevron-down text-xs text-gray-400 transition-transform duration-200"
+                   [class.rotate-180]="isStatusDropdownOpen"></i>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div *ngIf="isStatusDropdownOpen"
+                   class="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 animate-in fade-in zoom-in-95 duration-150">
+                <div class="space-y-1">
+                  <div *ngFor="let option of statusOptions"
+                       (click)="selectStatus(option, $event)"
+                       class="flex items-center justify-between px-3 py-2 hover:bg-gray-50 rounded-xl cursor-pointer transition-all">
+                    <span class="px-3 h-6 rounded-full text-xs font-medium inline-flex items-center"
+                          [class]="option.badgeClass">
+                      {{ option.label }}
+                    </span>
+                    <i *ngIf="newTask.status === option.value" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end gap-3 pt-5 border-t border-gray-100">
+              <button (click)="cancelCreateTask()"
+                      class="border border-gray-200/80 text-gray-700 px-5 py-2.5 rounded-xl font-medium text-xs hover:bg-gray-50 transition-all cursor-pointer shadow-xs">
+                Hủy bỏ
+              </button>
+              <button (click)="isEditMode ? updateTask() : submitCreateTask()"
+                      class="flex items-center gap-2 bg-[#6366F1] text-white px-6 py-2.5 rounded-xl font-medium text-xs hover:bg-[#5856EB] shadow-sm transition-all cursor-pointer">
+                <i class="pi text-xs" [ngClass]="isEditMode ? 'pi-save' : 'pi-plus'"></i> 
+                {{ isEditMode ? 'Lưu thay đổi' : 'Tạo task' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══ TASK LIST VIEW (only when NOT creating) ═══ -->
+    <ng-container *ngIf="!showCreateTask">
+
+      <!-- SUCCESS TOAST NOTIFICATION -->
+      <div *ngIf="successToastMessage"
+           class="mb-6 p-4 bg-emerald-50/80 border border-emerald-200/70 text-emerald-700 rounded-2xl flex items-center justify-between text-xs font-medium shadow-xs animate-in fade-in duration-200">
+        <div class="flex items-center gap-2.5">
+          <i class="pi pi-check-circle text-base text-emerald-600"></i>
+          <span>{{ successToastMessage }}</span>
+        </div>
+        <button (click)="successToastMessage = null" class="text-emerald-500 hover:text-emerald-700 p-1">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <!-- PAGE HEADER FOR TASK LIST -->
+      <div class="flex items-center justify-between mb-6 pb-1">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Danh sách công việc</h1>
+          <p class="text-xs text-slate-400 mt-1 font-normal tracking-wide">Quản lý, theo dõi tiến độ và hoàn thành các mục tiêu học tập</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200/70 hover:border-slate-300 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50/90 shadow-xs transition-all cursor-pointer">
+            <i class="pi pi-upload text-xs text-slate-400"></i> Nhập từ file
+          </button>
+          <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200/70 hover:border-slate-300 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50/90 shadow-xs transition-all cursor-pointer">
+            <i class="pi pi-download text-xs text-slate-400"></i> Xuất dữ liệu
+          </button>
+          <button (click)="showCreateTaskForm()"
+                  class="flex items-center gap-2 px-4 py-2.5 bg-[#6366F1] hover:bg-[#5253E1] rounded-xl text-xs font-medium text-white shadow-md shadow-indigo-100 hover:shadow-indigo-200 active:scale-95 transition-all cursor-pointer">
+            <i class="pi pi-plus text-xs"></i> Tạo task mới
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENT GRID: Left (Filter + Table) & Right (Sidebar) -->
+      <div class="grid grid-cols-12 gap-6 items-start">
+
+        <!-- Left Column (col-span-12 lg:col-span-8 xl:col-span-9) -->
+        <div class="col-span-12 lg:col-span-8 xl:col-span-9 space-y-4">
+
+          <!-- CARD 1: FILTER CARD (Standalone White Card) -->
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/60 space-y-4">
+            
+            <!-- Row 1: Search & Dropdown Filters -->
+            <div class="flex items-center gap-3 flex-wrap">
+              <!-- Search Input -->
+              <div class="relative">
+                <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text"
+                       [(ngModel)]="filterSearch"
+                       placeholder="Tìm kiếm công việc..."
+                       class="border border-slate-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl pl-9 pr-4 h-10 text-xs text-slate-700 placeholder-slate-400 outline-none w-64 transition-all font-normal"/>
+              </div>
+
+              <!-- Custom Priority Filter Dropdown -->
+              <div class="relative custom-dropdown-container">
+                <button type="button"
+                        (click)="toggleFilterPriorityDropdown($event)"
+                        class="flex items-center justify-between gap-2.5 border border-slate-200/80 hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 h-10 text-xs font-medium text-slate-700 transition-all cursor-pointer">
+                  <span>{{ getFilterPriorityLabel() }}</span>
+                  <i class="pi pi-chevron-down text-[10px] text-slate-400 transition-transform duration-200" [class.rotate-180]="isFilterPriorityDropdownOpen"></i>
+                </button>
+                <div *ngIf="isFilterPriorityDropdownOpen"
+                     (click)="$event.stopPropagation()"
+                     class="absolute top-full left-0 mt-2 z-50 bg-white rounded-2xl shadow-2xl shadow-slate-950/5 border border-slate-100 p-2 space-y-1 w-48 animate-in fade-in zoom-in-95 duration-150">
+                  <div (click)="selectFilterPriority('all', $event)" class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer">
+                    <span class="text-xs font-medium text-slate-700">Tất cả ưu tiên</span>
+                    <i *ngIf="filterPriority === 'all'" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                  <div (click)="selectFilterPriority('Cao', $event)" class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer">
+                    <span class="inline-flex items-center justify-center px-3 h-6 rounded-full text-xs font-medium whitespace-nowrap bg-rose-50 text-rose-600 border border-rose-200/60 min-w-[70px]">Cao</span>
+                    <i *ngIf="filterPriority === 'Cao'" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                  <div (click)="selectFilterPriority('Trung bình', $event)" class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer">
+                    <span class="inline-flex items-center justify-center px-3 h-6 rounded-full text-xs font-medium whitespace-nowrap bg-amber-50 text-amber-600 border border-amber-200/60 min-w-[70px]">Trung bình</span>
+                    <i *ngIf="filterPriority === 'Trung bình'" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                  <div (click)="selectFilterPriority('Thấp', $event)" class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer">
+                    <span class="inline-flex items-center justify-center px-3 h-6 rounded-full text-xs font-medium whitespace-nowrap bg-emerald-50 text-emerald-600 border border-emerald-200/60 min-w-[70px]">Thấp</span>
+                    <i *ngIf="filterPriority === 'Thấp'" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custom Subject Filter Dropdown -->
+              <div class="relative custom-dropdown-container">
+                <button type="button"
+                        (click)="toggleFilterSubjectDropdown($event)"
+                        class="flex items-center justify-between gap-2.5 border border-slate-200/80 hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 h-10 text-xs font-medium text-slate-700 transition-all cursor-pointer">
+                  <span>{{ getFilterSubjectLabel() }}</span>
+                  <i class="pi pi-chevron-down text-[10px] text-slate-400 transition-transform duration-200" [class.rotate-180]="isFilterSubjectDropdownOpen"></i>
+                </button>
+                <div *ngIf="isFilterSubjectDropdownOpen"
+                     (click)="$event.stopPropagation()"
+                     class="absolute top-full left-0 mt-2 z-50 bg-white rounded-2xl shadow-2xl shadow-slate-950/5 border border-slate-100 p-2 space-y-1 w-56 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
+                  <div (click)="selectFilterSubject('all', $event)" class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer">
+                    <span class="text-xs font-medium text-slate-700">Tất cả môn học / tag</span>
+                    <i *ngIf="filterSubject === 'all'" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                  <div *ngFor="let tag of dynamicSubjectTags"
+                       (click)="selectFilterSubject(tag.name, $event)"
+                       class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl cursor-pointer">
+                    <span class="inline-flex items-center justify-center px-3 h-6 rounded-full text-xs font-medium whitespace-nowrap border border-opacity-50"
+                          [ngStyle]="getTagBadgeStyle(tag.color)">
+                      {{ tag.name }}
+                    </span>
+                    <i *ngIf="filterSubject === tag.name" class="pi pi-check text-xs text-[#6366F1]"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date Picker Input -->
+              <div class="relative">
+                <input type="date"
+                       [(ngModel)]="filterDueDate"
+                       title="Lọc theo hạn chót"
+                       class="border border-slate-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 h-10 text-xs font-medium text-slate-700 outline-none cursor-pointer transition-all"/>
+              </div>
+
+              <!-- Reset Filters Button -->
+              <button *ngIf="filterSearch || filterStatus !== 'all' || filterPriority !== 'all' || filterSubject !== 'all' || filterDueDate"
+                      type="button"
+                      (click)="resetAllFilters()"
+                      class="flex items-center gap-1.5 px-4 h-10 rounded-xl text-xs font-medium text-rose-600 bg-rose-50/80 hover:bg-rose-100/80 border border-rose-200/60 transition-all cursor-pointer">
+                <i class="pi pi-refresh text-xs"></i> Đặt lại
+              </button>
+
+              <!-- View Toggle -->
+              <div class="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl ml-auto border border-slate-200/40">
+                <button (click)="setView('list')"
+                        [ngClass]="currentView === 'list' ? 'bg-white shadow-xs text-[#6366F1]' : 'text-slate-400 hover:bg-white hover:text-[#6366F1] cursor-pointer'"
+                        class="p-1.5 rounded-lg transition-all" title="Danh sách">
+                  <i class="pi pi-list text-sm"></i>
+                </button>
+                <button (click)="setView('kanban')"
+                        [ngClass]="currentView === 'kanban' ? 'bg-white shadow-xs text-[#6366F1]' : 'text-slate-400 hover:bg-white hover:text-[#6366F1] cursor-pointer'"
+                        class="p-1.5 rounded-lg transition-all" title="Kanban">
+                  <i class="pi pi-th-large text-sm"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2: Filter Status Tabs -->
+            <div class="flex items-center justify-between pt-1 border-t border-slate-100/80">
+              <div class="flex items-center gap-2">
+                <button (click)="setFilterStatus('all')"
+                        [ngClass]="{'bg-indigo-50/80 text-[#6366F1]': filterStatus === 'all'}"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 h-8 rounded-full text-xs font-medium whitespace-nowrap bg-gray-100/70 text-gray-600 hover:bg-indigo-50/80 hover:text-[#6366F1] transition-all cursor-pointer">
+                  Tất cả <span class="font-semibold">{{ countAll }}</span>
+                </button>
+                <button (click)="setFilterStatus('todo')"
+                        [ngClass]="{'ring-2': filterStatus === 'todo'}"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 h-8 rounded-full text-xs font-medium whitespace-nowrap bg-blue-50/80 text-blue-600 hover:bg-blue-100/80 transition-all cursor-pointer">
+                  Cần thực hiện <span class="font-semibold">{{ countTodo }}</span>
+                </button>
+                <button (click)="setFilterStatus('inprogress')"
+                        [ngClass]="{'ring-2': filterStatus === 'inprogress'}"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 h-8 rounded-full text-xs font-medium whitespace-nowrap bg-amber-50/80 text-amber-600 hover:bg-amber-100/80 transition-all cursor-pointer">
+                  Đang thực hiện <span class="font-semibold">{{ countInProgress }}</span>
+                </button>
+                <button (click)="setFilterStatus('done')"
+                        [ngClass]="{'ring-2': filterStatus === 'done'}"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 h-8 rounded-full text-xs font-medium whitespace-nowrap bg-emerald-50/80 text-emerald-600 hover:bg-emerald-100/80 transition-all cursor-pointer">
+                  Hoàn thành <span class="font-semibold">{{ countDone }}</span>
+                </button>
+                <button (click)="setFilterStatus('overdue')"
+                        [ngClass]="{'ring-2': filterStatus === 'overdue'}"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 h-8 rounded-full text-xs font-medium whitespace-nowrap bg-rose-50/80 text-rose-600 hover:bg-rose-100/80 transition-all cursor-pointer">
+                  Quá hạn <span class="font-semibold">{{ countOverdue }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2: TASK TABLE CARD (Standalone White Card) -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60">
+            <ng-container *ngIf="currentView === 'list'">
+              <div class="overflow-hidden flex flex-col min-h-[540px]">
+              
+              <!-- Table Headers -->
+              <div class="grid grid-cols-12 gap-4 px-4 py-4 border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider sticky top-0 z-10 items-center bg-white">
+                <div class="col-span-4 pl-1">Công việc</div>
+                <div class="col-span-2 text-left">Tag / Môn học</div>
+                <div class="col-span-1 text-center">Ưu tiên</div>
+                <div class="col-span-2 text-center whitespace-nowrap">Hạn chót</div>
+                <div class="col-span-2 text-center whitespace-nowrap">Trạng thái</div>
+                <div class="col-span-1 text-right pr-2">Tác vụ</div>
+              </div>
+
+              <!-- List Body -->
+              <div class="flex-1 overflow-y-auto overflow-x-hidden py-1 custom-scrollbar">
+                <ng-container *ngIf="filteredTasks.length > 0; else emptyTasksState">
+                  <div *ngFor="let task of filteredTasks" 
+                       class="grid grid-cols-12 gap-4 px-4 py-5 border-b border-slate-100/70 hover:bg-slate-50/50 transition-colors group items-center cursor-default">
+                    
+                    <!-- Title & Desc -->
+                    <div class="col-span-4 flex items-center gap-3 min-w-0 pr-4">
+                      <div class="relative group/checkbox shrink-0">
+                        <input type="checkbox"
+                               [checked]="task.status === 'Hoàn thành'"
+                               (change)="toggleTaskStatus(task)"
+                               class="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-lg checked:bg-[#6366F1] checked:border-[#6366F1] hover:border-[#6366F1] transition-all cursor-pointer"/>
+                        <i class="pi pi-check absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-[10px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-slate-800 truncate transition-all leading-snug" 
+                           [ngClass]="{'line-through text-slate-400 opacity-75': task.status === 'Hoàn thành'}">
+                          {{ task.title }}
+                        </p>
+                        <p class="text-xs text-slate-400 truncate mt-0.5 font-normal">{{ task.desc }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Tag -->
+                    <div class="col-span-2 flex items-center justify-start min-w-0 pr-2">
+                      <span class="inline-flex items-center justify-center px-3 h-6 rounded-full text-xs font-medium whitespace-nowrap truncate max-w-full border border-opacity-30"
+                            [ngStyle]="getTagBadgeStyle(task.tagColor)"
+                            [class]="!task.tagColor ? task.tagClass : ''"
+                            title="{{ task.tag }}">
+                        {{ task.tag }}
+                      </span>
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="col-span-1 flex items-center justify-center">
+                      <span class="inline-flex items-center justify-center px-3 h-6 rounded-full text-xs font-medium whitespace-nowrap text-center" [class]="task.priorityClass">{{ task.priority }}</span>
+                    </div>
+
+                    <!-- Due Date -->
+                    <div class="col-span-2 flex flex-col items-center justify-center text-center px-1">
+                      <div class="whitespace-nowrap">
+                        <p class="text-xs font-medium text-gray-700 whitespace-nowrap">{{ task.dueDate }}</p>
+                        <p class="text-[10px] mt-0.5 whitespace-nowrap font-normal" [class]="task.warnClass">{{ task.dueWarning }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-span-2 flex items-center justify-center">
+                      <div class="whitespace-nowrap flex items-center justify-center">
+                        <span class="inline-flex items-center justify-center px-3.5 h-6 rounded-full text-xs font-medium whitespace-nowrap text-center" [class]="task.statusClass">{{ task.status }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-span-1 flex items-center justify-center gap-1">
+                      <button (click)="openEditTaskModal(task, $event)"
+                              class="w-7 h-7 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 flex items-center justify-center transition-all cursor-pointer"
+                              title="Chỉnh sửa công việc">
+                        <i class="pi pi-pencil text-xs"></i>
+                      </button>
+                      <button (click)="confirmDeleteTask(task.id, $event)"
+                              class="w-7 h-7 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-gray-100 flex items-center justify-center transition-all cursor-pointer"
+                              title="Xóa công việc">
+                        <i class="pi pi-trash text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <ng-template #emptyTasksState>
+                  <div class="py-20 text-center bg-gray-50/20 flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 bg-indigo-50/80 text-[#6366F1] rounded-2xl flex items-center justify-center mb-3.5 shadow-xs border border-indigo-100/60">
+                      <i class="pi pi-inbox text-2xl"></i>
+                    </div>
+                    <h4 class="text-sm font-semibold text-gray-800">Không tìm thấy công việc nào phù hợp</h4>
+                    <p class="text-xs text-gray-400 mt-1 max-w-sm font-normal">Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại các bộ lọc môn học và hạn chót</p>
+                  </div>
+                </ng-template>
+              </div>
+
+              <!-- PAGINATION -->
+              <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-4 bg-transparent">
+                <span class="font-normal">Hiển thị 1 đến 8 của 18 công việc</span>
+                <div class="flex items-center gap-2">
+                  <button class="p-2 rounded-xl hover:bg-gray-100 text-gray-400 cursor-pointer"><i class="pi pi-angle-left text-sm"></i></button>
+                  <button class="w-8 h-8 rounded-xl text-xs font-semibold text-white flex items-center justify-center bg-[#6366F1] shadow-xs">1</button>
+                  <button class="w-8 h-8 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer">2</button>
+                  <button class="w-8 h-8 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer">3</button>
+                  <button class="p-2 rounded-xl hover:bg-gray-100 text-gray-400 cursor-pointer"><i class="pi pi-angle-right text-sm"></i></button>
+                  <select class="border border-gray-200/80 rounded-xl px-2.5 py-1.5 text-xs text-gray-600 bg-white outline-none font-normal cursor-pointer">
+                    <option>10 / trang</option>
+                    <option>20 / trang</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- KANBAN BOARD VIEW -->
+          <ng-container *ngIf="currentView === 'kanban'">
+            <div class="grid grid-cols-3 gap-6 items-start" cdkDropListGroup>
+
+              <!-- Column 1: Cần thực hiện -->
+              <div class="rounded-3xl overflow-hidden border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.03)] flex flex-col max-h-[650px] bg-white">
+                <div class="flex items-center justify-between px-5 py-4 bg-blue-50/50 border-b border-blue-100/60">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                    <h3 class="text-sm font-semibold text-gray-900">Cần thực hiện</h3>
+                    <span class="px-2.5 py-0.5 bg-blue-100/80 text-blue-700 text-xs font-semibold rounded-full">{{ filteredKanbanTodo.length }}</span>
+                  </div>
+                </div>
+                <div class="bg-blue-50/10 p-4 space-y-3.5 flex-1 overflow-y-auto custom-scrollbar"
+                     id="todoList"
+                     cdkDropList
+                     [cdkDropListData]="filteredKanbanTodo"
+                     (cdkDropListDropped)="drop($event)">
+                  <div *ngFor="let task of filteredKanbanTodo"
+                       cdkDrag
+                       class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
+                    <div class="flex items-start justify-between gap-2 mb-3">
+                      <p class="text-xs font-semibold text-gray-900 leading-snug">{{ task.title }}</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+                            [ngStyle]="getTagBadgeStyle(task.tagColor)"
+                            [class]="!task.tagColor ? task.tagClass : ''">{{ task.tag }}</span>
+                      <span class="flex items-center gap-1 text-[10px] text-gray-400 font-normal">
+                        <i class="pi pi-clock text-[9px]"></i> {{ task.due }}
+                      </span>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium ml-auto" [class]="task.pClass">{{ task.priority }}</span>
+                    </div>
+                  </div>
+                  <button (click)="showCreateTaskForm('todo')" class="w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-blue-50/80 transition-colors cursor-pointer text-[#6366F1]">
+                    <i class="pi pi-plus text-xs"></i> Thêm task
+                  </button>
+                </div>
+              </div>
+
+              <!-- Column 2: Đang thực hiện -->
+              <div class="rounded-3xl overflow-hidden border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.03)] flex flex-col max-h-[650px] bg-white">
+                <div class="flex items-center justify-between px-5 py-4 bg-amber-50/50 border-b border-amber-100/60">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                    <h3 class="text-sm font-semibold text-gray-900">Đang thực hiện</h3>
+                    <span class="px-2.5 py-0.5 bg-amber-100/80 text-amber-700 text-xs font-semibold rounded-full">{{ filteredKanbanInProgress.length }}</span>
+                  </div>
+                </div>
+                <div class="bg-amber-50/10 p-4 space-y-3.5 flex-1 overflow-y-auto custom-scrollbar"
+                     id="inProgressList"
+                     cdkDropList
+                     [cdkDropListData]="filteredKanbanInProgress"
+                     (cdkDropListDropped)="drop($event)">
+                  <div *ngFor="let task of filteredKanbanInProgress"
+                       cdkDrag
+                       class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
+                    <div class="flex items-start justify-between gap-2 mb-3">
+                      <p class="text-xs font-semibold text-gray-900 leading-snug">{{ task.title }}</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+                            [ngStyle]="getTagBadgeStyle(task.tagColor)"
+                            [class]="!task.tagColor ? task.tagClass : ''">{{ task.tag }}</span>
+                      <span class="flex items-center gap-1 text-[10px] text-gray-400 font-normal">
+                        <i class="pi pi-clock text-[9px]"></i> {{ task.due }}
+                      </span>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium ml-auto" [class]="task.pClass">{{ task.priority }}</span>
+                    </div>
+                  </div>
+                  <button (click)="showCreateTaskForm('inprogress')" class="w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-amber-50/80 transition-colors cursor-pointer text-amber-600">
+                    <i class="pi pi-plus text-xs"></i> Thêm task
+                  </button>
+                </div>
+              </div>
+
+              <!-- Column 3: Hoàn thành -->
+              <div class="rounded-3xl overflow-hidden border border-gray-100 shadow-[0_8px_30px_rgba(15,23,42,0.03)] flex flex-col max-h-[650px] bg-white">
+                <div class="flex items-center justify-between px-5 py-4 bg-emerald-50/50 border-b border-emerald-100/60">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                    <h3 class="text-sm font-semibold text-gray-900">Hoàn thành</h3>
+                    <span class="px-2.5 py-0.5 bg-emerald-100/80 text-emerald-700 text-xs font-semibold rounded-full">{{ filteredKanbanDone.length }}</span>
+                  </div>
+                </div>
+                <div class="bg-emerald-50/10 p-4 space-y-3.5 flex-1 overflow-y-auto custom-scrollbar"
+                     id="doneList"
+                     cdkDropList
+                     [cdkDropListData]="filteredKanbanDone"
+                     (cdkDropListDropped)="drop($event)">
+                  <div *ngFor="let task of filteredKanbanDone"
+                       cdkDrag
+                       class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing">
+                    <div class="flex items-start justify-between gap-2 mb-3">
+                      <div class="flex items-center gap-1.5">
+                        <i class="pi pi-check-circle text-xs text-emerald-500 flex-shrink-0"></i>
+                        <p class="text-xs font-semibold text-gray-700 leading-snug">{{ task.title }}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+                            [ngStyle]="getTagBadgeStyle(task.tagColor)"
+                            [class]="!task.tagColor ? task.tagClass : ''">{{ task.tag }}</span>
+                      <span class="flex items-center gap-1 text-[10px] text-gray-400 font-normal">
+                        <i class="pi pi-clock text-[9px]"></i> {{ task.due }}
+                      </span>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium ml-auto" [class]="task.pClass">{{ task.priority }}</span>
+                    </div>
+                  </div>
+                  <button (click)="showCreateTaskForm('done')" class="w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 hover:bg-emerald-50/80 transition-colors cursor-pointer text-emerald-600">
+                    <i class="pi pi-plus text-xs"></i> Thêm task
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </ng-container>
+        </div> <!-- END CARD 2 -->
+      </div> <!-- END LEFT COLUMN -->
+
+        <!-- Right Column Widgets (col-span-12 lg:col-span-4 xl:col-span-3) -->
+        <div class="col-span-12 lg:col-span-4 xl:col-span-3 space-y-6">
+
+          <!-- AI Assistant Card -->
+          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-xs" style="background:#EEECFF;">
+                <i class="pi pi-android text-base" style="color:#6366F1;"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900">AI Assistant</h3>
+                <p class="text-[11px] text-gray-400 font-normal">Gợi ý ưu tiên cho bạn</p>
+              </div>
+            </div>
+            <div class="space-y-3 pt-1">
+              <div *ngFor="let s of aiSuggestions" class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full text-[11px] font-semibold text-white flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style="background:#6366F1;">{{ s.rank }}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-gray-900 truncate">{{ s.title }}</p>
+                  <p class="text-[11px] mt-0.5 font-normal" [class]="s.dueClass">{{ s.due }}</p>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0" [class]="s.pClass">{{ s.priority }}</span>
+              </div>
+            </div>
+            <button class="w-full mt-2 py-2.5 bg-gray-50/80 hover:bg-gray-100/80 text-gray-700 text-xs font-medium rounded-xl transition-all border border-gray-200/60 cursor-pointer">
+              Xem tất cả gợi ý
+            </button>
+          </div>
+
+          <!-- Deadline Alert Card -->
+          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shadow-xs">
+                <i class="pi pi-bell text-base text-rose-500"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900">Cảnh báo deadline</h3>
+                <p class="text-[11px] text-rose-500 font-normal">Cần hoàn thành sớm</p>
+              </div>
+            </div>
+            <div class="space-y-3 pt-1">
+              <div *ngFor="let d of deadlineAlerts" class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-gray-900 truncate">{{ d.title }}</p>
+                  <p class="text-[11px] text-gray-400 mt-0.5 font-normal">{{ d.due }}</p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap flex-shrink-0" [class]="d.badgeClass">{{ d.badge }}</span>
+              </div>
+            </div>
+            <button class="w-full mt-2 py-2.5 bg-gray-50/80 hover:bg-gray-100/80 text-gray-700 text-xs font-medium rounded-xl transition-all border border-gray-200/60 cursor-pointer">
+              Xem tất cả
+            </button>
+          </div>
+
+          <!-- Quick Stats Card -->
+          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-900">Thống kê nhanh</h3>
+            <div class="flex items-center gap-4">
+              <div class="relative flex-shrink-0" style="width:96px;height:96px;">
+                <svg class="donut-svg w-full h-full" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" stroke-width="12"
+                          stroke-dasharray="98 147" stroke-dashoffset="0"/>
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f59e0b" stroke-width="12"
+                          stroke-dasharray="83 162" stroke-dashoffset="-98"/>
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" stroke-width="12"
+                          stroke-dasharray="70 175" stroke-dashoffset="-181"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span class="text-xl font-bold text-gray-900 leading-none">18</span>
+                  <span class="text-[10px] text-gray-400 font-normal mt-0.5">Tổng task</span>
+                </div>
+              </div>
+              <div class="space-y-1.5 text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                  <span class="text-gray-600 font-normal">Cần thực hiện</span>
+                  <span class="font-semibold text-gray-900 ml-auto">7 (39%)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                  <span class="text-gray-600 font-normal">Đang thực hiện</span>
+                  <span class="font-semibold text-gray-900 ml-auto">6 (33%)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                  <span class="text-gray-600 font-normal">Hoàn thành</span>
+                  <span class="font-semibold text-gray-900 ml-auto">5 (28%)</span>
+                </div>
+              </div>
+            </div>
+            <a href="javascript:void(0)" class="block text-center text-xs font-medium mt-2 text-[#6366F1] hover:underline">
+              Xem báo cáo chi tiết
+            </a>
+          </div>
+
+        </div> <!-- END RIGHT COLUMN -->
+      </div> <!-- END CONTENT GRID -->
+
+    </ng-container> <!-- END !showCreateTask -->
+
+  </div> <!-- END MAIN PAGE WRAPPER -->
+
+</div> <!-- END MAIN BODY CONTAINER -->
+
+<!-- ═══ CREATE / EDIT TAG MODAL ═══ -->
+<div *ngIf="showTagModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+  <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-sm p-6 space-y-6 relative"
+       (click)="$event.stopPropagation()">
+
+    <!-- Custom Color Popover Card -->
+    <div *ngIf="showCustomColorPopover"
+         (click)="$event.stopPropagation()"
+         class="absolute inset-x-3 top-10 z-50 bg-white rounded-3xl shadow-2xl border border-gray-100 p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+        <h4 class="text-sm font-semibold text-gray-900">Chọn màu tùy chỉnh</h4>
+        <button type="button" (click)="closeCustomColorPopover($event)" class="text-gray-400 hover:text-gray-600 p-1">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <!-- 2D Saturation / Lightness Gradient Box -->
+      <div class="space-y-3">
+        <div class="relative w-full h-32 rounded-2xl cursor-crosshair overflow-hidden shadow-inner border border-gray-200/80"
+             (click)="onGradientBoxClick($event)"
+             [style.background-color]="'hsl(' + currentHue + ', 100%, 50%)'">
+          <div class="absolute inset-0 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent pointer-events-none"></div>
+          <div class="absolute w-5 h-5 rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform active:scale-125"
+               [style.left.%]="currentSat"
+               [style.top.%]="100 - currentLight"
+               [style.background-color]="customColorHex"></div>
+        </div>
+
+        <!-- Rainbow Hue Slider -->
+        <div>
+          <label class="block text-[11px] font-medium text-gray-500 mb-1.5">Thanh trượt dải màu (Hue)</label>
+          <input type="range" min="0" max="360"
+                 [(ngModel)]="currentHue"
+                 (input)="onHueChange()"
+                 class="hue-slider w-full h-3 rounded-lg appearance-none cursor-pointer border border-gray-200/80"/>
+        </div>
+
+        <!-- Preview Circle & Color Output Hex -->
+        <div class="flex items-center gap-3 pt-1">
+          <div class="w-8 h-8 rounded-full border-2 border-white shadow-md flex-shrink-0"
+               [style.background-color]="customColorHex"></div>
+          <div class="flex-1">
+            <span class="block text-[10px] text-gray-400 font-normal">Mã Hex</span>
+            <span class="text-xs font-semibold text-gray-700 tracking-wider uppercase">{{ customColorHex }}</span>
+          </div>
+          <button type="button"
+                  (click)="saveCustomColor($event)"
+                  class="px-3 py-1.5 bg-[#6366F1] text-white text-xs font-medium rounded-xl hover:bg-[#5856EB] shadow-xs cursor-pointer">
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+      <h3 class="text-base font-semibold text-gray-900">
+        {{ tagModalMode === 'edit' ? 'Chỉnh sửa tag môn học' : 'Tạo tag môn học mới' }}
+      </h3>
+      <button type="button" (click)="closeTagModal()" class="text-gray-400 hover:text-gray-600 p-1">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-2">Tên môn học / tag <span class="text-rose-500">*</span></label>
+        <input type="text"
+               [(ngModel)]="tagFormName"
+               placeholder="Nhập tên môn học (ví dụ: Lập trình Web)..."
+               class="border border-gray-200/80 focus:border-[#6366F1] focus:ring-2 focus:ring-indigo-100 rounded-xl px-4 py-2.5 w-full text-xs outline-none transition-all placeholder-gray-400 font-normal"/>
+      </div>
+
+      <!-- Color Selector Options Grid -->
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-2">Chọn màu hiển thị</label>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <button *ngFor="let c of presetColors"
+                  type="button"
+                  (click)="tagFormColor = c"
+                  class="w-7 h-7 rounded-full transition-transform cursor-pointer border border-black/10 relative flex items-center justify-center hover:scale-110"
+                  [style.background-color]="c"
+                  [ngClass]="{'ring-2 ring-[#6366F1] ring-offset-2': tagFormColor === c}">
+            <i *ngIf="tagFormColor === c" class="pi pi-check text-[10px] text-white"></i>
+          </button>
+
+          <!-- Custom Color Picker Circle -->
+          <button type="button"
+                  (click)="openCustomColorPopover($event)"
+                  class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 via-rose-500 to-amber-400 border border-black/10 transition-transform hover:scale-110 flex items-center justify-center cursor-pointer"
+                  title="Chọn màu tùy chỉnh">
+            <i class="pi pi-plus text-[10px] text-white"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Badge Preview Box -->
+      <div class="pt-2">
+        <label class="block text-[11px] text-gray-400 mb-1.5 font-normal">Xem trước badge:</label>
+        <div class="p-3 bg-gray-50/60 rounded-xl border border-gray-100 flex items-center justify-center">
+          <span class="px-3 h-6 rounded-full text-xs font-medium inline-flex items-center"
+                [ngStyle]="getTagBadgeStyle(tagFormColor)">
+            {{ tagFormName || 'Tên tag xem trước' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+      <button type="button"
+              (click)="closeTagModal()"
+              class="border border-gray-200/80 text-gray-700 px-4 py-2 rounded-xl text-xs font-medium hover:bg-gray-50 transition-all cursor-pointer">
+        Hủy
+      </button>
+      <button type="button"
+              (click)="saveTag()"
+              class="bg-[#6366F1] text-white px-5 py-2 rounded-xl text-xs font-medium hover:bg-[#5856EB] shadow-xs transition-all cursor-pointer">
+        {{ tagModalMode === 'edit' ? 'Lưu thay đổi' : 'Tạo tag' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<header class="w-full h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
+  
+  <!-- LEFT PANEL -->
+  <div class="flex items-center gap-4">
+    <!-- Hamburger Menu Icon Button -->
+    <button class="p-1.5 hover:bg-gray-50 rounded-lg text-gray-500 focus:outline-none flex items-center justify-center transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+    </button>
+
+    <!-- Search Input Rounded Pill -->
+    <div class="bg-gray-100/80 rounded-full px-4 py-2 w-80 flex items-center gap-2 text-xs border border-transparent focus-within:border-gray-200 focus-within:bg-white transition-all">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 w-4 h-4"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" placeholder="Tìm kiếm nhóm, tin nhắn, tài liệu..." class="bg-transparent border-none outline-none w-full text-gray-700 placeholder-gray-400 text-xs font-medium">
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="flex items-center gap-5">
+    <!-- Bell Icon with Dynamic Badge -->
+    <button routerLink="/notifications" title="Xem thông báo" class="relative p-2 hover:bg-gray-50 rounded-full text-gray-600 focus:outline-none flex items-center justify-center transition-colors cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <span *ngIf="unreadCount > 0" class="bg-rose-500 text-white rounded-full text-[10px] min-w-[16px] h-4 px-1 flex items-center justify-center absolute -top-1 -right-1 font-bold animate-pulse">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    </button>
+
+    <!-- Calendar Icon -->
+    <button class="p-2 hover:bg-gray-50 rounded-full text-gray-600 focus:outline-none flex items-center justify-center transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    </button>
+
+    <!-- User Profile Dropdown -->
+    <div class="flex items-center gap-2.5 cursor-pointer p-1 rounded-xl hover:bg-gray-50 transition-colors">
+      <!-- Round Avatar (36x36px) -->
+      <div class="w-9 h-9 min-w-[36px] rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-gray-50">
+        <img *ngIf="userAvatar" [src]="userAvatar.startsWith('http') || userAvatar.startsWith('data:') ? userAvatar : 'http://localhost:5186' + userAvatar" alt="Avatar" class="w-full h-full object-cover">
+        <i *ngIf="!userAvatar" class="pi pi-user text-gray-400 text-sm"></i>
+      </div>
+      
+      <!-- Name and Role -->
+      <div class="flex flex-col select-none">
+        <span class="font-bold text-xs text-gray-900 leading-tight">{{ userName }}</span>
+        <span class="text-[11px] text-gray-400 leading-none mt-0.5">{{ userRole }}</span>
+      </div>
+
+      <!-- Chevron Down Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 w-3 h-3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+  </div>
+
+</header>
+
+<!-- REALTIME FLOATING TOAST POPUP BANNER -->
+<div *ngIf="activeToast" 
+     class="fixed bottom-6 right-6 z-[9999] bg-white border border-purple-200 shadow-2xl rounded-2xl p-4 max-w-md flex items-start gap-3.5 animate-bounce-short transition-all">
+  <div class="w-10 h-10 rounded-xl bg-purple-50 text-[#5B4DFF] flex items-center justify-center flex-shrink-0 mt-0.5">
+    <i class="pi pi-bell text-lg"></i>
+  </div>
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center justify-between gap-2">
+      <h4 class="text-xs font-bold text-gray-900 leading-snug truncate">{{ activeToast.tieuDe }}</h4>
+      <span class="text-[10px] bg-purple-100 text-[#5B4DFF] font-bold px-1.5 py-0.5 rounded flex-shrink-0">Mới</span>
+    </div>
+    <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ activeToast.noiDung }}</p>
+  </div>
+  <button (click)="activeToast = null" class="text-gray-400 hover:text-gray-600 p-1 text-xs">
+    <i class="pi pi-times"></i>
+  </button>
+</div>

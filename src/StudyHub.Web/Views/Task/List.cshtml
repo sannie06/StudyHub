@@ -1,0 +1,524 @@
+@{
+    ViewData["Title"] = "Danh sách công việc";
+}
+
+<style>
+    /* Custom status badge styling to avoid conflicts with global badge rules */
+    .status-badge-custom {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+    }
+    .status-todo {
+        background-color: rgba(124, 58, 237, 0.1) !important;
+        color: #7C3AED !important;
+    }
+    .status-progress {
+        background-color: rgba(245, 158, 11, 0.1) !important;
+        color: #D97706 !important;
+    }
+    .status-done {
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        color: #10B981 !important;
+    }
+</style>
+
+<!-- Heading -->
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1" style="font-size: 1.8rem;">Danh sách công việc</h2>
+        <p class="text-secondary mb-0">Theo dõi, quản lý và sắp xếp các công việc cá nhân dễ dàng.</p>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="glass-card p-3 mb-4">
+    <div class="row g-3 align-items-center justify-content-between">
+        <div class="col-xl-3 col-md-4">
+            <div class="position-relative">
+                <i class="fa-solid fa-magnifying-glass text-secondary" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);"></i>
+                <input type="text" class="glass-control p-2 ps-5" placeholder="Tìm kiếm công việc..." id="searchInput" onkeyup="filterTable()" />
+            </div>
+        </div>
+        <div class="col-xl-7 col-md-8 d-flex flex-wrap gap-2 justify-content-md-end">
+            <select class="glass-control p-2 border" id="tagFilter" onchange="filterTable()" style="width: auto;">
+                <option value="">Môn học: Tất cả</option>
+                <option value="PTPM">PTPM</option>
+                <option value="Java">Java</option>
+                <option value="Web">Web</option>
+                <option value="Cơ sở dữ liệu">Cơ sở dữ liệu</option>
+                <option value="Giải thuật">Giải thuật</option>
+                <option value="Cấu trúc dữ liệu">Cấu trúc dữ liệu</option>
+                <option value="Kỹ năng">Kỹ năng</option>
+            </select>
+            <select class="glass-control p-2 border" id="priorityFilter" onchange="filterTable()" style="width: auto;">
+                <option value="">Ưu tiên: Tất cả</option>
+                <option value="Cao">Cao</option>
+                <option value="Trung bình">Trung bình</option>
+                <option value="Thấp">Thấp</option>
+            </select>
+            <select class="glass-control p-2 border" id="statusFilter" onchange="filterTable()" style="width: auto;">
+                <option value="">Trạng thái: Tất cả</option>
+                <option value="Cần thực hiện">Cần thực hiện</option>
+                <option value="Đang thực hiện">Đang thực hiện</option>
+                <option value="Hoàn thành">Hoàn thành</option>
+            </select>
+            <button class="btn btn-primary-custom p-2 px-3" data-bs-toggle="modal" data-bs-target="#addTaskModal"><i class="fa-solid fa-plus me-1"></i> Tạo công việc mới</button>
+        </div>
+    </div>
+</div>
+
+<!-- Task Table Area -->
+<div class="glass-card p-0 mb-4" style="overflow: hidden; border: 1px solid #e5e7eb !important;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="taskTable" style="border-collapse: collapse;">
+            <thead style="background: #f8fafc; border-bottom: 1px solid #f1f5f9;">
+                <tr>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem; width: 60px;">STT</th>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem;">Công việc</th>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem; width: 160px;">Phân loại</th>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem; width: 150px;">Hạn chót</th>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem; width: 140px;">Độ ưu tiên</th>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem; width: 160px;">Trạng thái</th>
+                    <th style="padding: 18px 24px; font-weight: 600; color: #475569; font-size: 0.85rem; width: 150px; text-align: center;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody style="border: none;">
+                <!-- Row 1 -->
+                <tr class="task-row-item" data-tag="PTPM" data-priority="Cao" data-status="Cần thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">1</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Làm báo cáo UML</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">PTPM</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 30/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-high">Cao</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-todo">Cần thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary action-btn-play" style="border-radius: 8px;" onclick="changeStatus(this, 'Đang thực hiện')"><i class="fa-solid fa-play"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 2 -->
+                <tr class="task-row-item" data-tag="Java" data-priority="Trung bình" data-status="Cần thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">2</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Ôn tập Java OOP</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">Java</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 28/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-medium">Trung bình</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-todo">Cần thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary action-btn-play" style="border-radius: 8px;" onclick="changeStatus(this, 'Đang thực hiện')"><i class="fa-solid fa-play"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 3 -->
+                <tr class="task-row-item" data-tag="Web" data-priority="Thấp" data-status="Cần thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">3</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Đọc tài liệu ReactJS</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">Web</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 05/07/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-low">Thấp</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-todo">Cần thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary action-btn-play" style="border-radius: 8px;" onclick="changeStatus(this, 'Đang thực hiện')"><i class="fa-solid fa-play"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 4 -->
+                <tr class="task-row-item" data-tag="PTPM" data-priority="Cao" data-status="Cần thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">4</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Chuẩn bị thuyết trình</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">PTPM</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 02/07/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-high">Cao</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-todo">Cần thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary action-btn-play" style="border-radius: 8px;" onclick="changeStatus(this, 'Đang thực hiện')"><i class="fa-solid fa-play"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 5 -->
+                <tr class="task-row-item" data-tag="Cơ sở dữ liệu" data-priority="Cao" data-status="Đang thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">5</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Bài tập thiết kế CSDL</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">Cơ sở dữ liệu</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 25/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-high">Cao</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-progress">Đang thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-success action-btn-check" style="border-radius: 8px;" onclick="changeStatus(this, 'Hoàn thành')"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 6 -->
+                <tr class="task-row-item" data-tag="Giải thuật" data-priority="Trung bình" data-status="Đang thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">6</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Ôn tập thuật toán</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">Giải thuật</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 29/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-medium">Trung bình</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-progress">Đang thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-success action-btn-check" style="border-radius: 8px;" onclick="changeStatus(this, 'Hoàn thành')"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 7 -->
+                <tr class="task-row-item" data-tag="PTPM" data-priority="Thấp" data-status="Đang thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">7</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">Xây dựng Use Case Diagram</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">PTPM</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 20/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-low">Thấp</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-progress">Đang thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-success action-btn-check" style="border-radius: 8px;" onclick="changeStatus(this, 'Hoàn thành')"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 8 -->
+                <tr class="task-row-item completed-task" data-tag="Cấu trúc dữ liệu" data-priority="Thấp" data-status="Hoàn thành" style="opacity: 0.75;">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">8</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" checked onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-secondary task-title text-decoration-line-through">Nộp bài tập tuần 1</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">Cấu trúc dữ liệu</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 15/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-low">Thấp</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-done">Hoàn thành</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary action-btn-rotate" style="border-radius: 8px;" onclick="changeStatus(this, 'Cần thực hiện')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Row 9 -->
+                <tr class="task-row-item completed-task" data-tag="Kỹ năng" data-priority="Thấp" data-status="Hoàn thành" style="opacity: 0.75;">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">9</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" checked onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-secondary task-title text-decoration-line-through">Làm slide bài thuyết trình</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">Kỹ năng</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> 18/06/2024</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom badge-low">Thấp</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-done">Hoàn thành</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary action-btn-rotate" style="border-radius: 8px;" onclick="changeStatus(this, 'Cần thực hiện')"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Thêm công việc mới -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-2" style="border-radius: 16px; background:#fff; border: 1px solid #e2e8f0;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="addTaskModalLabel">Thêm công việc mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTaskForm">
+                    <div class="form-group-custom mb-3">
+                        <label class="form-label-custom fw-semibold mb-1 small text-secondary">Tiêu đề nhiệm vụ</label>
+                        <input type="text" class="glass-control" placeholder="Nhập tiêu đề..." id="newTaskTitle" required style="width: 100%; height: 42px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 10px;" />
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label class="form-label-custom fw-semibold mb-1 small text-secondary">Mức độ ưu tiên</label>
+                                <select class="glass-control" id="newTaskPriority" style="width: 100%; height: 42px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                                    <option value="Thấp">Thấp</option>
+                                    <option value="Trung bình" selected>Trung bình</option>
+                                    <option value="Cao">Cao</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label class="form-label-custom fw-semibold mb-1 small text-secondary">Phân loại (Tag)</label>
+                                <input type="text" class="glass-control" placeholder="Ví dụ: PTPM, Java" id="newTaskTag" style="width: 100%; height: 42px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 10px;" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group-custom mb-2">
+                        <label class="form-label-custom fw-semibold mb-1 small text-secondary">Hạn hoàn thành</label>
+                        <input type="date" class="glass-control" id="newTaskDeadline" style="width: 100%; height: 42px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 10px;" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary-custom" onclick="createNewTaskRow()">Tạo công việc</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Filters table row based on search queries and dropdown values
+        function filterTable() {
+            var searchVal = $('#searchInput').val().toLowerCase();
+            var tagVal = $('#tagFilter').val().toLowerCase();
+            var priorityVal = $('#priorityFilter').val().toLowerCase();
+            var statusVal = $('#statusFilter').val().toLowerCase();
+
+            $('#taskTable tbody tr').each(function () {
+                var row = $(this);
+                var text = row.find('.task-title').text().toLowerCase();
+                var tag = row.attr('data-tag').toLowerCase();
+                var priority = row.attr('data-priority').toLowerCase();
+                var status = row.attr('data-status').toLowerCase();
+
+                var matchText = text.indexOf(searchVal) > -1;
+                var matchTag = tagVal === "" || tag === tagVal;
+                var matchPriority = priorityVal === "" || priority === priorityVal;
+                var matchStatus = statusVal === "" || status === statusVal;
+
+                if (matchText && matchTag && matchPriority && matchStatus) {
+                    row.show();
+                } else {
+                    row.hide();
+                }
+            });
+            reorderIndices();
+        }
+
+        // Dynamically reorder STT index columns
+        function reorderIndices() {
+            var idx = 1;
+            $('#taskTable tbody tr:visible').each(function () {
+                $(this).find('.row-index').text(idx++);
+            });
+        }
+
+        // Toggle row complete state with checkbox
+        function toggleRowComplete(chk) {
+            var row = $(chk).closest('tr');
+            var isChecked = chk.checked;
+            
+            if (isChecked) {
+                row.addClass('completed-task');
+                row.css('opacity', '0.75');
+                row.find('.task-title').addClass('text-decoration-line-through text-secondary');
+                row.attr('data-status', 'Hoàn thành');
+                row.find('.status-badge-custom')
+                    .removeClass('status-todo status-progress')
+                    .addClass('status-done')
+                    .text('Hoàn thành');
+                
+                // Change action button to rotate
+                row.find('td:last-child div').html(`
+                    <button class="btn btn-sm btn-outline-secondary action-btn-rotate" style="border-radius: 8px;" onclick="changeStatus(this, 'Cần thực hiện')"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                `);
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã hoàn thành công việc!',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+            } else {
+                row.removeClass('completed-task');
+                row.css('opacity', '1');
+                row.find('.task-title').removeClass('text-decoration-line-through text-secondary');
+                row.attr('data-status', 'Cần thực hiện');
+                row.find('.status-badge-custom')
+                    .removeClass('status-done status-progress')
+                    .addClass('status-todo')
+                    .text('Cần thực hiện');
+
+                // Change action button to play
+                row.find('td:last-child div').html(`
+                    <button class="btn btn-sm btn-outline-primary action-btn-play" style="border-radius: 8px;" onclick="changeStatus(this, 'Đang thực hiện')"><i class="fa-solid fa-play"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                `);
+            }
+            filterTable();
+        }
+
+        // Change Status dynamically through button clicks
+        function changeStatus(btn, newStatus) {
+            var row = $(btn).closest('tr');
+            row.attr('data-status', newStatus);
+
+            if (newStatus === 'Đang thực hiện') {
+                row.removeClass('completed-task');
+                row.css('opacity', '1');
+                row.find('.task-title').removeClass('text-decoration-line-through text-secondary');
+                row.find('input[type="checkbox"]').prop('checked', false);
+                row.find('.status-badge-custom')
+                    .removeClass('status-todo status-done')
+                    .addClass('status-progress')
+                    .text('Đang thực hiện');
+                
+                row.find('td:last-child div').html(`
+                    <button class="btn btn-sm btn-outline-success action-btn-check" style="border-radius: 8px;" onclick="changeStatus(this, 'Hoàn thành')"><i class="fa-solid fa-check"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                `);
+            } else if (newStatus === 'Hoàn thành') {
+                row.find('input[type="checkbox"]').prop('checked', true);
+                toggleRowComplete(row.find('input[type="checkbox"]')[0]);
+            } else if (newStatus === 'Cần thực hiện') {
+                row.find('input[type="checkbox"]').prop('checked', false);
+                toggleRowComplete(row.find('input[type="checkbox"]')[0]);
+            }
+            filterTable();
+        }
+
+        // Delete Row confirmation
+        function deleteRow(btn) {
+            Swal.fire({
+                title: 'Bạn chắc chắn chứ?',
+                text: "Hành động này không thể hoàn tác!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Đồng ý xóa!',
+                cancelButtonText: 'Hủy bỏ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $(btn).closest('tr').remove();
+                    reorderIndices();
+                    Swal.fire(
+                        'Đã xóa!',
+                        'Công việc đã được loại bỏ khỏi danh sách.',
+                        'success'
+                    );
+                }
+            });
+        }
+
+        // Create new task in the table
+        function createNewTaskRow() {
+            var title = $('#newTaskTitle').val();
+            var priority = $('#newTaskPriority').val();
+            var tag = $('#newTaskTag').val() || "Chung";
+            var deadline = $('#newTaskDeadline').val() || "Chưa đặt";
+
+            if (title.trim() === '') {
+                Swal.fire('Lỗi', 'Vui lòng điền tiêu đề công việc!', 'error');
+                return;
+            }
+
+            var priorityClass = "badge-low";
+            if (priority === "Trung bình") priorityClass = "badge-medium";
+            if (priority === "Cao") priorityClass = "badge-high";
+
+            // Format deadline date to readable string
+            var formattedDeadline = deadline;
+            if (deadline !== "Chưa đặt") {
+                var dParts = deadline.split('-');
+                if (dParts.length === 3) {
+                    formattedDeadline = dParts[2] + '/' + dParts[1] + '/' + dParts[0];
+                }
+            }
+
+            var nextIndex = $('#taskTable tbody tr').length + 1;
+
+            var rowHtml = `
+                <tr class="task-row-item" data-tag="${tag}" data-priority="${priority}" data-status="Cần thực hiện">
+                    <td style="padding: 18px 24px; font-weight: 500; color: #64748b;" class="row-index">${nextIndex}</td>
+                    <td style="padding: 18px 24px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="checkbox" class="form-check-input" style="cursor: pointer;" onchange="toggleRowComplete(this)" />
+                            <span class="fw-semibold text-dark task-title">${title}</span>
+                        </div>
+                    </td>
+                    <td style="padding: 18px 24px;"><span class="badge rounded-pill bg-light text-secondary" style="font-size: 0.75rem; padding: 6px 12px; border: 1px solid #e2e8f0;">${tag}</span></td>
+                    <td style="padding: 18px 24px; color: #64748b; font-weight: 500;"><i class="fa-regular fa-calendar me-1"></i> ${formattedDeadline}</td>
+                    <td style="padding: 18px 24px;"><span class="badge-custom ${priorityClass}">${priority}</span></td>
+                    <td style="padding: 18px 24px;"><span class="status-badge-custom status-todo">Cần thực hiện</span></td>
+                    <td style="padding: 18px 24px; text-align: center;">
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary action-btn-play" style="border-radius: 8px;" onclick="changeStatus(this, 'Đang thực hiện')"><i class="fa-solid fa-play"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" style="border-radius: 8px;" onclick="deleteRow(this)"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            $('#taskTable tbody').append(rowHtml);
+            $('#addTaskModal').modal('hide');
+
+            // Reset inputs
+            $('#newTaskTitle').val('');
+            $('#newTaskTag').val('');
+            $('#newTaskDeadline').val('');
+
+            Swal.fire('Thành công!', 'Đã thêm công việc mới vào danh sách!', 'success');
+            filterTable();
+        }
+    </script>
+}

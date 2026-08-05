@@ -1,0 +1,304 @@
+<div class="min-h-screen w-full bg-gradient-to-br from-[#F4F5FF] via-[#EEF0FF] to-[#EAEFFF] relative overflow-hidden flex flex-col justify-between selection:bg-[#5B4DFF] selection:text-white">
+
+  <!-- ================================================== -->
+  <!-- TOP NAVIGATION HEADER (PINNED AT VERY TOP)         -->
+  <!-- ================================================== -->
+  <header class="absolute top-0 left-0 right-0 w-full p-6 lg:px-12 flex justify-between items-center z-30 pointer-events-auto">
+    <!-- Left Logo Unit -->
+    <div class="flex items-center gap-3 cursor-pointer" routerLink="/">
+      <div class="bg-[#5B4DFF] p-2.5 rounded-2xl text-white shadow-lg shadow-indigo-200 flex items-center justify-center">
+        <i class="pi pi-graduation-cap text-xl"></i>
+      </div>
+      <span class="font-extrabold text-2xl tracking-tight text-gray-900">
+        Study<span class="text-[#5B4DFF]">Hub</span>
+      </span>
+    </div>
+
+    <!-- Right Action Link (Pinned High at Top Edge) -->
+    <div class="flex items-center gap-3 text-sm">
+      <span class="text-gray-500 hidden sm:inline">Đã có tài khoản?</span>
+      <a routerLink="/login" class="px-5 py-2 bg-white border border-[#5B4DFF] text-[#5B4DFF] hover:bg-[#5B4DFF] hover:text-white font-semibold text-xs rounded-full transition-all cursor-pointer shadow-xs">
+        Đăng nhập
+      </a>
+    </div>
+  </header>
+
+  <!-- Background Decorative Glow Shapes -->
+  <div class="absolute -top-32 -left-32 w-96 h-96 bg-[#5B4DFF]/15 rounded-full blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- Background SVG Swoosh Lines Decor -->
+  <svg class="absolute left-0 top-1/4 w-3/5 h-3/5 opacity-25 pointer-events-none" viewBox="0 0 600 600" fill="none">
+    <path d="M-100,200 C180,100 250,450 550,300" stroke="#5B4DFF" stroke-width="2" stroke-dasharray="6 6" />
+    <path d="M-50,150 C230,80 300,400 600,250" stroke="#818CF8" stroke-width="1.5" />
+    <path d="M0,100 C280,60 350,350 650,200" stroke="#C7D2FE" stroke-width="1" />
+  </svg>
+
+  <!-- ================================================== -->
+  <!-- MAIN CONTAINER (VERTICALLY CENTERED BELOW HEADER)   -->
+  <!-- ================================================== -->
+  <main class="relative z-10 grid grid-cols-12 gap-10 xl:gap-16 min-h-screen items-center p-6 lg:p-12 pt-24 lg:pt-20 pb-12 max-w-[1400px] mx-auto w-full">
+
+    <!-- ================================================== -->
+    <!-- LEFT COLUMN (HERO PANEL - 7 COLS / 60%)           -->
+    <!-- ================================================== -->
+    <div class="hidden lg:flex col-span-12 lg:col-span-7 xl:col-span-7 flex-col justify-center space-y-6 relative">
+      
+      <!-- Dot Pattern Top Left -->
+      <div class="absolute -top-10 -left-6 opacity-30 pointer-events-none grid grid-cols-5 gap-2 text-indigo-400 text-xs">
+        <span>•</span><span>•</span><span>•</span><span>•</span><span>•</span>
+        <span>•</span><span>•</span><span>•</span><span>•</span><span>•</span>
+        <span>•</span><span>•</span><span>•</span><span>•</span><span>•</span>
+      </div>
+
+      <!-- 1. Pill Badge -->
+      <div>
+        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-purple-100/80 text-[#5B4DFF] border border-purple-200/50">
+          Nền tảng học tập thông minh <span class="ml-1 text-gray-500 font-normal">dành cho sinh viên</span>
+        </span>
+      </div>
+
+      <!-- 2. Dual-line Heading & Underline Bar -->
+      <div>
+        <h1 class="text-4xl lg:text-[46px] xl:text-5xl font-extrabold text-gray-900 leading-[1.18] tracking-tight">
+          Học tập <span class="text-[#5B4DFF]">thông minh</span><br />
+          Quản lý <span class="text-[#5B4DFF]">dễ dàng</span>
+        </h1>
+        <div class="w-16 h-[3.5px] bg-[#5B4DFF] rounded-full mt-2 mb-3"></div>
+      </div>
+
+      <!-- 3. Subtitle -->
+      <p class="text-gray-500 text-sm sm:text-base leading-relaxed max-w-lg">
+        Nền tảng hỗ trợ học tập và quản lý đời sống sinh viên tích hợp AI, giúp bạn học tập hiệu quả mỗi ngày.
+      </p>
+
+      <!-- 4. 2x2 Feature Cards Grid -->
+      <div class="grid grid-cols-2 gap-5 w-full mt-6">
+        
+        <!-- Card 1: AI -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-all group">
+          <div class="w-12 h-12 bg-purple-100/80 rounded-2xl flex items-center justify-center shrink-0 text-[#5B4DFF] text-xl group-hover:bg-[#5B4DFF] group-hover:text-white transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-gray-900">AI hỗ trợ học tập</h4>
+            <p class="text-xs text-gray-400 mt-1 leading-snug">Gợi ý kế hoạch học tập cá nhân hóa và tài liệu phù hợp.</p>
+          </div>
+        </div>
+
+        <!-- Card 2: Deadline -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-all group">
+          <div class="w-12 h-12 bg-purple-100/80 rounded-2xl flex items-center justify-center shrink-0 text-[#5B4DFF] text-xl group-hover:bg-[#5B4DFF] group-hover:text-white transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-gray-900">Quản lý deadline</h4>
+            <p class="text-xs text-gray-400 mt-1 leading-snug">Theo dõi lịch học, bài tập và nhắc nhở thông minh.</p>
+          </div>
+        </div>
+
+        <!-- Card 3: Notes -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-all group">
+          <div class="w-12 h-12 bg-purple-100/80 rounded-2xl flex items-center justify-center shrink-0 text-[#5B4DFF] text-xl group-hover:bg-[#5B4DFF] group-hover:text-white transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-gray-900">Ghi chú thông minh</h4>
+            <p class="text-xs text-gray-400 mt-1 leading-snug">Tạo, lưu trữ và tìm kiếm ghi chú mọi lúc, mọi nơi.</p>
+          </div>
+        </div>
+
+        <!-- Card 4: Pomodoro -->
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-all group">
+          <div class="w-12 h-12 bg-purple-100/80 rounded-2xl flex items-center justify-center shrink-0 text-[#5B4DFF] text-xl group-hover:bg-[#5B4DFF] group-hover:text-white transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-gray-900">Pomodoro Focus</h4>
+            <p class="text-xs text-gray-400 mt-1 leading-snug">Tập trung học tập với bộ đếm Pomodoro hiệu quả.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dot Pattern Bottom Left -->
+      <div class="absolute -bottom-8 -left-6 opacity-30 pointer-events-none grid grid-cols-5 gap-2 text-indigo-400 text-xs">
+        <span>•</span><span>•</span><span>•</span><span>•</span><span>•</span>
+        <span>•</span><span>•</span><span>•</span><span>•</span><span>•</span>
+        <span>•</span><span>•</span><span>•</span><span>•</span><span>•</span>
+      </div>
+
+    </div>
+
+    <!-- ================================================== -->
+    <!-- RIGHT COLUMN (REGISTER FORM CARD - 5 COLS / 40%)   -->
+    <!-- ================================================== -->
+    <div class="col-span-12 lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end w-full">
+      <div class="bg-white p-7 lg:p-9 rounded-[32px] shadow-2xl shadow-indigo-100/60 border border-gray-50 space-y-4 max-w-md w-full">
+        
+        <!-- Form Header -->
+        <div>
+          <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+            Tạo <span class="text-[#5B4DFF]">tài khoản</span>
+          </h2>
+          <p class="text-sm text-gray-500 mt-1 mb-3">Tham gia StudyHub để bắt đầu hành trình học tập hiệu quả!</p>
+        </div>
+
+        <!-- Error Alert Banner -->
+        <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-200 text-rose-600 p-3.5 rounded-2xl text-xs flex items-center gap-2.5">
+          <i class="pi pi-exclamation-triangle text-base text-rose-500"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Register Form -->
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+          
+          <!-- 1. Input Họ và tên -->
+          <div>
+            <label class="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Họ và tên
+            </label>
+            <div class="relative">
+              <input 
+                type="text" 
+                formControlName="hoTen"
+                placeholder="Nhập họ và tên của bạn"
+                class="bg-white border border-gray-200 rounded-2xl pl-4 pr-10 py-3.5 text-sm text-gray-800 focus:border-[#5B4DFF] focus:ring-4 focus:ring-indigo-100 outline-none w-full transition-all placeholder:text-gray-400"
+              />
+              <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+                <i class="pi pi-user"></i>
+              </span>
+            </div>
+            <div *ngIf="registerForm.get('hoTen')?.touched && registerForm.get('hoTen')?.invalid" class="text-xs text-rose-500 mt-1">
+              Họ tên không được để trống
+            </div>
+          </div>
+
+          <!-- 2. Input Email -->
+          <div>
+            <label class="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Email
+            </label>
+            <div class="relative">
+              <input 
+                type="email" 
+                formControlName="email"
+                placeholder="Nhập email của bạn"
+                class="bg-white border border-gray-200 rounded-2xl pl-4 pr-10 py-3.5 text-sm text-gray-800 focus:border-[#5B4DFF] focus:ring-4 focus:ring-indigo-100 outline-none w-full transition-all placeholder:text-gray-400"
+              />
+              <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+                <i class="pi pi-envelope"></i>
+              </span>
+            </div>
+            <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid" class="text-xs text-rose-500 mt-1">
+              Vui lòng nhập Email hợp lệ
+            </div>
+          </div>
+
+          <!-- 3. Input Mật khẩu -->
+          <div>
+            <label class="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Mật khẩu
+            </label>
+            <div class="relative">
+              <input 
+                [type]="showPassword ? 'text' : 'password'" 
+                formControlName="matKhau"
+                placeholder="Tối thiểu 6 ký tự"
+                class="bg-white border border-gray-200 rounded-2xl pl-4 pr-16 py-3.5 text-sm text-gray-800 focus:border-[#5B4DFF] focus:ring-4 focus:ring-indigo-100 outline-none w-full transition-all placeholder:text-gray-400"
+              />
+              <div class="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-gray-400 text-sm">
+                <i class="pi pi-lock"></i>
+                <button 
+                  type="button" 
+                  (click)="togglePasswordVisibility()"
+                  class="hover:text-gray-600 focus:outline-none transition-colors p-0.5"
+                >
+                  <i [class]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="registerForm.get('matKhau')?.touched && registerForm.get('matKhau')?.invalid" class="text-xs text-rose-500 mt-1">
+              Mật khẩu tối thiểu 6 ký tự
+            </div>
+          </div>
+
+          <!-- 4. Input Xác nhận mật khẩu -->
+          <div>
+            <label class="text-xs font-semibold text-gray-700 mb-1.5 block">
+              Xác nhận mật khẩu
+            </label>
+            <div class="relative">
+              <input 
+                [type]="showConfirmPassword ? 'text' : 'password'" 
+                formControlName="confirmMatKhau"
+                placeholder="Nhập lại mật khẩu"
+                class="bg-white border border-gray-200 rounded-2xl pl-4 pr-10 py-3.5 text-sm text-gray-800 focus:border-[#5B4DFF] focus:ring-4 focus:ring-indigo-100 outline-none w-full transition-all placeholder:text-gray-400"
+              />
+              <button 
+                type="button" 
+                (click)="toggleConfirmPasswordVisibility()"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm focus:outline-none transition-colors p-1"
+              >
+                <i [class]="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+              </button>
+            </div>
+            <div *ngIf="(registerForm.get('confirmMatKhau')?.touched && registerForm.get('confirmMatKhau')?.invalid) || registerForm.hasError('mismatch')" class="text-xs text-rose-500 mt-1">
+              Mật khẩu xác nhận không trùng khớp
+            </div>
+          </div>
+
+          <!-- 5. Terms Checkbox -->
+          <div class="flex items-center gap-2 text-xs text-gray-600 select-none pt-1">
+            <input 
+              type="checkbox" 
+              formControlName="agreeTerms"
+              class="w-4 h-4 accent-[#5B4DFF] rounded border-gray-300 focus:ring-[#5B4DFF] cursor-pointer"
+            />
+            <span>
+              Tôi đồng ý với 
+              <a href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline">Điều khoản dịch vụ</a> 
+              và 
+              <a href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline">Chính sách bảo mật</a>
+            </span>
+          </div>
+
+          <!-- Primary Submit Button -->
+          <button 
+            type="submit" 
+            [disabled]="loading"
+            class="w-full py-3.5 bg-gradient-to-r from-[#5B4DFF] to-[#6366F1] hover:opacity-95 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+          >
+            <i *ngIf="loading" class="pi pi-spin pi-spinner text-sm"></i>
+            <span>{{ loading ? 'Đang xử lý...' : 'Đăng ký' }}</span>
+            <i *ngIf="!loading" class="pi pi-arrow-right text-xs"></i>
+          </button>
+
+        </form>
+
+        <!-- Divider -->
+        <div class="relative flex py-1 items-center text-xs text-gray-400 font-medium">
+          <div class="flex-grow border-t border-gray-100"></div>
+          <span class="flex-shrink mx-4 text-gray-400">hoặc đăng ký với</span>
+          <div class="flex-grow border-t border-gray-100"></div>
+        </div>
+
+        <!-- Google Register Button -->
+        <button 
+          type="button" 
+          class="w-full py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl flex items-center justify-center gap-3 text-sm transition-all shadow-xs cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Đăng ký với Google</span>
+        </button>
+
+      </div>
+    </div>
+
+  </main>
+</div>

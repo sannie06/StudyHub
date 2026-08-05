@@ -1,0 +1,127 @@
+<!-- ═══════════════════════════════════════
+     SHARED GLOBAL SIDEBAR (Width: 256px)
+     ═══════════════════════════════════════ -->
+<aside class="w-64 min-w-[256px] h-screen bg-white border-r border-gray-100 flex flex-col overflow-y-auto sidebar-scroll flex-shrink-0"
+       style="z-index: 40;">
+
+  <!-- Logo -->
+  <div class="flex items-center gap-2.5 px-6 py-5 border-b border-gray-100 flex-shrink-0">
+    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#5B4DFF;">
+      <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24">
+        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17 5 13.18z"/>
+      </svg>
+    </div>
+    <span class="text-lg font-extrabold" style="color:#5B4DFF;">StudyHub</span>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="px-3 pt-4 space-y-0.5 flex-1">
+
+    <!-- 1. Dashboard -->
+    <a routerLink="/dashboard" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/dashboard') && !isRouteActive('/phan-tich-hoc-tap') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-home text-base" [style]="isRouteActive('/dashboard') && !isRouteActive('/phan-tich-hoc-tap') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <!-- 2. Công việc (With Collapsible Sub-menu) -->
+    <div>
+      <button (click)="onTaskParentClick()"
+              class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all text-left"
+              [style]="isRouteActive('/tasks') ? 'background:#5B4DFF; color:white;' : 'color:#64748b;'">
+        <div class="flex items-center gap-3">
+          <i class="pi pi-check-square text-base" [style]="isRouteActive('/tasks') ? 'color:white;' : 'color:#94a3b8;'"></i>
+          <span>Công việc</span>
+        </div>
+        <i class="pi text-xs transition-transform duration-200"
+           [class]="isTaskMenuOpen ? 'pi-chevron-down' : 'pi-chevron-right'"
+           [style]="isRouteActive('/tasks') ? 'color:white;' : 'color:#94a3b8;'"></i>
+      </button>
+
+      <!-- Sub-menu (Collapsible) -->
+      <div *ngIf="isTaskMenuOpen" class="ml-4 mt-1 space-y-0.5 transition-all">
+        <a routerLink="/tasks" [queryParams]="{ view: 'list' }"
+           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+           [style]="isTasksViewActive('list') ? 'color:#5B4DFF; background:#EEECFF;' : 'color:#6b7280;'">
+          <span class="w-2 h-2 rounded-full inline-block" [style]="isTasksViewActive('list') ? 'background:#5B4DFF;' : 'background:#d1d5db;'"></span>
+          Danh sách công việc
+        </a>
+        <a routerLink="/tasks" [queryParams]="{ view: 'kanban' }"
+           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+           [style]="isTasksViewActive('kanban') ? 'color:#5B4DFF; background:#EEECFF;' : 'color:#6b7280;'">
+          <span class="w-2 h-2 rounded-full inline-block" [style]="isTasksViewActive('kanban') ? 'background:#5B4DFF;' : 'background:#d1d5db;'"></span>
+          Kanban Board
+        </a>
+      </div>
+    </div>
+
+    <!-- 3. Lịch học - Lịch thi -->
+    <a routerLink="/calendar" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/calendar') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-calendar text-base" [style]="isRouteActive('/calendar') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>Lịch học - Lịch thi</span>
+    </a>
+
+    <!-- 4. Pomodoro / Focus -->
+    <a routerLink="/pomodoro" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/pomodoro') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-clock text-base" [style]="isRouteActive('/pomodoro') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>Pomodoro / Focus</span>
+    </a>
+
+    <!-- 5. Nhóm học tập -->
+    <a routerLink="/groups" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/groups') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-users text-base" [style]="isRouteActive('/groups') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>Nhóm học tập</span>
+    </a>
+
+    <!-- 6. AI Assistant -->
+    <a routerLink="/ai" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/ai') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-android text-base" [style]="isRouteActive('/ai') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>AI Assistant</span>
+    </a>
+
+    <!-- 7. Thông báo -->
+    <a routerLink="/notifications" (click)="closeTaskMenu()"
+       class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/notifications') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-bell text-base" [style]="isRouteActive('/notifications') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Thông báo</span>
+      </div>
+      <span class="text-[11px] font-bold text-white px-2 py-0.5 rounded-full" style="background:#5B4DFF;">8</span>
+    </a>
+
+    <!-- 8. Phân tích học tập -->
+    <a routerLink="/phan-tich-hoc-tap" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/phan-tich-hoc-tap') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-chart-bar text-base" [style]="isRouteActive('/phan-tich-hoc-tap') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>Phân tích học tập</span>
+    </a>
+
+    <!-- Nhóm TÀI KHOẢN -->
+    <div class="pt-4 pb-1 px-1">
+      <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Tài khoản</span>
+    </div>
+    <a routerLink="/profile" (click)="closeTaskMenu()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+       [style]="isRouteActive('/profile') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+      <i class="pi pi-user text-base" [style]="isRouteActive('/profile') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+      <span>Quản lý tài khoản</span>
+    </a>
+    <a href="javascript:void(0)" (click)="closeTaskMenu(); logout()"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all">
+      <i class="pi pi-sign-out text-base text-slate-400"></i>
+      <span>Đăng xuất</span>
+    </a>
+  </nav>
+</aside>
+
