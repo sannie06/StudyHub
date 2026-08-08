@@ -35,6 +35,7 @@ namespace StudyHub.Infrastructure
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddHttpClient<IAiService, AiService>();
+            services.AddScoped<IAdminService, AdminService>();
             
             return services;
         }

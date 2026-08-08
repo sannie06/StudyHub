@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
@@ -63,7 +63,7 @@ export interface MonthDayCell {
     }
   `]
 })
-export class CalendarComponent implements OnInit {
+export class CalendarComponent implements OnInit, OnDestroy {
   currentViewTab: 'week' | 'month' | 'day' = 'week';
   selectedSubjectFilter = 'all';
   selectedTypeFilter = 'all';
@@ -115,6 +115,11 @@ export class CalendarComponent implements OnInit {
   currentWeekMonday!: Date;
   currentWeekSunday!: Date;
   weekRangeLabel: string = '';
+
+  currentTimeStr: string = '';
+  currentTimeTopWeek: number = 0;
+  currentTimeTopDay: number = 0;
+  private timeIntervalId: any;
 
   subjectOptions: string[] = [
     'Cơ sở dữ liệu',
@@ -180,8 +185,31 @@ export class CalendarComponent implements OnInit {
         this.targetSelectedId = String(params['selectedId']);
       }
     });
+    this.updateCurrentTime();
+    this.timeIntervalId = setInterval(() => {
+      this.updateCurrentTime();
+    }, 10000);
     this.setupCurrentWeekDays();
     this.loadCalendarEvents();
+  }
+
+  ngOnDestroy() {
+    if (this.timeIntervalId) {
+      clearInterval(this.timeIntervalId);
+    }
+  }
+
+  updateCurrentTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    this.currentTimeStr = `${pad(hours)}:${pad(minutes)}`;
+
+    const totalHours = hours + (minutes / 60);
+    this.currentTimeTopWeek = Math.round(totalHours * 52);
+    this.currentTimeTopDay = Math.round(totalHours * 56);
   }
 
   monthDaysMatrix: MonthDayCell[] = [];

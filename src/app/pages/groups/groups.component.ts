@@ -1392,16 +1392,29 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   leaveCurrentGroup(): void {
-    if (this.activeGroupId <= 0) return;
-    if (confirm(`Bạn có chắc chắn muốn rời nhóm "${this.activeGroup.name}" không?`)) {
+    if (!this.activeGroupId || this.activeGroupId <= 0) return;
+
+    const groupName = this.activeGroup ? this.activeGroup.name : 'nhóm này';
+    const isOwner = this.activeGroup ? this.activeGroup.isOwner : false;
+    const confirmMsg = isOwner
+      ? `Bạn là Trưởng nhóm. Nếu bạn rời khỏi nhóm, nhóm "${groupName}" có thể bị giải tán. Bạn có chắc chắn muốn rời nhóm không?`
+      : `Bạn có chắc chắn muốn rời khỏi nhóm "${groupName}" không?`;
+
+    if (confirm(confirmMsg)) {
+      this.loadingGroups = true;
       this.groupService.leaveGroup(this.activeGroupId).subscribe({
         next: () => {
-          alert('Đã rời nhóm thành công.');
+          if (this.activeGroupId > 0) {
+            this.chatSignalRService.leaveGroupChat(this.activeGroupId);
+          }
+          this.activeGroupId = 0;
           this.loadMyGroups();
         },
         error: (err) => {
+          this.loadingGroups = false;
           console.error('Error leaving group:', err);
-          alert(err?.error?.message || 'Không thể rời nhóm.');
+          const msg = err?.error?.message || 'Không thể rời nhóm. Vui lòng thử lại!';
+          alert(msg);
         }
       });
     }

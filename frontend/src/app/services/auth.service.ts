@@ -3,10 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 
 export interface User {
-  maNguoiDung: number;
-  email: string;
+  maNguoiDung?: number;
+  email?: string;
   hoTen: string;
-  vaiTro: string;
+  maVaiTro?: number;
+  vaiTro?: string;
+  soDienThoai?: string;
+  ngaySinh?: string;
+  gioiTinh?: number;
+  diaChi?: string;
+  anhDaiDien?: string;
 }
 
 export interface AuthResponse {
@@ -32,6 +38,15 @@ export class AuthService {
 
   public get currentUserValue(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  public isAdmin(): boolean {
+    const user = this.currentUserSubject.value;
+    if (!user) return false;
+    if (user.maVaiTro === 1) return true;
+    if (user.email === 'admin@studyhub.com') return true;
+    if (user.vaiTro && (user.vaiTro.toLowerCase().includes('admin') || user.vaiTro.toLowerCase().includes('quantri'))) return true;
+    return false;
   }
 
   public get token(): string | null {

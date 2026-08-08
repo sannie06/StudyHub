@@ -138,13 +138,7 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   };
 
   // Completed sessions history
-  sessionHistory: PomodoroSession[] = [
-    { id: 5, type: 'pomodoro', name: 'Pomodoro 4', duration: '25 phút', timeRange: '10:30 - 10:55', icon: '🍅', iconColor: 'text-red-500' },
-    { id: 4, type: 'pomodoro', name: 'Pomodoro 3', duration: '25 phút', timeRange: '09:55 - 10:20', icon: '🍅', iconColor: 'text-red-500' },
-    { id: 3, type: 'short_break', name: 'Short Break', duration: '5 phút', timeRange: '09:50 - 09:55', icon: '☕', iconColor: 'text-blue-500' },
-    { id: 2, type: 'pomodoro', name: 'Pomodoro 2', duration: '25 phút', timeRange: '09:15 - 09:40', icon: '🍅', iconColor: 'text-red-500' },
-    { id: 1, type: 'pomodoro', name: 'Pomodoro 1', duration: '25 phút', timeRange: '08:40 - 09:05', icon: '🍅', iconColor: 'text-red-500' },
-  ];
+  sessionHistory: PomodoroSession[] = [];
 
   constructor(
     private pomodoroService: PomodoroService,
@@ -158,6 +152,34 @@ export class PomodoroComponent implements OnInit, OnDestroy {
     this.loadTasks();
     this.loadSubjects();
     this.checkActiveSession();
+    this.loadSessionHistoryFromStorage();
+  }
+
+  loadSessionHistoryFromStorage() {
+    const saved = localStorage.getItem('studyhub_pomodoro_session_history');
+    if (saved) {
+      try {
+        this.sessionHistory = JSON.parse(saved);
+      } catch (e) {
+        this.sessionHistory = [];
+      }
+    } else {
+      this.sessionHistory = [];
+    }
+  }
+
+  saveSessionHistoryToStorage() {
+    localStorage.setItem('studyhub_pomodoro_session_history', JSON.stringify(this.sessionHistory));
+  }
+
+  deleteHistoryItem(id: number, event?: Event) {
+    if (event) event.stopPropagation();
+    this.sessionHistory = this.sessionHistory.filter(h => h.id !== id);
+    this.saveSessionHistoryToStorage();
+  }
+
+  getCompletedPomoCount(): number {
+    return this.sessionHistory.filter(s => s.type === 'pomodoro').length;
   }
 
   ngOnDestroy() {
@@ -579,17 +601,20 @@ export class PomodoroComponent implements OnInit, OnDestroy {
     const isShort = this.activeMode === 'short_break';
     const minutes = Math.round(this.totalSeconds / 60);
 
+    const pomoCount = this.sessionHistory.filter(s => s.type === 'pomodoro').length + 1;
+
     const newHistory: PomodoroSession = {
       id: Date.now(),
       type: this.activeMode,
-      name: isPomo ? `Pomodoro ${this.sessionHistory.length + 1}` : isShort ? 'Short Break' : 'Long Break',
+      name: isPomo ? `Pomodoro ${pomoCount}` : (isShort ? 'Short Break' : 'Long Break'),
       duration: `${minutes} phút`,
       timeRange: `${startStr} - ${endStr}`,
-      icon: isPomo ? '🍅' : '☕',
+      icon: isPomo ? '🍅' : (isShort ? '☕' : '🌴'),
       iconColor: isPomo ? 'text-red-500' : 'text-blue-500'
     };
 
     this.sessionHistory.unshift(newHistory);
+    this.saveSessionHistoryToStorage();
   }
 
   loadSubjects() {

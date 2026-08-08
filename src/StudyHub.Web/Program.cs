@@ -5,6 +5,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using StudyHub.Application;
 using StudyHub.Application.Common.Security;
+using StudyHub.Application.Common.Interfaces.Security;
+using StudyHub.Domain.Entities;
 using StudyHub.Infrastructure;
 using StudyHub.Persistence;
 
@@ -117,6 +119,104 @@ using (var scope = app.Services.CreateScope())
         {
             dbContext.Database.Migrate();
             Console.WriteLine("[Database] Migration applied & Database created/verified successfully.");
+
+            // Ensure Admin user (admin@studyhub.com) exists with valid BCrypt hash for "123456" and IsEmailConfirmed = true
+            var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+            var adminUser = dbContext.NguoiDung.FirstOrDefault(u => u.Email == "admin@studyhub.com" || u.MaVaiTro == 1 || u.MaNguoiDung == 1);
+            if (adminUser == null)
+            {
+                adminUser = new NguoiDung
+                {
+                    HoTen = "System Admin",
+                    Email = "admin@studyhub.com",
+                    MatKhauHash = hasher.HashPassword("123456"),
+                    MaVaiTro = 1,
+                    TrangThai = 1,
+                    IsEmailConfirmed = true,
+                    NgayTao = DateTime.Now
+                };
+                dbContext.NguoiDung.Add(adminUser);
+            }
+            else
+            {
+                adminUser.Email = "admin@studyhub.com";
+                adminUser.MatKhauHash = hasher.HashPassword("123456");
+                adminUser.IsEmailConfirmed = true;
+                adminUser.TrangThai = 1;
+                adminUser.MaVaiTro = 1;
+                adminUser.DaXoa = false;
+            }
+            dbContext.SaveChanges();
+            Console.WriteLine("[Admin Seed] Password for admin@studyhub.com updated to '123456' & confirmed successfully.");
+
+            // Ensure Sample Study Groups exist
+            if (!dbContext.NhomHocTap.Any(g => !g.DaXoa))
+            {
+                var sampleGroups = new List<NhomHocTap>
+                {
+                    new NhomHocTap
+                    {
+                        TenNhom = "Nhóm Lập Trình Web Fullstack (ASP.NET Core & Angular)",
+                        MoTa = "Nhóm học tập, trao đổi kinh nghiệm lập trình Web API và Angular Framework.",
+                        MaNguoiTao = adminUser.MaNguoiDung,
+                        MaThamGia = "WEB2026",
+                        SoLuongToiDa = 15,
+                        TrangThai = 1,
+                        NgayTao = DateTime.Now.AddDays(-20)
+                    },
+                    new NhomHocTap
+                    {
+                        TenNhom = "Cấu Trúc Dữ Liệu & Giải Thuật 2026",
+                        MoTa = "Ôn tập thuật toán LeetCode, chuẩn bị cho các kỳ thi và phỏng vấn phần mềm.",
+                        MaNguoiTao = adminUser.MaNguoiDung,
+                        MaThamGia = "ALGO99",
+                        SoLuongToiDa = 10,
+                        TrangThai = 1,
+                        NgayTao = DateTime.Now.AddDays(-15)
+                    },
+                    new NhomHocTap
+                    {
+                        TenNhom = "Cơ Sở Dữ Liệu SQL Server Advanced",
+                        MoTa = "Thảo luận tối ưu hóa truy vấn SQL, thiết kế DB và Trigger/Stored Procedures.",
+                        MaNguoiTao = adminUser.MaNguoiDung,
+                        MaThamGia = "SQLDB88",
+                        SoLuongToiDa = 12,
+                        TrangThai = 1,
+                        NgayTao = DateTime.Now.AddDays(-10)
+                    },
+                    new NhomHocTap
+                    {
+                        TenNhom = "Tiếng Anh Chuyên Ngành CNTT",
+                        MoTa = "Nhóm luyện nói Tiếng Anh IT, giao tiếp và viết CV ứng tuyển doanh nghiệp.",
+                        MaNguoiTao = adminUser.MaNguoiDung,
+                        MaThamGia = "ENG4IT",
+                        SoLuongToiDa = 20,
+                        TrangThai = 1,
+                        NgayTao = DateTime.Now.AddDays(-5)
+                    }
+                };
+
+                dbContext.NhomHocTap.AddRange(sampleGroups);
+                dbContext.SaveChanges();
+
+                var allUsers = dbContext.NguoiDung.Where(u => !u.DaXoa).ToList();
+                foreach (var grp in sampleGroups)
+                {
+                    foreach (var usr in allUsers)
+                    {
+                        dbContext.ThanhVienNhom.Add(new ThanhVienNhom
+                        {
+                            MaNhom = grp.MaNhom,
+                            MaNguoiDung = usr.MaNguoiDung,
+                            VaiTro = (byte)(usr.MaNguoiDung == grp.MaNguoiTao ? 2 : 0),
+                            TrangThai = 1,
+                            NgayThamGia = DateTime.Now.AddDays(-2)
+                        });
+                    }
+                }
+                dbContext.SaveChanges();
+                Console.WriteLine("[Group Seed] 4 Sample Study Groups seeded successfully.");
+            }
         }
         catch (Exception ex)
         {

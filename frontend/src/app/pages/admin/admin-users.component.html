@@ -1,0 +1,217 @@
+<!-- MAIN ADMIN USERS CONTAINER -->
+<div class="min-h-screen bg-[#F8F9FD] p-6 md:p-8 font-sans space-y-6 max-w-[1650px] mx-auto">
+
+  <!-- TOP HEADER -->
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
+      <p class="text-xs text-gray-500 mt-0.5">Giám sát hoạt động, phân quyền và quản lý tài khoản người dùng</p>
+    </div>
+
+    <button (click)="loadUsers(); loadStats()" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 flex items-center gap-1.5 shadow-2xs">
+      <i class="pi pi-refresh text-xs"></i> Tải lại dữ liệu
+    </button>
+  </div>
+
+  <!-- BANNERS ALERT -->
+  <div *ngIf="successMessage" class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-center gap-2">
+    <i class="pi pi-check-circle text-emerald-500 text-sm"></i>
+    <p class="text-xs text-emerald-700 font-bold leading-normal">{{ successMessage }}</p>
+  </div>
+  <div *ngIf="errorMessage" class="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-2">
+    <i class="pi pi-exclamation-circle text-rose-500 text-sm"></i>
+    <p class="text-xs text-rose-700 font-bold leading-normal">{{ errorMessage }}</p>
+  </div>
+
+  <!-- 3 SYSTEM STATS CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    
+    <!-- Stat 1: Total Users -->
+    <div class="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm flex items-center justify-between">
+      <div class="space-y-1">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng người dùng</p>
+        <h3 class="text-2xl font-black text-gray-900">{{ stats?.totalUsers || 8 }}</h3>
+        <p class="text-[10px] text-purple-600 font-medium">Tài khoản trong hệ thống</p>
+      </div>
+      <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl font-bold shadow-2xs">
+        <i class="pi pi-users"></i>
+      </div>
+    </div>
+
+    <!-- Stat 2: Active Students -->
+    <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
+      <div class="space-y-1">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Sinh viên hoạt động</p>
+        <h3 class="text-2xl font-black text-emerald-600">{{ stats?.activeStudents || 7 }}</h3>
+        <p class="text-[10px] text-emerald-600 font-medium">Đang học tập bình thường</p>
+      </div>
+      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold shadow-2xs">
+        <i class="pi pi-user-check"></i>
+      </div>
+    </div>
+
+    <!-- Stat 3: Blocked Users -->
+    <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm flex items-center justify-between">
+      <div class="space-y-1">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tài khoản bị khóa</p>
+        <h3 class="text-2xl font-black text-rose-600">{{ stats?.blockedUsers || 0 }}</h3>
+        <p class="text-[10px] text-rose-600 font-medium">Cần quản trị viên xử lý</p>
+      </div>
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl font-bold shadow-2xs">
+        <i class="pi pi-lock"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- USER MANAGEMENT SECTION -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+    
+    <!-- Table Header & Controls -->
+    <div class="flex items-center justify-between flex-wrap gap-4 border-b border-gray-100 pb-4">
+      <div>
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <span>Danh sách người dùng hệ thống</span>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+            {{ filteredUsers.length }} người dùng
+          </span>
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Tìm kiếm, mở/khóa tài khoản và thay đổi phân quyền người dùng</p>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Search Input -->
+        <div class="relative w-64">
+          <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+          <input type="text" [(ngModel)]="searchTerm" (input)="applyFilters()" placeholder="Tìm theo tên hoặc email..."
+                 class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#5B4DFF] focus:bg-white transition-all"/>
+        </div>
+
+        <!-- Role Filter Dropdown -->
+        <select [(ngModel)]="selectedRoleFilter" (change)="applyFilters()" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#5B4DFF]">
+          <option [value]="0">Tất cả vai trò</option>
+          <option [value]="1">System Admin</option>
+          <option [value]="2">Sinh viên</option>
+        </select>
+
+        <!-- Status Filter Dropdown -->
+        <select [(ngModel)]="selectedStatusFilter" (change)="applyFilters()" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#5B4DFF]">
+          <option value="all">Tất cả trạng thái</option>
+          <option value="1">🟢 Đang hoạt động</option>
+          <option value="0">🔴 Bị khóa</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- USERS TABLE -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-gray-600">
+        <thead class="bg-gray-50/80 text-[11px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
+          <tr>
+            <th class="py-3 px-4 font-bold">Người dùng</th>
+            <th class="py-3 px-4 font-bold">Số điện thoại</th>
+            <th class="py-3 px-4 font-bold">Vai trò</th>
+            <th class="py-3 px-4 font-bold">Trạng thái</th>
+            <th class="py-3 px-4 font-bold">Ngày tham gia</th>
+            <th class="py-3 px-4 font-bold text-right">Thao tác Admin</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr *ngFor="let user of filteredUsers" class="hover:bg-gray-50/60 transition-colors">
+            
+            <!-- User Info -->
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs overflow-hidden flex-shrink-0 border border-purple-200">
+                  <img *ngIf="user.anhDaiDien" [src]="user.anhDaiDien.startsWith('http') ? user.anhDaiDien : 'http://localhost:5186' + user.anhDaiDien" alt="Avatar" class="w-full h-full object-cover">
+                  <span *ngIf="!user.anhDaiDien">{{ user.hoTen.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div>
+                  <p class="font-bold text-gray-900">{{ user.hoTen }}</p>
+                  <p class="text-[11px] text-gray-400">{{ user.email }}</p>
+                </div>
+              </div>
+            </td>
+
+            <!-- Phone -->
+            <td class="py-3.5 px-4 font-medium text-gray-600">
+              {{ user.soDienThoai || '---' }}
+            </td>
+
+            <!-- Role Badge -->
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 border"
+                    [class.bg-purple-50]="user.maVaiTro === 1"
+                    [class.text-purple-700]="user.maVaiTro === 1"
+                    [class.border-purple-200]="user.maVaiTro === 1"
+                    [class.bg-slate-50]="user.maVaiTro !== 1"
+                    [class.text-slate-600]="user.maVaiTro !== 1"
+                    [class.border-slate-200]="user.maVaiTro !== 1">
+                <i class="pi text-[9px]" [class.pi-shield]="user.maVaiTro === 1" [class.pi-user]="user.maVaiTro !== 1"></i>
+                {{ user.tenVaiTro }}
+              </span>
+            </td>
+
+            <!-- Status Badge -->
+            <td class="py-3.5 px-4">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 border"
+                    [class.bg-emerald-50]="user.trangThai === 1"
+                    [class.text-emerald-700]="user.trangThai === 1"
+                    [class.border-emerald-200]="user.trangThai === 1"
+                    [class.bg-rose-50]="user.trangThai === 0"
+                    [class.text-rose-700]="user.trangThai === 0"
+                    [class.border-rose-200]="user.trangThai === 0">
+                <span class="w-1.5 h-1.5 rounded-full" [class.bg-emerald-500]="user.trangThai === 1" [class.bg-rose-500]="user.trangThai === 0"></span>
+                {{ user.trangThai === 1 ? 'Hoạt động' : 'Bị khóa' }}
+              </span>
+            </td>
+
+            <!-- Date -->
+            <td class="py-3.5 px-4 text-gray-500 text-[11px]">
+              {{ user.ngayTao | date:'dd/MM/yyyy' }}
+            </td>
+
+            <!-- Admin Actions -->
+            <td class="py-3.5 px-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <!-- Toggle Block / Unblock Button -->
+                <button (click)="toggleUserStatus(user)"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1 cursor-pointer"
+                        [class.bg-rose-50]="user.trangThai === 1"
+                        [class.text-rose-600]="user.trangThai === 1"
+                        [class.border-rose-200]="user.trangThai === 1"
+                        [class.hover:bg-rose-100]="user.trangThai === 1"
+                        [class.bg-emerald-50]="user.trangThai === 0"
+                        [class.text-emerald-600]="user.trangThai === 0"
+                        [class.border-emerald-200]="user.trangThai === 0"
+                        [class.hover:bg-emerald-100]="user.trangThai === 0">
+                  <i class="pi text-[10px]" [class.pi-lock]="user.trangThai === 1" [class.pi-unlock]="user.trangThai === 0"></i>
+                  {{ user.trangThai === 1 ? 'Khóa' : 'Mở khóa' }}
+                </button>
+
+                <!-- Change Role Button -->
+                <button (click)="changeUserRole(user)"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all flex items-center gap-1 cursor-pointer">
+                  <i class="pi pi-key text-[10px]"></i>
+                  {{ user.maVaiTro === 1 ? 'Đổi sang Sinh viên' : 'Phong làm Admin' }}
+                </button>
+              </div>
+            </td>
+
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="filteredUsers.length === 0">
+            <td colspan="6" class="text-center py-8 text-gray-400">
+              <i class="pi pi-user-slash text-2xl mb-1 block"></i>
+              Không tìm thấy người dùng nào phù hợp.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>

@@ -24,9 +24,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private authService: AuthService,
+    public authService: AuthService,
     private notificationService: NotificationService
   ) {}
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
 
   ngOnInit() {
     this.currentUrl = this.router.url;

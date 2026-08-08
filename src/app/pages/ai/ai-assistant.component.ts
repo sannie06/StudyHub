@@ -1,15 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AiService, AiChatResponse, StudyPlanResponse, StudyPlanItem } from '../../services/ai.service';
+import { DashboardService, DashboardData } from '../../services/dashboard.service';
 
-export interface ChatHistoryItem {
-  id: number;
+export interface ChatSession {
+  id: string;
   title: string;
   time: string;
   icon: string;
-  isActive?: boolean;
+  messages: ChatMessage[];
+  createdAt: number;
 }
 
 export interface QuickPromptItem {
@@ -50,35 +52,30 @@ export interface ChatMessage {
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './ai-assistant.component.html',
   styles: [`
-    .chat-container::-webkit-scrollbar { width: 4px; }
-    .chat-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .chat-container::-webkit-scrollbar,
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+    .chat-container::-webkit-scrollbar-track,
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 9999px; }
+    .chat-container::-webkit-scrollbar-thumb,
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .chat-container::-webkit-scrollbar-thumb:hover,
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   `]
 })
-export class AiAssistantComponent implements OnInit {
+export class AiAssistantComponent implements OnInit, AfterViewChecked {
+  @ViewChild('chatContainer') private chatContainer?: ElementRef;
+  private shouldScrollToBottom: boolean = false;
+
   activeTab: 'chat' | 'analytics' | 'recommendations' | 'help' = 'chat';
   promptInput: string = '';
+  historySearchQuery: string = '';
 
   isAiThinking: boolean = false;
   errorMessage: string = '';
 
-  messages: ChatMessage[] = [
-    {
-      sender: 'ai',
-      text: 'Xin chào! 👋 Tôi là Trợ lý AI cá nhân trên StudyHub. Tôi có thể giúp bạn lập kế hoạch học tập, kiểm tra deadline, hoặc phân tích tiến độ hôm nay.',
-      time: '10:30',
-      actionSuggestions: ['Hôm nay nên học gì?', 'Xem deadline sắp tới', 'Phân tích mức độ quá tải', 'Sinh kế hoạch học tập 7 ngày']
-    }
-  ];
-
-  chatHistory: ChatHistoryItem[] = [
-    { id: 1, title: 'Lập kế hoạch ôn thi Java', time: '10:30', icon: 'pi-comments', isActive: true },
-    { id: 2, title: 'Tóm tắt tài liệu Cơ sở dữ liệu', time: '09:15', icon: 'pi-file' },
-    { id: 3, title: 'Phân tích tiến độ học tập', time: 'Hôm qua', icon: 'pi-chart-bar' },
-    { id: 4, title: 'Gợi ý bài tập DSA', time: 'Hôm qua', icon: 'pi-code' },
-    { id: 5, title: 'Hỗ trợ nhóm DATN', time: '2 ngày trước', icon: 'pi-users' },
-    { id: 6, title: 'Giải thích thuật toán BFS', time: '3 ngày trước', icon: 'pi-code' },
-    { id: 7, title: 'Lịch học tuần tới', time: '3 ngày trước', icon: 'pi-calendar' }
-  ];
+  chatSessions: ChatSession[] = [];
+  activeSessionId: string = '';
+  messages: ChatMessage[] = [];
 
   quickPrompts: QuickPromptItem[] = [
     { id: 1, title: 'Lập kế hoạch học tập', icon: 'pi-file-edit', iconBg: 'bg-purple-50 text-purple-600', promptType: 'WorkloadAnalysis' },
@@ -106,10 +103,151 @@ export class AiAssistantComponent implements OnInit {
     { id: 4, title: 'Lịch học gợi ý', desc: 'Ôn tập Java vào 20:00 tối nay', badge: 'Gợi ý', badgeClass: 'bg-purple-100 text-purple-700', icon: 'pi-calendar' }
   ];
 
-  constructor(private aiService: AiService) {}
+  dashboardStats = {
+    tongSoCongViec: 35,
+    congViecHoanThanh: 28,
+    completionRate: 80,
+    quaHan: 2,
+    streakDays: 7,
+    performanceRate: 82,
+    lastUpdatedTime: '10:30'
+  };
+
+  constructor(
+    private aiService: AiService,
+    private dashboardService: DashboardService,
+    private router: Router
+  ) {}
+
+  onSelectRecommendation(rec: AIRecommendationItem) {
+    if (rec.title.includes('Ưu tiên')) {
+      this.sendPrompt('Phân tích mức độ quá tải và gợi ý thứ tự ưu tiên các công việc hôm nay', 'PriorityTasks');
+    } else if (rec.title.includes('Pomodoro')) {
+      this.router.navigate(['/pomodoro']);
+    } else if (rec.title.includes('Hoạt động nhóm')) {
+      this.router.navigate(['/groups']);
+    } else if (rec.title.includes('Lịch học')) {
+      this.router.navigate(['/calendar']);
+    }
+  }
 
   ngOnInit() {
     this.loadWorkloadAndAdvice();
+    this.loadChatSessionsFromStorage();
+    this.loadRealDashboardStats();
+  }
+
+  loadRealDashboardStats() {
+    this.dashboardService.getDashboardData().subscribe({
+      next: (res: DashboardData) => {
+        if (res && res.statistics) {
+          const total = res.statistics.tongSoCongViec || 0;
+          const completed = res.statistics.congViecHoanThanh || 0;
+          const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+          const todayDeadline = res.statistics.deadlineHomNay || 0;
+
+          const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+          this.dashboardStats = {
+            tongSoCongViec: total,
+            congViecHoanThanh: completed,
+            completionRate: rate,
+            quaHan: todayDeadline,
+            streakDays: 7,
+            performanceRate: rate > 0 ? rate : (total > 0 ? rate : 82),
+            lastUpdatedTime: nowTime
+          };
+        }
+      },
+      error: (err) => console.error('Error fetching real dashboard stats for AI component:', err)
+    });
+  }
+
+  loadChatSessionsFromStorage() {
+    const saved = localStorage.getItem('studyhub_ai_chat_sessions');
+    if (saved) {
+      try {
+        this.chatSessions = JSON.parse(saved);
+      } catch (e) {
+        this.chatSessions = [];
+      }
+    }
+
+    if (!this.chatSessions || this.chatSessions.length === 0) {
+      const nowStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      const defaultSession: ChatSession = {
+        id: 'chat_' + Date.now(),
+        title: 'Hội thoại mới',
+        time: nowStr,
+        icon: 'pi-comments',
+        createdAt: Date.now(),
+        messages: [
+          {
+            sender: 'ai',
+            text: 'Xin chào! 👋 Tôi là Trợ lý AI cá nhân trên StudyHub. Tôi có thể giúp bạn lập kế hoạch học tập, kiểm tra deadline, hoặc phân tích tiến độ hôm nay.',
+            time: nowStr,
+            actionSuggestions: ['Hôm nay nên học gì?', 'Xem deadline sắp tới', 'Phân tích mức độ quá tải', 'Sinh kế hoạch học tập 7 ngày']
+          }
+        ]
+      };
+      this.chatSessions = [defaultSession];
+      this.saveChatSessionsToStorage();
+    }
+
+    this.activeSessionId = this.chatSessions[0].id;
+    this.messages = this.chatSessions[0].messages;
+  }
+
+  saveChatSessionsToStorage() {
+    localStorage.setItem('studyhub_ai_chat_sessions', JSON.stringify(this.chatSessions));
+  }
+
+  get filteredChatHistory(): ChatSession[] {
+    if (!this.historySearchQuery || !this.historySearchQuery.trim()) {
+      return this.chatSessions;
+    }
+    const q = this.historySearchQuery.toLowerCase().trim();
+    return this.chatSessions.filter(s => s.title.toLowerCase().includes(q));
+  }
+
+  selectHistory(id: string) {
+    this.activeSessionId = id;
+    const found = this.chatSessions.find(s => s.id === id);
+    if (found) {
+      this.messages = found.messages;
+      this.shouldScrollToBottom = true;
+    }
+  }
+
+  deleteHistory(id: string, event?: Event) {
+    if (event) event.stopPropagation();
+    this.chatSessions = this.chatSessions.filter(s => s.id !== id);
+    if (this.chatSessions.length === 0) {
+      this.startNewChat();
+    } else {
+      if (this.activeSessionId === id) {
+        this.selectHistory(this.chatSessions[0].id);
+      }
+      this.saveChatSessionsToStorage();
+    }
+  }
+
+  private syncActiveSession() {
+    const active = this.chatSessions.find(s => s.id === this.activeSessionId);
+    if (active) {
+      active.messages = [...this.messages];
+      const lastMsg = this.messages[this.messages.length - 1];
+      if (lastMsg) {
+        active.time = lastMsg.time;
+      }
+      if (active.title === 'Hội thoại mới' || active.title === 'Cuộc trò chuyện mới') {
+        const userMsg = this.messages.find(m => m.sender === 'user');
+        if (userMsg) {
+          active.title = userMsg.text.length > 25 ? userMsg.text.substring(0, 25) + '...' : userMsg.text;
+        }
+      }
+      this.saveChatSessionsToStorage();
+    }
   }
 
   loadWorkloadAndAdvice() {
@@ -136,8 +274,19 @@ export class AiAssistantComponent implements OnInit {
     });
   }
 
-  selectHistory(id: number) {
-    this.chatHistory.forEach(h => h.isActive = (h.id === id));
+  ngAfterViewChecked() {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
+  }
+
+  scrollToBottom(): void {
+    try {
+      if (this.chatContainer) {
+        this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
+      }
+    } catch (err) {}
   }
 
   selectQuickPrompt(prompt: QuickPromptItem) {
@@ -164,6 +313,8 @@ export class AiAssistantComponent implements OnInit {
     this.promptInput = '';
     this.isAiThinking = true;
     this.errorMessage = '';
+    this.syncActiveSession();
+    this.shouldScrollToBottom = true;
 
     this.aiService.chat({ message: text, promptType }).subscribe({
       next: (res: AiChatResponse) => {
@@ -175,6 +326,8 @@ export class AiAssistantComponent implements OnInit {
           actionSuggestions: res.actionSuggestions,
           workloadLevel: res.workloadLevel
         });
+        this.syncActiveSession();
+        this.shouldScrollToBottom = true;
       },
       error: (err) => {
         this.isAiThinking = false;
@@ -192,6 +345,8 @@ export class AiAssistantComponent implements OnInit {
             time: timeStr
           });
         }
+        this.syncActiveSession();
+        this.shouldScrollToBottom = true;
       }
     });
   }
@@ -205,6 +360,9 @@ export class AiAssistantComponent implements OnInit {
     });
 
     this.isAiThinking = true;
+    this.syncActiveSession();
+    this.shouldScrollToBottom = true;
+
     this.aiService.generateStudyPlan({ goal, numberOfDays: 7 }).subscribe({
       next: (res: StudyPlanResponse) => {
         this.isAiThinking = false;
@@ -223,22 +381,40 @@ export class AiAssistantComponent implements OnInit {
           planItems: mappedItems,
           actionSuggestions: ['Tạo lịch học', 'Điều chỉnh kế hoạch']
         });
+        this.syncActiveSession();
+        this.shouldScrollToBottom = true;
       },
       error: (err) => {
         this.isAiThinking = false;
         console.error('Error generating study plan:', err);
+        this.syncActiveSession();
+        this.shouldScrollToBottom = true;
       }
     });
   }
 
   startNewChat() {
-    this.messages = [
-      {
-        sender: 'ai',
-        text: 'Cuộc trò chuyện mới đã bắt đầu! Bạn muốn hỏi gì hôm nay?',
-        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-        actionSuggestions: ['Hôm nay nên học gì?', 'Xem deadline sắp tới', 'Sinh kế hoạch 7 ngày']
-      }
-    ];
+    const nowStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const newSession: ChatSession = {
+      id: 'chat_' + Date.now(),
+      title: 'Hội thoại mới',
+      time: nowStr,
+      icon: 'pi-comments',
+      createdAt: Date.now(),
+      messages: [
+        {
+          sender: 'ai',
+          text: 'Cuộc trò chuyện mới đã bắt đầu! Bạn muốn hỏi gì hôm nay?',
+          time: nowStr,
+          actionSuggestions: ['Hôm nay nên học gì?', 'Xem deadline sắp tới', 'Sinh kế hoạch 7 ngày']
+        }
+      ]
+    };
+
+    this.chatSessions.unshift(newSession);
+    this.activeSessionId = newSession.id;
+    this.messages = newSession.messages;
+    this.saveChatSessionsToStorage();
+    this.shouldScrollToBottom = true;
   }
 }

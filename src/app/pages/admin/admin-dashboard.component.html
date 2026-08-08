@@ -1,0 +1,476 @@
+<!-- MAIN ADMIN DASHBOARD CONTAINER (MATCHING PHOTO 2) -->
+<div class="min-h-screen bg-[#F8F9FD] p-6 md:p-8 font-sans space-y-6 max-w-[1650px] mx-auto text-gray-800">
+
+  <!-- TOP HEADER -->
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Dashboard quản trị</h1>
+      <p class="text-xs text-gray-500 mt-0.5">Tổng quan hệ thống StudyHub</p>
+    </div>
+
+    <div class="flex items-center gap-3 relative">
+      <!-- Date Range Filter Dropdown -->
+      <div class="relative">
+        <button (click)="toggleDateMenu()" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-50 flex items-center gap-2 shadow-2xs transition-all">
+          <i class="pi pi-calendar text-[#5B4DFF]"></i>
+          <span>{{ selectedDateRangeLabel }}</span>
+          <i class="pi pi-chevron-down text-[10px] text-gray-400"></i>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div *ngIf="showDateMenu" class="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl z-50 py-1.5 text-xs font-medium space-y-0.5">
+          <button (click)="selectDateRange('today')" class="w-full px-3.5 py-2 text-left hover:bg-purple-50 flex items-center justify-between text-gray-700" [class.font-bold]="selectedRangeKey === 'today'" [class.text-[#5B4DFF]]="selectedRangeKey === 'today'">
+            <span>Hôm nay</span>
+            <i *ngIf="selectedRangeKey === 'today'" class="pi pi-check text-[10px]"></i>
+          </button>
+          <button (click)="selectDateRange('7days')" class="w-full px-3.5 py-2 text-left hover:bg-purple-50 flex items-center justify-between text-gray-700" [class.font-bold]="selectedRangeKey === '7days'" [class.text-[#5B4DFF]]="selectedRangeKey === '7days'">
+            <span>7 ngày qua</span>
+            <i *ngIf="selectedRangeKey === '7days'" class="pi pi-check text-[10px]"></i>
+          </button>
+          <button (click)="selectDateRange('thisWeek')" class="w-full px-3.5 py-2 text-left hover:bg-purple-50 flex items-center justify-between text-gray-700" [class.font-bold]="selectedRangeKey === 'thisWeek'" [class.text-[#5B4DFF]]="selectedRangeKey === 'thisWeek'">
+            <span>Tuần này</span>
+            <i *ngIf="selectedRangeKey === 'thisWeek'" class="pi pi-check text-[10px]"></i>
+          </button>
+          <button (click)="selectDateRange('thisMonth')" class="w-full px-3.5 py-2 text-left hover:bg-purple-50 flex items-center justify-between text-gray-700" [class.font-bold]="selectedRangeKey === 'thisMonth'" [class.text-[#5B4DFF]]="selectedRangeKey === 'thisMonth'">
+            <span>Tháng này</span>
+            <i *ngIf="selectedRangeKey === 'thisMonth'" class="pi pi-check text-[10px]"></i>
+          </button>
+          <div class="my-1 border-t border-gray-100"></div>
+          <button (click)="selectDateRange('all')" class="w-full px-3.5 py-2 text-left hover:bg-purple-50 flex items-center justify-between text-gray-700" [class.font-bold]="selectedRangeKey === 'all'" [class.text-[#5B4DFF]]="selectedRangeKey === 'all'">
+            <span>Tất cả thời gian</span>
+            <i *ngIf="selectedRangeKey === 'all'" class="pi pi-check text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Export Report Button -->
+      <button (click)="exportReport()" class="px-4 py-2 bg-[#5B4DFF] text-white rounded-xl text-xs font-semibold hover:bg-[#4a3ecc] flex items-center gap-2 shadow-sm transition-all active:scale-95">
+        <i class="pi pi-download text-xs"></i>
+        <span>Xuất báo cáo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ROW 1: 5 STAT CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+    <!-- Stat 1: Total Users -->
+    <div class="bg-white p-4.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl flex-shrink-0">
+        <i class="pi pi-users"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-400">Tổng người dùng</p>
+        <h3 class="text-xl font-bold text-gray-900 mt-0.5">{{ stats?.totalUsers || 1250 }}</h3>
+        <p class="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-0.5">
+          <i class="pi pi-arrow-up text-[9px]"></i> 12.5% so với tuần trước
+        </p>
+      </div>
+    </div>
+
+    <!-- Stat 2: Active Students -->
+    <div class="bg-white p-4.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl flex-shrink-0">
+        <i class="pi pi-graduation-cap"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-400">Sinh viên</p>
+        <h3 class="text-xl font-bold text-gray-900 mt-0.5">{{ stats?.activeStudents || 1200 }}</h3>
+        <p class="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-0.5">
+          <i class="pi pi-arrow-up text-[9px]"></i> 10.3% so với tuần trước
+        </p>
+      </div>
+    </div>
+
+    <!-- Stat 3: Study Groups -->
+    <div class="bg-white p-4.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl flex-shrink-0">
+        <i class="pi pi-users"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-400">Nhóm học tập</p>
+        <h3 class="text-xl font-bold text-gray-900 mt-0.5">{{ stats?.totalStudyGroups || 85 }}</h3>
+        <p class="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-0.5">
+          <i class="pi pi-arrow-up text-[9px]"></i> 5.2% so với tuần trước
+        </p>
+      </div>
+    </div>
+
+    <!-- Stat 4: Total Tasks -->
+    <div class="bg-white p-4.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl flex-shrink-0">
+        <i class="pi pi-check-square"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-400">Tổng Task</p>
+        <h3 class="text-xl font-bold text-gray-900 mt-0.5">{{ stats?.totalTasks || 8500 }}</h3>
+        <p class="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-0.5">
+          <i class="pi pi-arrow-up text-[9px]"></i> 15.8% so với tuần trước
+        </p>
+      </div>
+    </div>
+
+    <!-- Stat 5: Completed Tasks -->
+    <div class="bg-white p-4.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl flex-shrink-0">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-400">Task hoàn thành</p>
+        <h3 class="text-xl font-bold text-gray-900 mt-0.5">{{ completedTasksCount }}</h3>
+        <p class="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-0.5">
+          <i class="pi pi-arrow-up text-[9px]"></i> 18.7% so với tuần trước
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: 3 CHARTS & CARDS -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- Left Card: User Growth Chart (Col 5) -->
+    <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-gray-900">Tăng trưởng người dùng</h3>
+        <select class="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-gray-50 text-gray-600 focus:outline-none">
+          <option>6 tháng gần nhất</option>
+          <option>3 tháng gần nhất</option>
+        </select>
+      </div>
+
+      <!-- Chart Legend -->
+      <div class="flex items-center gap-4 text-xs">
+        <span class="flex items-center gap-1.5 font-medium text-gray-600">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#5B4DFF]"></span> Người dùng mới
+        </span>
+        <span class="flex items-center gap-1.5 font-medium text-gray-600">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6]"></span> Tổng người dùng
+        </span>
+      </div>
+
+      <!-- Vector Line Chart SVG -->
+      <div class="h-48 w-full pt-2">
+        <svg class="w-full h-full" viewBox="0 0 400 160">
+          <!-- Grid Lines -->
+          <line x1="40" y1="20" x2="390" y2="20" stroke="#f1f5f9" stroke-dasharray="4"/>
+          <line x1="40" y1="60" x2="390" y2="60" stroke="#f1f5f9" stroke-dasharray="4"/>
+          <line x1="40" y1="100" x2="390" y2="100" stroke="#f1f5f9" stroke-dasharray="4"/>
+          <line x1="40" y1="140" x2="390" y2="140" stroke="#f1f5f9"/>
+
+          <!-- Y-Axis Labels -->
+          <text x="30" y="24" class="text-[9px] fill-gray-400" text-anchor="end">1.500</text>
+          <text x="30" y="64" class="text-[9px] fill-gray-400" text-anchor="end">1.200</text>
+          <text x="30" y="104" class="text-[9px] fill-gray-400" text-anchor="end">900</text>
+          <text x="30" y="144" class="text-[9px] fill-gray-400" text-anchor="end">600</text>
+
+          <!-- Blue Line (Total Users) -->
+          <path [attr.d]="totalUsersPath" fill="none" stroke="#3B82F6" stroke-width="2.5"/>
+          <!-- Purple Line (New Users) -->
+          <path [attr.d]="newUsersPath" fill="none" stroke="#8B5CF6" stroke-width="2.5"/>
+
+          <!-- Render Monthly Points & Labels dynamically from DB -->
+          <ng-container *ngIf="stats?.userGrowth && (stats?.userGrowth?.length || 0) > 0; else defaultGrowthPoints">
+            <g *ngFor="let item of stats!.userGrowth; let i = index">
+              <!-- Total Users Point -->
+              <circle [attr.cx]="50 + i * 65" [attr.cy]="getPointY(item.totalUsers)" r="3.5" fill="#3B82F6"/>
+              <text *ngIf="i === (stats?.userGrowth?.length || 0) - 1" [attr.x]="50 + i * 65 + 8" [attr.y]="getPointY(item.totalUsers) + 3" class="text-[10px] font-bold fill-[#3B82F6]">{{ item.totalUsers }}</text>
+
+              <!-- New Users Point -->
+              <circle [attr.cx]="50 + i * 65" [attr.cy]="getPointY(item.newUsers)" r="3.5" fill="#8B5CF6"/>
+              <text *ngIf="i === (stats?.userGrowth?.length || 0) - 1" [attr.x]="50 + i * 65 + 8" [attr.y]="getPointY(item.newUsers) + 3" class="text-[10px] font-bold fill-[#8B5CF6]">{{ item.newUsers }}</text>
+
+              <!-- X-Axis Month Label -->
+              <text [attr.x]="50 + i * 65" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">{{ item.monthLabel }}</text>
+            </g>
+          </ng-container>
+
+          <ng-template #defaultGrowthPoints>
+            <!-- Dots for Blue Line -->
+            <circle cx="50" cy="110" r="3.5" fill="#3B82F6"/>
+            <circle cx="115" cy="80" r="3.5" fill="#3B82F6"/>
+            <circle cx="180" cy="60" r="3.5" fill="#3B82F6"/>
+            <circle cx="245" cy="45" r="3.5" fill="#3B82F6"/>
+            <circle cx="310" cy="35" r="3.5" fill="#3B82F6"/>
+            <circle cx="375" cy="25" r="4.5" fill="#3B82F6" stroke="white" stroke-width="2"/>
+            <text x="375" y="20" class="text-[10px] font-bold fill-[#3B82F6]" text-anchor="start">1.250</text>
+
+            <!-- Dots for Purple Line -->
+            <circle cx="50" cy="130" r="3.5" fill="#8B5CF6"/>
+            <circle cx="115" cy="125" r="3.5" fill="#8B5CF6"/>
+            <circle cx="180" cy="120" r="3.5" fill="#8B5CF6"/>
+            <circle cx="245" cy="115" r="3.5" fill="#8B5CF6"/>
+            <circle cx="310" cy="113" r="3.5" fill="#8B5CF6"/>
+            <circle cx="375" cy="110" r="4.5" fill="#8B5CF6" stroke="white" stroke-width="2"/>
+            <text x="375" y="112" class="text-[10px] font-bold fill-[#8B5CF6]" text-anchor="start">230</text>
+
+            <!-- X-Axis Labels -->
+            <text x="50" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">Tháng 1</text>
+            <text x="115" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">Tháng 2</text>
+            <text x="180" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">Tháng 3</text>
+            <text x="245" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">Tháng 4</text>
+            <text x="310" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">Tháng 5</text>
+            <text x="375" y="155" class="text-[9px] fill-gray-400" text-anchor="middle">Tháng 6</text>
+          </ng-template>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Center Card: System Activity Today (Col 3) -->
+    <div class="lg:col-span-3 bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
+      <h3 class="text-sm font-bold text-gray-900">Hoạt động hệ thống <span class="text-xs font-normal text-gray-400">(Hôm nay)</span></h3>
+
+      <div class="space-y-3">
+        <!-- Activity 1 -->
+        <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-sm">
+              <i class="pi pi-calendar-plus"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-gray-500">Task được tạo</p>
+              <h4 class="text-base font-bold text-gray-900">{{ stats?.tasksCreatedToday || 0 }}</h4>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[8px]"></i> Hôm nay
+          </span>
+        </div>
+
+        <!-- Activity 2 -->
+        <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+              <i class="pi pi-clock"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-gray-500">Phiên Pomodoro</p>
+              <h4 class="text-base font-bold text-gray-900">{{ stats?.pomodoroSessionsToday || 0 }}</h4>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[8px]"></i> Hôm nay
+          </span>
+        </div>
+
+        <!-- Activity 3 -->
+        <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+              <i class="pi pi-users"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-gray-500">Nhóm được tạo</p>
+              <h4 class="text-base font-bold text-gray-900">{{ stats?.groupsCreatedToday || 0 }}</h4>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[8px]"></i> Hôm nay
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Card: Study Group Stats (Col 4) -->
+    <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
+      <h3 class="text-sm font-bold text-gray-900">Thống kê nhóm học tập</h3>
+
+      <div class="flex items-center justify-between gap-4">
+        <!-- Stats list -->
+        <div class="space-y-2 text-xs">
+          <div>
+            <p class="text-[11px] font-medium text-gray-400">Tổng nhóm</p>
+            <h4 class="text-lg font-bold text-gray-900">{{ stats?.totalStudyGroups || 0 }}</h4>
+          </div>
+          <div>
+            <p class="text-[11px] font-medium text-gray-500">Nhóm hoạt động</p>
+            <p class="text-sm font-bold text-emerald-600">{{ stats?.activeStudyGroups || stats?.totalStudyGroups || 0 }}</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-medium text-gray-500">Nhóm ít hoạt động</p>
+            <p class="text-sm font-bold text-rose-500">{{ stats?.inactiveStudyGroups || 0 }}</p>
+          </div>
+          <div>
+            <p class="text-[11px] font-medium text-gray-500">Nhóm mới (tuần này)</p>
+            <p class="text-sm font-bold text-purple-600">{{ stats?.newStudyGroupsThisWeek || 0 }}</p>
+          </div>
+        </div>
+
+        <!-- SVG Donut Chart -->
+        <div class="relative w-36 h-36 flex items-center justify-center">
+          <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+            <path class="text-gray-100" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="text-emerald-500" [attr.stroke-dasharray]="activeGroupDashArray" stroke-width="4.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="text-rose-500" [attr.stroke-dasharray]="inactiveGroupDashArray" [attr.stroke-dashoffset]="'-' + activeGroupPercent" stroke-width="4.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span class="text-lg font-bold text-gray-900">{{ stats?.totalStudyGroups || 0 }}</span>
+            <span class="text-[9px] text-gray-400 font-medium">Tổng nhóm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut Legend -->
+      <div class="pt-2 border-t border-gray-100 flex items-center justify-around text-xs">
+        <span class="flex items-center gap-1.5 font-medium text-gray-600">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hoạt động <b class="text-gray-900">{{ stats?.activeStudyGroups || stats?.totalStudyGroups || 0 }} ({{ activeGroupPercent }}%)</b>
+        </span>
+        <span class="flex items-center gap-1.5 font-medium text-gray-600">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Ít hoạt động <b class="text-gray-900">{{ stats?.inactiveStudyGroups || 0 }} ({{ 100 - activeGroupPercent }}%)</b>
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 3: 3 DETAILED CARDS -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- Block 1: AI Assistant Stats (Col 4) -->
+    <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
+      <h3 class="text-xs font-bold text-gray-900">Thống kê AI Assistant</h3>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-50 space-y-1">
+          <div class="w-7 h-7 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xs">
+            <i class="pi pi-graduation-cap"></i>
+          </div>
+          <p class="text-[10px] text-gray-500 font-medium">Tổng lượt sử dụng</p>
+          <h4 class="text-base font-bold text-gray-900">{{ stats?.totalAiUsage || 0 }}</h4>
+          <span class="text-[9px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[7px]"></i> Hệ thống
+          </span>
+        </div>
+
+        <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-50 space-y-1">
+          <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
+            <i class="pi pi-file"></i>
+          </div>
+          <p class="text-[10px] text-gray-500 font-medium">Tóm tắt tài liệu</p>
+          <h4 class="text-base font-bold text-gray-900">{{ stats?.aiSummariesCount || 0 }}</h4>
+          <span class="text-[9px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[7px]"></i> Hệ thống
+          </span>
+        </div>
+
+        <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-50 space-y-1">
+          <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xs">
+            <i class="pi pi-calendar"></i>
+          </div>
+          <p class="text-[10px] text-gray-500 font-medium">Lập kế hoạch học</p>
+          <h4 class="text-base font-bold text-gray-900">{{ stats?.aiPlannerCount || 0 }}</h4>
+          <span class="text-[9px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[7px]"></i> Hệ thống
+          </span>
+        </div>
+
+        <div class="p-3 bg-teal-50/50 rounded-xl border border-teal-50 space-y-1">
+          <div class="w-7 h-7 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center text-xs">
+            <i class="pi pi-compass"></i>
+          </div>
+          <p class="text-[10px] text-gray-500 font-medium">Hỏi đáp</p>
+          <h4 class="text-base font-bold text-gray-900">{{ stats?.aiQnaCount || 0 }}</h4>
+          <span class="text-[9px] font-semibold text-emerald-600 flex items-center gap-0.5">
+            <i class="pi pi-arrow-up text-[7px]"></i> Hệ thống
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block 2: New Users This Week (Col 4) -->
+    <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-gray-900">Người dùng mới <span class="text-[10px] font-normal text-gray-400">(gần đây)</span></h3>
+        <a routerLink="/admin/users" class="text-[11px] font-bold text-purple-600 hover:underline">Xem tất cả</a>
+      </div>
+
+      <div class="space-y-2.5">
+        <ng-container *ngIf="stats?.recentUsers && (stats?.recentUsers?.length || 0) > 0; else defaultRecentUsers">
+          <div *ngFor="let u of stats!.recentUsers" class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[10px]">
+                {{ u.hoTen ? u.hoTen.charAt(0).toUpperCase() : 'U' }}
+              </div>
+              <div>
+                <p class="font-bold text-gray-900 text-[11px]">{{ u.hoTen }}</p>
+                <p class="text-[9px] text-gray-400">{{ u.email }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-bold rounded">{{ u.tenVaiTro }}</span>
+              <p class="text-[9px] text-gray-400 mt-0.5">{{ u.ngayTao | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #defaultRecentUsers>
+          <div class="text-center py-4 text-xs text-gray-400">Đang tải người dùng...</div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Block 3: System Notifications (Col 4) -->
+    <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-gray-900">Thông báo hệ thống</h3>
+        <a routerLink="/notifications" class="text-[11px] font-bold text-purple-600 hover:underline">Xem tất cả</a>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="flex items-start gap-2.5">
+          <div class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs flex-shrink-0 mt-0.5 border border-rose-100">
+            <i class="pi pi-shield"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-bold text-gray-900 text-[11px]">5 tài khoản bị khóa</p>
+              <span class="text-[9px] text-gray-400">10 phút trước</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-0.5">Có 5 tài khoản vi phạm chính sách</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5">
+          <div class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs flex-shrink-0 mt-0.5 border border-amber-100">
+            <i class="pi pi-flag"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-bold text-gray-900 text-[11px]">2 báo cáo vi phạm</p>
+              <span class="text-[9px] text-gray-400">30 phút trước</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-0.5">Cần xử lý trong hôm nay</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5">
+          <div class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs flex-shrink-0 mt-0.5 border border-amber-100">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-bold text-gray-900 text-[11px]">1 lỗi hệ thống</p>
+              <span class="text-[9px] text-gray-400">1 giờ trước</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-0.5">API AI Assistant báo lỗi timeout</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-2.5">
+          <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0 mt-0.5 border border-blue-100">
+            <i class="pi pi-info-circle"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="font-bold text-gray-900 text-[11px]">Cập nhật hệ thống</p>
+              <span class="text-[9px] text-gray-400">3 giờ trước</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-0.5">Phiên bản 1.2.0 đã sẵn sàng</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

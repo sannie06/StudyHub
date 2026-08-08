@@ -226,13 +226,14 @@
               </ng-container>
             </div>
 
-            <!-- Current Time Indicator (Purple line at 11:30) -->
-            <div class="absolute left-0 right-0 top-[598px] pointer-events-none z-20 flex items-center">
+            <!-- Current Time Indicator (Real current time in Blue) -->
+            <div class="absolute left-0 right-0 pointer-events-none z-20 flex items-center transition-all duration-300"
+                 [style.top.px]="currentTimeTopWeek">
               <div class="w-[60px] flex justify-end pr-1">
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-white shadow-xs" style="background:#5B4DFF;">11:30</span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-white shadow-xs bg-blue-600">{{ currentTimeStr }}</span>
               </div>
-              <div class="flex-1 h-[2px]" style="background:#5B4DFF;"></div>
-              <div class="w-2 h-2 rounded-full -ml-1" style="background:#5B4DFF;"></div>
+              <div class="flex-1 h-[2px] bg-blue-600"></div>
+              <div class="w-2 h-2 rounded-full -ml-1 bg-blue-600"></div>
             </div>
 
           </div>
@@ -343,10 +344,14 @@
                 </div>
               </ng-container>
 
-              <!-- Current Time Indicator (Purple line at 11:30) -->
-              <div class="absolute left-0 right-0 top-[644px] pointer-events-none z-20 flex items-center">
-                <div class="flex-1 h-[2px]" style="background:#5B4DFF;"></div>
-                <div class="w-2.5 h-2.5 rounded-full -ml-1" style="background:#5B4DFF;"></div>
+              <!-- Current Time Indicator (Real current time in Blue) -->
+              <div class="absolute -left-[70px] right-0 pointer-events-none z-20 flex items-center transition-all duration-300"
+                   [style.top.px]="currentTimeTopDay">
+                <div class="w-[70px] flex justify-end pr-1">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-white shadow-xs bg-blue-600">{{ currentTimeStr }}</span>
+                </div>
+                <div class="flex-1 h-[2px] bg-blue-600"></div>
+                <div class="w-2.5 h-2.5 rounded-full -ml-1 bg-blue-600"></div>
               </div>
 
             </div>

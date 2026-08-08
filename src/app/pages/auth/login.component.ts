@@ -30,6 +30,9 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Clear any stale/expired tokens from local storage when arriving at login page
+    this.authService.clearSession();
+
     this.route.queryParams.subscribe(params => {
       if (params['registered']) {
         this.successMessage = 'Đăng ký tài khoản thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.';
@@ -69,11 +72,19 @@ export class LoginComponent implements OnInit {
         this.authService.getProfile().subscribe({
           next: () => {
             this.loading = false;
-            this.router.navigate(['/dashboard']);
+            if (this.authService.isAdmin()) {
+              this.router.navigate(['/admin/dashboard']);
+            } else {
+              this.router.navigate(['/dashboard']);
+            }
           },
           error: () => {
             this.loading = false;
-            this.router.navigate(['/dashboard']);
+            if (this.authService.isAdmin()) {
+              this.router.navigate(['/admin/dashboard']);
+            } else {
+              this.router.navigate(['/dashboard']);
+            }
           }
         });
       },

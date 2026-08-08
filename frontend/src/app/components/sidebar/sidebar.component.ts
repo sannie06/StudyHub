@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -20,8 +21,13 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    public authService: AuthService,
+    private notificationService: NotificationService
   ) {}
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
 
   ngOnInit() {
     this.currentUrl = this.router.url;

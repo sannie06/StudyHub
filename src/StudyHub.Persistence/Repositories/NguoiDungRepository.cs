@@ -13,14 +13,16 @@ namespace StudyHub.Persistence.Repositories
 
         public async Task<NguoiDung?> GetByEmailAsync(string email)
         {
-            return await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+            var normalizedEmail = email.Trim().ToLower();
+            return await _dbSet.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail && !u.DaXoa);
         }
 
         public async Task<NguoiDung?> GetWithRolesAsync(string email)
         {
+            var normalizedEmail = email.Trim().ToLower();
             return await _dbSet
                 .Include(u => u.VaiTro)
-                .FirstOrDefaultAsync(u => u.Email == email);
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail && !u.DaXoa);
         }
 
         public async Task<bool> IsEmailUniqueAsync(string email)

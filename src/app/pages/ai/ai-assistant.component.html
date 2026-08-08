@@ -50,59 +50,75 @@
   <!-- ═══════════════════════════════════════
        2. BỐ CỤC 3 CỘT (GRID 12)
        ═══════════════════════════════════════ -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+  <!-- ═══════════════════════════════════════
+       2. BỐ CỤC 3 CỘT (GRID 12) - EQUAL HEIGHT ALIGNED
+       ═══════════════════════════════════════ -->
+  <div *ngIf="activeTab === 'chat'" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
 
     <!-- ───────────────────────────────────────
          CỘT 1: LỊCH SỬ HỘI THOẠI & GỢI Ý NHANH (LG:COL-SPAN-3)
          ─────────────────────────────────────── -->
-    <div class="lg:col-span-3 space-y-4">
+    <div class="lg:col-span-3 flex flex-col h-[720px] max-h-[calc(100vh-140px)] min-h-[600px] gap-4">
 
-      <!-- CARD 1: LỊCH SỬ HỘI THOẠI -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Lịch sử hội thoại</h3>
+      <!-- CARD 1: LỊCH SỬ HỘI THOẠI (Fills available space) -->
+      <div class="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col justify-between overflow-hidden">
+        <div class="space-y-3 shrink-0">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Lịch sử hội thoại</h3>
 
-        <!-- Search Input -->
-        <div class="relative">
-          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-          <input type="text" placeholder="Tìm kiếm hội thoại..."
-                 class="w-full bg-gray-50 border border-gray-200 rounded-full pl-8 pr-3 py-1.5 text-xs text-gray-700 placeholder-gray-400 outline-none focus:bg-white focus:border-[#5B4DFF] transition-all"/>
+          <!-- Search Input -->
+          <div class="relative">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+            <input type="text"
+                   [(ngModel)]="historySearchQuery"
+                   placeholder="Tìm kiếm hội thoại..."
+                   class="w-full bg-gray-50 border border-gray-200 rounded-full pl-8 pr-3 py-1.5 text-xs text-gray-700 placeholder-gray-400 outline-none focus:bg-white focus:border-[#5B4DFF] transition-all"/>
+          </div>
         </div>
 
-        <!-- History List -->
-        <div class="space-y-1 text-xs">
-          <button *ngFor="let h of chatHistory"
+        <!-- History List Scrollable -->
+        <div class="flex-1 min-h-0 overflow-y-auto space-y-1 text-xs my-2 pr-1 custom-scrollbar">
+          <div *ngIf="filteredChatHistory.length === 0" class="text-center py-6 text-xs text-gray-400">
+            Chưa có hội thoại nào
+          </div>
+
+          <button *ngFor="let h of filteredChatHistory"
                   (click)="selectHistory(h.id)"
-                  class="w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-left"
-                  [class.bg-purple-50]="h.isActive"
-                  [class.border]="h.isActive"
-                  [class.border-purple-200]="h.isActive"
-                  [class.hover:bg-gray-50]="!h.isActive">
-            <div class="flex items-center gap-2.5 min-w-0">
-              <i class="pi text-xs flex-shrink-0" [class]="h.icon" [style.color]="h.isActive ? '#5B4DFF' : '#94a3b8'"></i>
-              <span class="truncate font-medium" [class.font-bold]="h.isActive" [class.text-purple-900]="h.isActive" [class.text-gray-700]="!h.isActive">
+                  class="w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-left group"
+                  [class.bg-purple-50]="h.id === activeSessionId"
+                  [class.border]="h.id === activeSessionId"
+                  [class.border-purple-200]="h.id === activeSessionId"
+                  [class.hover:bg-gray-50]="h.id !== activeSessionId">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+              <i class="pi text-xs flex-shrink-0" [class]="h.icon" [style.color]="h.id === activeSessionId ? '#5B4DFF' : '#94a3b8'"></i>
+              <span class="truncate font-medium" [class.font-bold]="h.id === activeSessionId" [class.text-purple-900]="h.id === activeSessionId" [class.text-gray-700]="h.id !== activeSessionId">
                 {{ h.title }}
               </span>
             </div>
-            <span class="text-[10px] text-gray-400 flex-shrink-0 ml-1">{{ h.time }}</span>
+            <div class="flex items-center gap-1 flex-shrink-0 ml-1">
+              <span class="text-[10px] text-gray-400 group-hover:hidden">{{ h.time }}</span>
+              <button (click)="deleteHistory(h.id, $event)" title="Xóa hội thoại" class="hidden group-hover:block text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors">
+                <i class="pi pi-trash text-[11px]"></i>
+              </button>
+            </div>
           </button>
         </div>
 
-        <a href="javascript:void(0)" class="block text-center text-xs font-bold pt-1" style="color:#5B4DFF;">
-          Xem tất cả →
+        <a (click)="startNewChat()" href="javascript:void(0)" class="block text-center text-xs font-bold pt-1 shrink-0" style="color:#5B4DFF;">
+          + Cuộc trò chuyện mới
         </a>
       </div>
 
-      <!-- CARD 2: GỢI Ý NHANH (QUICK PROMPTS) -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+      <!-- CARD 2: GỢI Ý NHANH (QUICK PROMPTS - Fixed at bottom) -->
+      <div class="shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2.5">
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Gợi ý nhanh</h3>
 
         <div class="space-y-1.5 text-xs">
           <button *ngFor="let q of quickPrompts"
                   (click)="selectQuickPrompt(q)"
-                  class="w-full flex items-center justify-between p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all text-left group">
-            <div class="flex items-center gap-2.5">
+                  class="w-full flex items-center justify-between p-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all text-left group">
+            <div class="flex items-center gap-2">
               <i class="pi text-xs p-1.5 rounded-lg flex-shrink-0" [class]="q.icon + ' ' + q.iconBg"></i>
-              <span class="font-bold text-gray-800 group-hover:text-purple-600 transition-colors">{{ q.title }}</span>
+              <span class="font-bold text-gray-800 group-hover:text-purple-600 transition-colors text-[11px]">{{ q.title }}</span>
             </div>
             <i class="pi pi-chevron-right text-[10px] text-gray-400 group-hover:text-purple-600"></i>
           </button>
@@ -114,10 +130,10 @@
     <!-- ───────────────────────────────────────
          CỘT 2: KHUNG CHATBOT TƯƠNG TÁC CHÍNH (LG:COL-SPAN-6)
          ─────────────────────────────────────── -->
-    <div class="lg:col-span-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5 flex flex-col min-h-[720px]">
+    <div class="lg:col-span-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col h-[720px] max-h-[calc(100vh-140px)] min-h-[600px] overflow-hidden">
 
       <!-- Header Welcome AI Banner -->
-      <div class="flex items-center gap-3 p-3 bg-purple-50/50 rounded-2xl border border-purple-100">
+      <div class="flex items-center gap-3 p-3 bg-purple-50/50 rounded-2xl border border-purple-100 shrink-0">
         <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white flex-shrink-0 shadow-xs" style="background:#5B4DFF;">
           <i class="pi pi-android text-xl"></i>
         </div>
@@ -128,7 +144,7 @@
       </div>
 
       <!-- Messages Area Scrollable -->
-      <div class="flex-1 overflow-y-auto space-y-4 pr-1 chat-container">
+      <div #chatContainer class="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2 my-2 chat-container">
 
         <ng-container *ngFor="let m of messages">
           <!-- 1. User Message (Right Align) -->
@@ -211,7 +227,7 @@
       </div>
 
       <!-- Bottom Chat Input Bar -->
-      <div class="space-y-1.5 pt-2">
+      <div class="space-y-1.5 pt-2 shrink-0">
         <div class="bg-white border border-gray-200 rounded-2xl p-2.5 shadow-sm flex items-center gap-3">
           <button class="p-1.5 text-gray-400 hover:text-purple-600 rounded-lg">
             <i class="pi pi-paperclip text-sm"></i>
@@ -243,138 +259,234 @@
     <!-- ───────────────────────────────────────
          CỘT 3: DASHBOARD PHÂN TÍCH & ĐỀ XUẤT AI (LG:COL-SPAN-3)
          ─────────────────────────────────────── -->
-    <div class="lg:col-span-3 space-y-4">
+    <div class="lg:col-span-3 flex flex-col h-[720px] max-h-[calc(100vh-140px)] min-h-[600px] gap-4">
 
       <!-- CARD 1: PHÂN TÍCH HỌC TẬP -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+      <div class="shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 space-y-2.5">
         <div class="flex items-center justify-between">
           <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Phân tích học tập</h3>
           <span class="text-[10px] text-gray-400 flex items-center gap-1">
-            Cập nhật: 10:30 <i class="pi pi-refresh text-[9px] cursor-pointer"></i>
+            Cập nhật: {{ dashboardStats.lastUpdatedTime }} <i (click)="loadRealDashboardStats()" class="pi pi-refresh text-[9px] cursor-pointer hover:text-purple-600"></i>
           </span>
         </div>
 
         <!-- Donut & Efficiency Info -->
-        <div class="p-3 rounded-2xl bg-gray-50 border border-gray-100 flex items-center gap-4">
-          <div class="w-14 h-14 rounded-full border-4 border-emerald-500 bg-emerald-50 flex items-center justify-center text-sm font-black text-emerald-600 flex-shrink-0">
-            82%
+        <div class="p-2.5 rounded-2xl bg-gray-50 border border-gray-100 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full border-4 border-emerald-500 bg-emerald-50 flex items-center justify-center text-xs font-black text-emerald-600 flex-shrink-0">
+            {{ dashboardStats.performanceRate }}%
           </div>
           <div class="space-y-0.5 min-w-0">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1">
               <span class="text-xs font-bold text-gray-900">Hiệu suất học tập</span>
-              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">🟢 Tốt</span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">
+                🟢 {{ dashboardStats.performanceRate >= 70 ? 'Tốt' : (dashboardStats.performanceRate >= 50 ? 'Khá' : 'Cần cố gắng') }}
+              </span>
             </div>
-            <p class="text-[11px] text-gray-500">Tăng 12% so với tuần trước</p>
+            <p class="text-[10px] text-gray-500">Tỷ lệ hoàn thành nhiệm vụ</p>
           </div>
         </div>
 
         <!-- 2x2 Indicators Grid -->
-        <div class="grid grid-cols-2 gap-2.5 text-center">
-          <div class="p-2.5 rounded-xl bg-purple-50/60 border border-purple-100">
-            <i class="pi pi-calendar text-xs text-purple-600 block mb-1"></i>
-            <p class="text-lg font-black text-gray-900">35</p>
-            <p class="text-[10px] text-gray-500 font-medium">Công việc (Tổng)</p>
+        <div class="grid grid-cols-2 gap-2 text-center">
+          <div class="p-2 rounded-xl bg-purple-50/60 border border-purple-100">
+            <i class="pi pi-calendar text-[10px] text-purple-600 block mb-0.5"></i>
+            <p class="text-base font-black text-gray-900">{{ dashboardStats.tongSoCongViec }}</p>
+            <p class="text-[9px] text-gray-500 font-medium">Công việc (Tổng)</p>
           </div>
 
-          <div class="p-2.5 rounded-xl bg-blue-50/60 border border-blue-100">
-            <i class="pi pi-check-square text-xs text-blue-600 block mb-1"></i>
-            <p class="text-lg font-black text-gray-900">28</p>
-            <p class="text-[10px] text-gray-500 font-medium">Hoàn thành (80%)</p>
+          <div class="p-2 rounded-xl bg-blue-50/60 border border-blue-100">
+            <i class="pi pi-check-square text-[10px] text-blue-600 block mb-0.5"></i>
+            <p class="text-base font-black text-gray-900">{{ dashboardStats.congViecHoanThanh }}</p>
+            <p class="text-[9px] text-gray-500 font-medium">Hoàn thành ({{ dashboardStats.completionRate }}%)</p>
           </div>
 
-          <div class="p-2.5 rounded-xl bg-rose-50/60 border border-rose-100">
-            <i class="pi pi-exclamation-circle text-xs text-rose-600 block mb-1"></i>
-            <p class="text-lg font-black text-rose-600">2</p>
-            <p class="text-[10px] text-rose-600 font-bold">Quá hạn (Cần xử lý)</p>
+          <div class="p-2 rounded-xl bg-rose-50/60 border border-rose-100">
+            <i class="pi pi-exclamation-circle text-[10px] text-rose-600 block mb-0.5"></i>
+            <p class="text-base font-black text-rose-600">{{ dashboardStats.quaHan }}</p>
+            <p class="text-[9px] text-rose-600 font-bold">Hôm nay / Quá hạn</p>
           </div>
 
-          <div class="p-2.5 rounded-xl bg-amber-50/60 border border-amber-100">
-            <i class="pi pi-bolt text-xs text-amber-500 block mb-1"></i>
-            <p class="text-lg font-black text-gray-900">7</p>
-            <p class="text-[10px] text-gray-500 font-medium">Ngày liên tiếp</p>
+          <div class="p-2 rounded-xl bg-amber-50/60 border border-amber-100">
+            <i class="pi pi-bolt text-[10px] text-amber-500 block mb-0.5"></i>
+            <p class="text-base font-black text-gray-900">{{ dashboardStats.streakDays }}</p>
+            <p class="text-[9px] text-gray-500 font-medium">Ngày liên tiếp</p>
           </div>
         </div>
       </div>
 
       <!-- CARD 2: MÔN HỌC CẦN CẢI THIỆN -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+      <div class="shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 space-y-2.5">
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Môn học cần cải thiện</h3>
 
-        <div class="space-y-3 text-xs">
+        <div class="space-y-2 text-xs">
           <!-- Item 1 -->
-          <div class="space-y-1">
+          <div class="space-y-0.5">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-gray-900 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Java Programming
+              <span class="font-bold text-gray-900 flex items-center gap-1 text-[11px]">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span> Java Programming
               </span>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] text-gray-400">Tiến độ: 45%</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-600">Yếu</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] text-gray-400">45%</span>
+                <span class="px-1 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-600">Yếu</span>
               </div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div class="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
               <div class="h-full bg-rose-500 rounded-full" style="width:45%;"></div>
             </div>
           </div>
 
           <!-- Item 2 -->
-          <div class="space-y-1">
+          <div class="space-y-0.5">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-gray-900 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Cơ sở dữ liệu
+              <span class="font-bold text-gray-900 flex items-center gap-1 text-[11px]">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span> Cơ sở dữ liệu
               </span>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] text-gray-400">Tiến độ: 65%</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-600">Trung bình</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] text-gray-400">65%</span>
+                <span class="px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-600">TB</span>
               </div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div class="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
               <div class="h-full bg-amber-500 rounded-full" style="width:65%;"></div>
             </div>
           </div>
 
           <!-- Item 3 -->
-          <div class="space-y-1">
+          <div class="space-y-0.5">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-gray-900 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> Cấu trúc dữ liệu và GT
+              <span class="font-bold text-gray-900 flex items-center gap-1 text-[11px]">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span> Cấu trúc dữ liệu & GT
               </span>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] text-gray-400">Tiến độ: 70%</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-600">Trung bình</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] text-gray-400">70%</span>
+                <span class="px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-600">TB</span>
               </div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div class="w-full bg-gray-100 rounded-full h-1 overflow-hidden">
               <div class="h-full bg-blue-500 rounded-full" style="width:70%;"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- CARD 3: ĐỀ XUẤT TỪ AI -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">Đề xuất từ AI</h3>
+      <!-- CARD 3: ĐỀ XUẤT TỪ AI (Fills available space) -->
+      <div class="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 flex flex-col justify-between overflow-hidden">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 shrink-0">Đề xuất từ AI</h3>
 
-        <div class="space-y-2 text-xs">
+        <div class="flex-1 min-h-0 overflow-y-auto space-y-1.5 text-xs my-1 pr-1 custom-scrollbar">
           <div *ngFor="let rec of recommendations"
-               class="p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors space-y-1">
+               (click)="onSelectRecommendation(rec)"
+               class="p-2 rounded-xl border border-gray-100 hover:bg-purple-50/60 hover:border-purple-200 transition-all space-y-0.5 cursor-pointer group">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-gray-900 flex items-center gap-1.5">
-                <i class="pi text-xs text-purple-600" [class]="rec.icon"></i> {{ rec.title }}
+              <span class="font-bold text-gray-900 flex items-center gap-1 text-[11px]">
+                <i class="pi text-[10px] text-purple-600" [class]="rec.icon"></i> {{ rec.title }}
               </span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold" [class]="rec.badgeClass">{{ rec.badge }}</span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold" [class]="rec.badgeClass">{{ rec.badge }}</span>
             </div>
-            <p class="text-[11px] text-gray-500 pl-5">{{ rec.desc }}</p>
+            <p class="text-[10px] text-gray-500 pl-4 truncate">{{ rec.desc }}</p>
           </div>
         </div>
 
-        <a href="javascript:void(0)" class="block text-center text-xs font-bold pt-1" style="color:#5B4DFF;">
+        <a (click)="activeTab = 'recommendations'" href="javascript:void(0)" class="block text-center text-xs font-bold pt-1 shrink-0 cursor-pointer hover:underline" style="color:#5B4DFF;">
           Xem tất cả đề xuất →
         </a>
       </div>
 
     </div>
 
+  </div>
+
+  <!-- TAB: ĐỀ XUẤT CÁ NHÂN (When activeTab === 'recommendations') -->
+  <div *ngIf="activeTab === 'recommendations'" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+      <div>
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <i class="pi pi-lightbulb text-purple-600"></i>
+          <span>Tất cả Đề xuất & Lời khuyên từ AI</span>
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Phân tích chuyên sâu và các hành động được AI tối ưu hóa riêng cho bạn</p>
+      </div>
+      <button (click)="activeTab = 'chat'" class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all cursor-pointer">
+        ← Quay lại Khung chat
+      </button>
+    </div>
+
+    <!-- Recommendations Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div *ngFor="let rec of recommendations"
+           (click)="onSelectRecommendation(rec); activeTab = 'chat';"
+           class="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-purple-50/50 hover:border-purple-200 transition-all cursor-pointer space-y-2 group">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-gray-900 text-sm flex items-center gap-2">
+            <i class="pi text-sm text-purple-600" [class]="rec.icon"></i> {{ rec.title }}
+          </span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold" [class]="rec.badgeClass">{{ rec.badge }}</span>
+        </div>
+        <p class="text-xs text-gray-600 leading-relaxed">{{ rec.desc }}</p>
+        <div class="flex items-center gap-1 text-xs font-bold text-purple-700 pt-1 group-hover:translate-x-1 transition-transform">
+          <span>Kích hoạt hành động này</span>
+          <i class="pi pi-arrow-right text-xs"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: PHÂN TÍCH HỌC TẬP (When activeTab === 'analytics') -->
+  <div *ngIf="activeTab === 'analytics'" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+      <div>
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <i class="pi pi-chart-bar text-purple-600"></i>
+          <span>Báo cáo & Phân tích Học tập AI</span>
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Tổng hợp hiệu suất, mức độ hoàn thành task và phân bổ thời gian</p>
+      </div>
+      <button (click)="activeTab = 'chat'" class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all cursor-pointer">
+        ← Quay lại Khung chat
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+      <div class="p-5 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-1">
+        <p class="text-2xl font-black text-purple-900">82%</p>
+        <p class="text-xs font-bold text-purple-700">Hiệu suất học tập trung bình</p>
+      </div>
+      <div class="p-5 rounded-2xl bg-blue-50/60 border border-blue-100 space-y-1">
+        <p class="text-2xl font-black text-blue-900">28 / 35</p>
+        <p class="text-xs font-bold text-blue-700">Công việc đã hoàn thành</p>
+      </div>
+      <div class="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-1">
+        <p class="text-2xl font-black text-emerald-900">7 ngày</p>
+        <p class="text-xs font-bold text-emerald-700">Chuỗi học tập liên tục (Streak)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: TRỢ GIÚP (When activeTab === 'help') -->
+  <div *ngIf="activeTab === 'help'" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+      <div>
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <i class="pi pi-question-circle text-purple-600"></i>
+          <span>Hướng dẫn sử dụng AI Assistant</span>
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">Cách để tận dụng tối đa sức mạnh của Trợ lý AI cá nhân</p>
+      </div>
+      <button (click)="activeTab = 'chat'" class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all cursor-pointer">
+        ← Quay lại Khung chat
+      </button>
+    </div>
+
+    <div class="space-y-4 text-xs text-gray-700 leading-relaxed">
+      <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
+        <p class="font-bold text-gray-900 text-sm">💡 Hỏi bất kỳ câu hỏi nào về môn học</p>
+        <p>Bạn có thể nhập thắc mắc bài tập, lý thuyết lập trình, thuật toán hoặc nhờ AI tóm tắt kiến thức.</p>
+      </div>
+      <div class="p-4 rounded-xl bg-gray-50 border border-gray-100 space-y-1">
+        <p class="font-bold text-gray-900 text-sm">🗓️ Tự động tạo kế hoạch học tập 7 ngày</p>
+        <p>Bấm chọn nút gợi ý "Sinh kế hoạch 7 ngày" để AI tự động chia lộ trình học chi tiết cho từng ngày.</p>
+      </div>
+    </div>
   </div>
 
 </div>

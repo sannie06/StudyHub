@@ -423,10 +423,20 @@
 
       <!-- Widget 2: Lịch sử phiên học -->
       <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
-        <h4 class="text-xs font-bold text-gray-400 uppercase">Lịch sử phiên học</h4>
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-gray-400 uppercase">Lịch sử phiên học</h4>
+          <span class="text-[10px] text-gray-400 font-medium" *ngIf="sessionHistory.length > 0">{{ sessionHistory.length }} phiên</span>
+        </div>
+
         <div class="space-y-2">
+          <!-- Empty State -->
+          <div *ngIf="sessionHistory.length === 0" class="text-center py-6 text-xs text-gray-400 space-y-1">
+            <p class="font-medium text-gray-500">Chưa có phiên học nào</p>
+            <p class="text-[10px] text-gray-400">Hãy bấm Bắt đầu phiên Pomodoro để ghi lại tiến độ nhé!</p>
+          </div>
+
           <div *ngFor="let item of sessionHistory"
-               class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-xs">
+               class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-xs group">
             <div class="flex items-center gap-2 min-w-0">
               <span class="text-sm">{{ item.icon }}</span>
               <span class="font-bold text-gray-900 truncate">{{ item.name }}</span>
@@ -434,13 +444,13 @@
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <span class="text-[10px] text-gray-400">{{ item.timeRange }}</span>
-              <i class="pi pi-check-circle text-xs text-emerald-500"></i>
+              <i class="pi pi-check-circle text-xs text-emerald-500 group-hover:hidden"></i>
+              <button (click)="deleteHistoryItem(item.id, $event)" title="Xóa phiên này" class="hidden group-hover:block text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors">
+                <i class="pi pi-trash text-[11px]"></i>
+              </button>
             </div>
           </div>
         </div>
-        <a href="javascript:void(0)" class="block text-center text-xs font-bold text-[#5B4DFF] pt-1">
-          Xem tất cả lịch sử →
-        </a>
       </div>
 
       <!-- Widget 3: AI Assistant (Beta) -->
@@ -456,11 +466,11 @@
         </div>
 
         <p class="text-xs text-gray-800 leading-relaxed font-medium">
-          Bạn đã hoàn thành <span class="font-bold text-purple-700">4 phiên Pomodoro</span> hôm nay! 🎉 Hiệu suất của bạn cao hơn <span class="font-bold text-purple-700">20%</span> so với trung bình.
+          Bạn đã hoàn thành <span class="font-bold text-purple-700">{{ getCompletedPomoCount() }} phiên Pomodoro</span> hôm nay! 🎉 Hiệu suất của bạn cao hơn <span class="font-bold text-purple-700">20%</span> so với trung bình.
         </p>
 
         <div class="p-3 bg-white/80 rounded-xl border border-purple-100 text-xs text-purple-900 font-medium leading-relaxed">
-          <span class="font-bold">Gợi ý:</span> Bạn nên nghỉ dài 15 phút sau phiên thứ 4 để tái tạo năng lượng và duy trì sự tập trung.
+          <span class="font-bold">Gợi ý:</span> Bạn nên nghỉ dài 15 phút sau mỗi 4 phiên tập trung để tái tạo năng lượng.
         </div>
 
         <div class="flex items-center justify-between pt-1">

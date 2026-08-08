@@ -16,95 +16,131 @@
   <!-- Navigation Menu -->
   <nav class="px-3 pt-4 space-y-0.5 flex-1">
 
-    <!-- 1. Dashboard -->
-    <a routerLink="/dashboard" (click)="closeTaskMenu()"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/dashboard') && !isRouteActive('/phan-tich-hoc-tap') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <i class="pi pi-home text-base" [style]="isRouteActive('/dashboard') && !isRouteActive('/phan-tich-hoc-tap') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-      <span>Dashboard</span>
-    </a>
+    <!-- Admin Navigation Menu Section (Only for Admin Users) -->
+    <ng-container *ngIf="isAdmin">
+      <div class="pt-2 pb-1 px-1">
+        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Quản trị hệ thống</span>
+      </div>
 
-    <!-- 2. Công việc (With Collapsible Sub-menu) -->
-    <div>
-      <button (click)="onTaskParentClick()"
-              class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all text-left"
-              [style]="isRouteActive('/tasks') ? 'background:#5B4DFF; color:white;' : 'color:#64748b;'">
-        <div class="flex items-center gap-3">
-          <i class="pi pi-check-square text-base" [style]="isRouteActive('/tasks') ? 'color:white;' : 'color:#94a3b8;'"></i>
-          <span>Công việc</span>
+      <!-- 1. Dashboard Quản Trị -->
+      <a routerLink="/admin/dashboard" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/admin/dashboard') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-th-large text-base" [style]="isRouteActive('/admin/dashboard') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- 2. Quản lý người dùng -->
+      <a routerLink="/admin/users" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/admin/users') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-users text-base" [style]="isRouteActive('/admin/users') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Quản lý người dùng</span>
+      </a>
+
+      <!-- 3. Quản lý nhóm học tập -->
+      <a routerLink="/admin/groups" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/admin/groups') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-comments text-base" [style]="isRouteActive('/admin/groups') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Quản lý nhóm học tập</span>
+      </a>
+    </ng-container>
+
+    <!-- Student Navigation Menu Items (Only visible to non-Admin students) -->
+    <ng-container *ngIf="!isAdmin">
+
+      <!-- 1. Dashboard -->
+      <a routerLink="/dashboard" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/dashboard') && !isRouteActive('/phan-tich-hoc-tap') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-home text-base" [style]="isRouteActive('/dashboard') && !isRouteActive('/phan-tich-hoc-tap') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- 2. Công việc (With Collapsible Sub-menu) -->
+      <div>
+        <button (click)="onTaskParentClick()"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all text-left"
+                [style]="isRouteActive('/tasks') ? 'background:#5B4DFF; color:white;' : 'color:#64748b;'">
+          <div class="flex items-center gap-3">
+            <i class="pi pi-check-square text-base" [style]="isRouteActive('/tasks') ? 'color:white;' : 'color:#94a3b8;'"></i>
+            <span>Công việc</span>
+          </div>
+          <i class="pi text-xs transition-transform duration-200"
+             [class]="isTaskMenuOpen ? 'pi-chevron-down' : 'pi-chevron-right'"
+             [style]="isRouteActive('/tasks') ? 'color:white;' : 'color:#94a3b8;'"></i>
+        </button>
+
+        <!-- Sub-menu (Collapsible) -->
+        <div *ngIf="isTaskMenuOpen" class="ml-4 mt-1 space-y-0.5 transition-all">
+          <a routerLink="/tasks" [queryParams]="{ view: 'list' }"
+             class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+             [style]="isTasksViewActive('list') ? 'color:#5B4DFF; background:#EEECFF;' : 'color:#6b7280;'">
+            <span class="w-2 h-2 rounded-full inline-block" [style]="isTasksViewActive('list') ? 'background:#5B4DFF;' : 'background:#d1d5db;'"></span>
+            Danh sách công việc
+          </a>
+          <a routerLink="/tasks" [queryParams]="{ view: 'kanban' }"
+             class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+             [style]="isTasksViewActive('kanban') ? 'color:#5B4DFF; background:#EEECFF;' : 'color:#6b7280;'">
+            <span class="w-2 h-2 rounded-full inline-block" [style]="isTasksViewActive('kanban') ? 'background:#5B4DFF;' : 'background:#d1d5db;'"></span>
+            Kanban Board
+          </a>
         </div>
-        <i class="pi text-xs transition-transform duration-200"
-           [class]="isTaskMenuOpen ? 'pi-chevron-down' : 'pi-chevron-right'"
-           [style]="isRouteActive('/tasks') ? 'color:white;' : 'color:#94a3b8;'"></i>
-      </button>
-
-      <!-- Sub-menu (Collapsible) -->
-      <div *ngIf="isTaskMenuOpen" class="ml-4 mt-1 space-y-0.5 transition-all">
-        <a routerLink="/tasks" [queryParams]="{ view: 'list' }"
-           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-           [style]="isTasksViewActive('list') ? 'color:#5B4DFF; background:#EEECFF;' : 'color:#6b7280;'">
-          <span class="w-2 h-2 rounded-full inline-block" [style]="isTasksViewActive('list') ? 'background:#5B4DFF;' : 'background:#d1d5db;'"></span>
-          Danh sách công việc
-        </a>
-        <a routerLink="/tasks" [queryParams]="{ view: 'kanban' }"
-           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-           [style]="isTasksViewActive('kanban') ? 'color:#5B4DFF; background:#EEECFF;' : 'color:#6b7280;'">
-          <span class="w-2 h-2 rounded-full inline-block" [style]="isTasksViewActive('kanban') ? 'background:#5B4DFF;' : 'background:#d1d5db;'"></span>
-          Kanban Board
-        </a>
       </div>
-    </div>
 
-    <!-- 3. Lịch học - Lịch thi -->
-    <a routerLink="/calendar" (click)="closeTaskMenu()"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/calendar') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <i class="pi pi-calendar text-base" [style]="isRouteActive('/calendar') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-      <span>Lịch học - Lịch thi</span>
-    </a>
+      <!-- 3. Lịch học - Lịch thi -->
+      <a routerLink="/calendar" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/calendar') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-calendar text-base" [style]="isRouteActive('/calendar') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Lịch học - Lịch thi</span>
+      </a>
 
-    <!-- 4. Pomodoro / Focus -->
-    <a routerLink="/pomodoro" (click)="closeTaskMenu()"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/pomodoro') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <i class="pi pi-clock text-base" [style]="isRouteActive('/pomodoro') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-      <span>Pomodoro / Focus</span>
-    </a>
+      <!-- 4. Pomodoro / Focus -->
+      <a routerLink="/pomodoro" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/pomodoro') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-clock text-base" [style]="isRouteActive('/pomodoro') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Pomodoro / Focus</span>
+      </a>
 
-    <!-- 5. Nhóm học tập -->
-    <a routerLink="/groups" (click)="closeTaskMenu()"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/groups') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <i class="pi pi-users text-base" [style]="isRouteActive('/groups') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-      <span>Nhóm học tập</span>
-    </a>
+      <!-- 5. Nhóm học tập -->
+      <a routerLink="/groups" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/groups') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-users text-base" [style]="isRouteActive('/groups') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Nhóm học tập</span>
+      </a>
 
-    <!-- 6. AI Assistant -->
-    <a routerLink="/ai" (click)="closeTaskMenu()"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/ai') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <i class="pi pi-android text-base" [style]="isRouteActive('/ai') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-      <span>AI Assistant</span>
-    </a>
+      <!-- 6. AI Assistant -->
+      <a routerLink="/ai" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/ai') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-android text-base" [style]="isRouteActive('/ai') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>AI Assistant</span>
+      </a>
 
-    <!-- 7. Thông báo -->
-    <a routerLink="/notifications" (click)="closeTaskMenu()"
-       class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/notifications') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <div class="flex items-center gap-3">
-        <i class="pi pi-bell text-base" [style]="isRouteActive('/notifications') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-        <span>Thông báo</span>
-      </div>
-      <span *ngIf="unreadCount > 0" class="text-[11px] font-bold text-white px-2 py-0.5 rounded-full" style="background:#5B4DFF;">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
-    </a>
+      <!-- 7. Thông báo -->
+      <a routerLink="/notifications" (click)="closeTaskMenu()"
+         class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/notifications') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <div class="flex items-center gap-3">
+          <i class="pi pi-bell text-base" [style]="isRouteActive('/notifications') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+          <span>Thông báo</span>
+        </div>
+        <span *ngIf="unreadCount > 0" class="text-[11px] font-bold text-white px-2 py-0.5 rounded-full" style="background:#5B4DFF;">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+      </a>
 
-    <!-- 8. Phân tích học tập -->
-    <a routerLink="/phan-tich-hoc-tap" (click)="closeTaskMenu()"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-       [style]="isRouteActive('/phan-tich-hoc-tap') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
-      <i class="pi pi-chart-bar text-base" [style]="isRouteActive('/phan-tich-hoc-tap') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
-      <span>Phân tích học tập</span>
-    </a>
+      <!-- 8. Phân tích học tập -->
+      <a routerLink="/phan-tich-hoc-tap" (click)="closeTaskMenu()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+         [style]="isRouteActive('/phan-tich-hoc-tap') ? 'background:#EEECFF; color:#5B4DFF;' : 'color:#64748b;'">
+        <i class="pi pi-chart-bar text-base" [style]="isRouteActive('/phan-tich-hoc-tap') ? 'color:#5B4DFF;' : 'color:#94a3b8;'"></i>
+        <span>Phân tích học tập</span>
+      </a>
+
+    </ng-container>
 
     <!-- Nhóm TÀI KHOẢN -->
     <div class="pt-4 pb-1 px-1">

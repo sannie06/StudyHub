@@ -29,6 +29,9 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Clear any stale/expired tokens from local storage when arriving at login page
+    this.authService.clearSession();
+
     this.loginForm = this.fb.group({
       email: ['', [Validators.required]],
       password: ['', [Validators.required]],
@@ -57,7 +60,11 @@ export class LoginComponent implements OnInit {
     this.authService.login(loginData).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigate(['/dashboard']);
+        if (this.authService.isAdmin()) {
+          this.router.navigate(['/admin/dashboard']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         this.loading = false;
