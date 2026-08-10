@@ -205,18 +205,15 @@
                 [type]="showPassword ? 'text' : 'password'" 
                 formControlName="matKhau"
                 placeholder="Tối thiểu 6 ký tự"
-                class="bg-white border border-gray-200 rounded-2xl pl-4 pr-16 py-3.5 text-sm text-gray-800 focus:border-[#5B4DFF] focus:ring-4 focus:ring-indigo-100 outline-none w-full transition-all placeholder:text-gray-400"
+                class="bg-white border border-gray-200 rounded-2xl pl-4 pr-10 py-3.5 text-sm text-gray-800 focus:border-[#5B4DFF] focus:ring-4 focus:ring-indigo-100 outline-none w-full transition-all placeholder:text-gray-400"
               />
-              <div class="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-gray-400 text-sm">
-                <i class="pi pi-lock"></i>
-                <button 
-                  type="button" 
-                  (click)="togglePasswordVisibility()"
-                  class="hover:text-gray-600 focus:outline-none transition-colors p-0.5"
-                >
-                  <i [class]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-                </button>
-              </div>
+              <button 
+                type="button" 
+                (click)="togglePasswordVisibility()"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm focus:outline-none transition-colors p-1 cursor-pointer"
+              >
+                <i [class]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+              </button>
             </div>
             <div *ngIf="registerForm.get('matKhau')?.touched && registerForm.get('matKhau')?.invalid" class="text-xs text-rose-500 mt-1">
               Mật khẩu tối thiểu 6 ký tự
@@ -238,7 +235,7 @@
               <button 
                 type="button" 
                 (click)="toggleConfirmPasswordVisibility()"
-                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm focus:outline-none transition-colors p-1"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm focus:outline-none transition-colors p-1 cursor-pointer"
               >
                 <i [class]="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
               </button>
@@ -257,9 +254,9 @@
             />
             <span>
               Tôi đồng ý với 
-              <a href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline">Điều khoản dịch vụ</a> 
+              <a (click)="openTermsModal('terms')" href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline cursor-pointer">Điều khoản dịch vụ</a> 
               và 
-              <a href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline">Chính sách bảo mật</a>
+              <a (click)="openTermsModal('privacy')" href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline cursor-pointer">Chính sách bảo mật</a>
             </span>
           </div>
 
@@ -270,8 +267,7 @@
             class="w-full py-3.5 bg-gradient-to-r from-[#5B4DFF] to-[#6366F1] hover:opacity-95 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
           >
             <i *ngIf="loading" class="pi pi-spin pi-spinner text-sm"></i>
-            <span>{{ loading ? 'Đang xử lý...' : 'Đăng ký' }}</span>
-            <i *ngIf="!loading" class="pi pi-arrow-right text-xs"></i>
+            <span>{{ loading ? 'Đang xử lý...' : 'Đăng ký →' }}</span>
           </button>
 
         </form>
@@ -286,7 +282,8 @@
         <!-- Google Register Button -->
         <button 
           type="button" 
-          class="w-full py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl flex items-center justify-center gap-3 text-sm transition-all shadow-xs cursor-pointer"
+          (click)="onGoogleLogin()"
+          class="w-full py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl flex items-center justify-center gap-3 text-sm transition-all shadow-xs cursor-pointer active:scale-[0.99]"
         >
           <svg class="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -301,4 +298,457 @@
     </div>
 
   </main>
+
+  <!-- ================================================== -->
+  <!-- MODAL: GOOGLE SIGN-IN / SIGN-UP ACCOUNT SELECTOR   -->
+  <!-- ================================================== -->
+  <div *ngIf="showGoogleDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fadeIn" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 flex flex-col animate-scaleUp">
+      
+      <!-- Google Modal Header -->
+      <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg class="w-6 h-6" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <div>
+            <h3 class="text-base font-bold text-gray-900 leading-tight">Đăng ký bằng Google</h3>
+            <p class="text-xs text-gray-500">Chọn tài khoản để tiếp tục với StudyHub</p>
+          </div>
+        </div>
+        <button (click)="closeGoogleDialog()" class="w-8 h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 flex items-center justify-center cursor-pointer transition-all">
+          <i class="pi pi-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Google Accounts List -->
+      <div class="p-6 space-y-3">
+        
+        <!-- Account Option 1: Student Account -->
+        <div 
+          (click)="continueWithGoogleAccount('student@studyhub.edu.vn', 'Trần San San', 'https://ui-avatars.com/api/?name=San+San&background=5B4DFF&color=fff')"
+          class="p-3.5 rounded-2xl border border-gray-200 hover:border-[#5B4DFF] hover:bg-purple-50/50 flex items-center justify-between cursor-pointer transition-all group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+              SS
+            </div>
+            <div class="text-left">
+              <h4 class="text-sm font-bold text-gray-900 group-hover:text-[#5B4DFF] transition-colors">Trần San San</h4>
+              <p class="text-xs text-gray-500">student&#64;studyhub.edu.vn</p>
+            </div>
+          </div>
+          <i class="pi pi-chevron-right text-gray-400 group-hover:text-[#5B4DFF] group-hover:translate-x-0.5 transition-all text-xs"></i>
+        </div>
+
+        <!-- Account Option 2: Default Google Account -->
+        <div 
+          (click)="continueWithGoogleAccount('student.google@gmail.com', 'Sinh viên StudyHub', 'https://ui-avatars.com/api/?name=Student+Hub&background=10B981&color=fff')"
+          class="p-3.5 rounded-2xl border border-gray-200 hover:border-[#5B4DFF] hover:bg-purple-50/50 flex items-center justify-between cursor-pointer transition-all group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+              SH
+            </div>
+            <div class="text-left">
+              <h4 class="text-sm font-bold text-gray-900 group-hover:text-[#5B4DFF] transition-colors">Sinh viên StudyHub</h4>
+              <p class="text-xs text-gray-500">student.google&#64;gmail.com</p>
+            </div>
+          </div>
+          <i class="pi pi-chevron-right text-gray-400 group-hover:text-[#5B4DFF] group-hover:translate-x-0.5 transition-all text-xs"></i>
+        </div>
+
+        <!-- Custom Account Input -->
+        <div class="pt-2 border-t border-gray-100">
+          <label class="text-xs font-semibold text-gray-700 mb-1.5 block">Hoặc nhập email Google của bạn:</label>
+          <div class="flex gap-2">
+            <input 
+              type="email" 
+              [(ngModel)]="customGoogleEmail"
+              placeholder="tenban@gmail.com" 
+              class="flex-1 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#5B4DFF] focus:bg-white transition-all"
+            />
+            <button 
+              type="button"
+              (click)="continueWithGoogleAccount(customGoogleEmail, customGoogleEmail.split('@')[0])"
+              [disabled]="!customGoogleEmail || !customGoogleEmail.includes('@')"
+              class="px-4 py-2.5 bg-[#5B4DFF] hover:bg-indigo-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              Tiếp tục
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Loading State Overlay in Modal -->
+      <div *ngIf="googleLoading" class="p-6 pt-0 text-center text-xs text-[#5B4DFF] font-semibold flex items-center justify-center gap-2">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Đang kết nối và xác thực tài khoản Google...</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================== -->
+  <!-- MODAL: ĐIỀU KHOẢN DỊCH VỤ VÀ CHÍNH SÁCH BẢO MẬT    -->
+  <!-- ================================================== -->
+  <div *ngIf="showTermsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fadeIn" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-scaleUp">
+      
+      <!-- Modal Header -->
+      <div class="px-8 pt-7 pb-4 flex flex-col items-center relative text-center">
+        <button 
+          (click)="closeTermsModal()" 
+          class="absolute top-6 right-6 w-8 h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all flex items-center justify-center cursor-pointer text-lg"
+          title="Đóng"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+
+        <h3 class="text-xl lg:text-2xl font-extrabold text-gray-900 tracking-tight">
+          Điều khoản dịch vụ và Chính sách bảo mật
+        </h3>
+        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-1">
+          Vui lòng đọc kỹ và chấp nhận để tiếp tục sử dụng StudyHub
+        </p>
+
+        <!-- Tab Bar Switcher -->
+        <div class="w-full grid grid-cols-2 border-b border-gray-200 mt-6 text-sm font-semibold">
+          <button 
+            type="button"
+            (click)="setTermsTab('terms')"
+            [ngClass]="activeTermsTab === 'terms' ? 'text-[#5B4DFF] border-b-2 border-[#5B4DFF] font-bold' : 'text-gray-500 hover:text-gray-800 border-b-2 border-transparent'"
+            class="py-3 text-center transition-all cursor-pointer"
+          >
+            Điều khoản dịch vụ
+          </button>
+          <button 
+            type="button"
+            (click)="setTermsTab('privacy')"
+            [ngClass]="activeTermsTab === 'privacy' ? 'text-[#5B4DFF] border-b-2 border-[#5B4DFF] font-bold' : 'text-gray-500 hover:text-gray-800 border-b-2 border-transparent'"
+            class="py-3 text-center transition-all cursor-pointer"
+          >
+            Chính sách bảo mật
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body Content (Scrollable Container) -->
+      <div class="px-8 py-5 overflow-y-auto max-h-[50vh] space-y-5 text-xs sm:text-sm text-gray-600 leading-relaxed custom-scrollbar text-left select-text">
+        
+        <!-- ============================================== -->
+        <!-- TAB 1: ĐIỀU KHOẢN DỊCH VỤ                      -->
+        <!-- ============================================== -->
+        <div *ngIf="activeTermsTab === 'terms'" class="space-y-4 animate-fadeIn">
+          
+          <!-- 1. Giới thiệu -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">1. Giới thiệu</h4>
+            <p class="text-gray-600">
+              Chào mừng bạn đến với StudyHub – hệ thống hỗ trợ học tập và quản lý đời sống sinh viên. Khi đăng ký và sử dụng StudyHub, bạn xác nhận rằng đã đọc, hiểu và đồng ý với các điều khoản dưới đây.
+            </p>
+          </div>
+
+          <!-- 2. Chấp nhận điều khoản -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">2. Chấp nhận điều khoản</h4>
+            <p class="text-gray-600">
+              Bằng việc tạo tài khoản hoặc sử dụng StudyHub, bạn đồng ý tuân thủ các điều khoản sử dụng của hệ thống. Nếu không đồng ý với bất kỳ nội dung nào, bạn vui lòng không đăng ký hoặc tiếp tục sử dụng dịch vụ.
+            </p>
+          </div>
+
+          <!-- 3. Tài khoản người dùng -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">3. Tài khoản người dùng</h4>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>Người dùng cần cung cấp thông tin chính xác khi đăng ký tài khoản.</li>
+              <li>Mỗi người dùng chịu trách nhiệm bảo mật tài khoản, mật khẩu và mã xác thực của mình.</li>
+              <li>Không được sử dụng tài khoản của người khác hoặc cung cấp tài khoản cho người khác sử dụng trái phép.</li>
+              <li>Người dùng cần thông báo cho quản trị viên nếu phát hiện tài khoản có dấu hiệu bị truy cập trái phép.</li>
+            </ul>
+          </div>
+
+          <!-- 4. Sử dụng dịch vụ -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">4. Sử dụng dịch vụ</h4>
+            <p class="text-gray-600 mb-1">StudyHub cung cấp các chức năng hỗ trợ học tập như:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600 mb-2">
+              <li>Quản lý công việc và Kanban.</li>
+              <li>Quản lý lịch học, lịch thi.</li>
+              <li>Pomodoro.</li>
+              <li>Nhóm học tập và trao đổi.</li>
+              <li>Thông báo.</li>
+              <li>Phân tích quá trình học tập.</li>
+              <li>Quản lý tài liệu.</li>
+              <li>AI Assistant hỗ trợ học tập.</li>
+            </ul>
+            <p class="text-gray-600">
+              Người dùng không được sử dụng hệ thống để thực hiện các hành vi vi phạm pháp luật, phát tán nội dung độc hại, xâm phạm quyền riêng tư hoặc gây ảnh hưởng đến hoạt động của hệ thống.
+            </p>
+          </div>
+
+          <!-- 5. Nội dung người dùng -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">5. Nội dung người dùng</h4>
+            <p class="text-gray-600 mb-1">
+              Người dùng chịu trách nhiệm đối với nội dung do mình tạo, tải lên hoặc chia sẻ trên StudyHub.
+            </p>
+            <p class="text-gray-600 mb-1">Người dùng không được tải lên hoặc chia sẻ:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>Nội dung vi phạm pháp luật.</li>
+              <li>Nội dung chứa mã độc hoặc phần mềm gây hại.</li>
+              <li>Nội dung xâm phạm quyền riêng tư của người khác.</li>
+              <li>Nội dung vi phạm bản quyền hoặc quyền sở hữu trí tuệ.</li>
+            </ul>
+          </div>
+
+          <!-- 6. AI Assistant -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">6. AI Assistant</h4>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>AI Assistant được cung cấp nhằm hỗ trợ việc học tập và tham khảo.</li>
+              <li>Nội dung do AI tạo ra có thể không hoàn toàn chính xác. Người dùng nên kiểm tra và đối chiếu thông tin trước khi sử dụng cho các mục đích quan trọng.</li>
+              <li>StudyHub không đảm bảo mọi câu trả lời của AI luôn chính xác, đầy đủ hoặc phù hợp với mọi trường hợp.</li>
+            </ul>
+          </div>
+
+          <!-- 7. Tính khả dụng của dịch vụ -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">7. Tính khả dụng của dịch vụ</h4>
+            <p class="text-gray-600 mb-1">
+              StudyHub cố gắng duy trì hệ thống hoạt động ổn định. Tuy nhiên, dịch vụ có thể tạm thời gián đoạn do:
+            </p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>Bảo trì hệ thống.</li>
+              <li>Lỗi kỹ thuật.</li>
+              <li>Sự cố máy chủ hoặc mạng.</li>
+              <li>Các nguyên nhân ngoài khả năng kiểm soát.</li>
+            </ul>
+          </div>
+
+          <!-- 8. Thay đổi điều khoản -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">8. Thay đổi điều khoản</h4>
+            <p class="text-gray-600 mb-1">
+              StudyHub có thể cập nhật hoặc thay đổi các điều khoản khi cần thiết để phù hợp với sự phát triển của hệ thống.
+            </p>
+            <p class="text-gray-600">
+              Khi có thay đổi quan trọng, nội dung cập nhật sẽ được thông báo trên hệ thống.
+            </p>
+          </div>
+
+          <!-- 9. Chấm dứt tài khoản -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">9. Chấm dứt tài khoản</h4>
+            <p class="text-gray-600 mb-1">
+              StudyHub có quyền hạn chế hoặc chấm dứt tài khoản nếu phát hiện người dùng vi phạm nghiêm trọng các điều khoản sử dụng hoặc gây ảnh hưởng đến hệ thống và người dùng khác.
+            </p>
+            <p class="text-gray-600">
+              Người dùng cũng có thể yêu cầu ngừng sử dụng tài khoản của mình theo các phương thức được hệ thống hỗ trợ.
+            </p>
+          </div>
+
+          <!-- 10. Liên hệ -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">10. Liên hệ</h4>
+            <p class="text-gray-600">
+              Nếu có câu hỏi hoặc phản hồi liên quan đến Điều khoản dịch vụ, người dùng có thể liên hệ với nhóm phát triển StudyHub thông qua thông tin liên hệ được cung cấp trên hệ thống.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: CHÍNH SÁCH BẢO MẬT                      -->
+        <!-- ============================================== -->
+        <div *ngIf="activeTermsTab === 'privacy'" class="space-y-4 animate-fadeIn">
+          
+          <!-- 1. Giới thiệu -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">1. Giới thiệu</h4>
+            <p class="text-gray-600">
+              StudyHub tôn trọng quyền riêng tư của người dùng và cam kết bảo vệ thông tin được cung cấp trong quá trình sử dụng hệ thống. Chính sách này giải thích loại dữ liệu StudyHub thu thập, cách sử dụng và các biện pháp bảo vệ dữ liệu.
+            </p>
+          </div>
+
+          <!-- 2. Thông tin được thu thập -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">2. Thông tin được thu thập</h4>
+            <p class="text-gray-600 mb-1">Khi sử dụng StudyHub, hệ thống có thể thu thập các thông tin cần thiết như:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600 mb-2">
+              <li>Họ tên.</li>
+              <li>Email.</li>
+              <li>Thông tin tài khoản đăng nhập.</li>
+              <li>Thông tin hồ sơ cá nhân.</li>
+              <li>Công việc và môn học.</li>
+              <li>Lịch học và lịch thi.</li>
+              <li>Dữ liệu Pomodoro.</li>
+              <li>Nội dung nhóm học tập và tin nhắn.</li>
+              <li>Tài liệu do người dùng tải lên.</li>
+              <li>Dữ liệu thống kê và tiến độ học tập.</li>
+            </ul>
+            <p class="text-gray-600">
+              Một số thông tin phiên làm việc hoặc dữ liệu tạm thời có thể được lưu trên thiết bị thông qua LocalStorage nhằm hỗ trợ hoạt động của ứng dụng.
+            </p>
+          </div>
+
+          <!-- 3. Mục đích sử dụng dữ liệu -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">3. Mục đích sử dụng dữ liệu</h4>
+            <p class="text-gray-600 mb-1">Dữ liệu được sử dụng để:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600 mb-2">
+              <li>Tạo và quản lý tài khoản.</li>
+              <li>Xác thực người dùng.</li>
+              <li>Cung cấp các chức năng của StudyHub.</li>
+              <li>Lưu và đồng bộ dữ liệu học tập.</li>
+              <li>Gửi thông báo và lời nhắc.</li>
+              <li>Tạo thống kê và phân tích tiến độ học tập.</li>
+              <li>Cung cấp các tính năng của AI Assistant.</li>
+              <li>Cải thiện chất lượng và độ ổn định của hệ thống.</li>
+            </ul>
+            <p class="text-gray-600">
+              StudyHub không sử dụng thông tin người dùng cho các mục đích không liên quan đến hoạt động của hệ thống nếu không có cơ sở hoặc sự đồng ý phù hợp.
+            </p>
+          </div>
+
+          <!-- 4. Bảo vệ tài khoản -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">4. Bảo vệ tài khoản</h4>
+            <p class="text-gray-600 mb-1">StudyHub áp dụng các cơ chế bảo mật để bảo vệ tài khoản, bao gồm:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600 mb-2">
+              <li>Xác thực bằng JWT.</li>
+              <li>Refresh Token.</li>
+              <li>Mã xác thực OTP qua Email.</li>
+              <li>Kiểm soát quyền truy cập API.</li>
+              <li>Xác thực và kiểm tra dữ liệu từ người dùng.</li>
+            </ul>
+            <p class="text-gray-600">
+              Người dùng có trách nhiệm giữ bí mật thông tin đăng nhập và không chia sẻ mật khẩu hoặc mã xác thực cho người khác.
+            </p>
+          </div>
+
+          <!-- 5. Dữ liệu AI -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">5. Dữ liệu AI</h4>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>Khi người dùng sử dụng AI Assistant, nội dung câu hỏi hoặc dữ liệu cần thiết có thể được gửi đến dịch vụ AI được tích hợp với StudyHub để tạo phản hồi.</li>
+              <li>Người dùng không nên nhập các thông tin nhạy cảm, mật khẩu hoặc thông tin cá nhân không cần thiết vào nội dung gửi cho AI.</li>
+            </ul>
+          </div>
+
+          <!-- 6. Chia sẻ dữ liệu -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">6. Chia sẻ dữ liệu</h4>
+            <p class="text-gray-600 mb-1">
+              StudyHub không chủ động bán hoặc cho thuê thông tin cá nhân của người dùng.
+            </p>
+            <p class="text-gray-600 mb-1">Dữ liệu chỉ được chia sẻ khi cần thiết để:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>Cung cấp chức năng mà người dùng yêu cầu.</li>
+              <li>Vận hành các dịch vụ tích hợp.</li>
+              <li>Tuân thủ yêu cầu pháp luật hoặc cơ quan có thẩm quyền.</li>
+            </ul>
+          </div>
+
+          <!-- 7. Thời gian lưu trữ -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">7. Thời gian lưu trữ</h4>
+            <p class="text-gray-600 mb-1">
+              Dữ liệu được lưu trữ trong thời gian cần thiết để cung cấp các chức năng của StudyHub hoặc theo yêu cầu của hệ thống.
+            </p>
+            <p class="text-gray-600">
+              Khi người dùng yêu cầu xóa tài khoản, dữ liệu liên quan sẽ được xử lý theo khả năng và chính sách lưu trữ của hệ thống.
+            </p>
+          </div>
+
+          <!-- 8. Quyền của người dùng -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">8. Quyền của người dùng</h4>
+            <p class="text-gray-600 mb-1">Người dùng có quyền:</p>
+            <ul class="list-disc list-inside space-y-1 text-gray-600">
+              <li>Kiểm tra thông tin tài khoản của mình.</li>
+              <li>Cập nhật thông tin cá nhân.</li>
+              <li>Quản lý nội dung học tập của mình.</li>
+              <li>Yêu cầu hỗ trợ khi phát hiện vấn đề liên quan đến dữ liệu.</li>
+              <li>Yêu cầu xóa tài khoản theo cơ chế được hệ thống hỗ trợ.</li>
+            </ul>
+          </div>
+
+          <!-- 9. Bảo mật dữ liệu -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">9. Bảo mật dữ liệu</h4>
+            <p class="text-gray-600 mb-1">
+              StudyHub áp dụng các biện pháp kỹ thuật và tổ chức phù hợp nhằm hạn chế việc truy cập, thay đổi, tiết lộ hoặc sử dụng dữ liệu trái phép.
+            </p>
+            <p class="text-gray-600">
+              Tuy nhiên, không có hệ thống Internet nào có thể đảm bảo an toàn tuyệt đối. Trong trường hợp xảy ra sự cố bảo mật nghiêm trọng, StudyHub sẽ thực hiện các biện pháp cần thiết để kiểm tra và khắc phục.
+            </p>
+          </div>
+
+          <!-- 10. Cập nhật chính sách -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">10. Cập nhật chính sách</h4>
+            <p class="text-gray-600 mb-1">
+              Chính sách bảo mật có thể được cập nhật khi StudyHub thay đổi chức năng, công nghệ hoặc phương thức xử lý dữ liệu.
+            </p>
+            <p class="text-gray-600">
+              Phiên bản mới nhất sẽ được công bố trên hệ thống.
+            </p>
+          </div>
+
+          <!-- 11. Liên hệ -->
+          <div>
+            <h4 class="font-bold text-gray-900 text-sm mb-1.5">11. Liên hệ</h4>
+            <p class="text-gray-600">
+              Nếu có câu hỏi hoặc yêu cầu liên quan đến quyền riêng tư và dữ liệu cá nhân, người dùng có thể liên hệ với nhóm phát triển StudyHub thông qua thông tin liên hệ được cung cấp trên hệ thống.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Modal Bottom Checkbox Agreement -->
+      <div class="px-8 pt-3 pb-2 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-700 select-none">
+        <input 
+          type="checkbox" 
+          [checked]="registerForm.get('agreeTerms')?.value"
+          (change)="registerForm.patchValue({ agreeTerms: !registerForm.get('agreeTerms')?.value })"
+          id="modalAgreeCheckbox"
+          class="w-4 h-4 accent-[#5B4DFF] rounded border-gray-300 focus:ring-[#5B4DFF] cursor-pointer"
+        />
+        <label for="modalAgreeCheckbox" class="cursor-pointer">
+          Tôi đã đọc và đồng ý với 
+          <a (click)="setTermsTab('terms')" href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline">Điều khoản dịch vụ</a> 
+          và 
+          <a (click)="setTermsTab('privacy')" href="javascript:void(0)" class="text-[#5B4DFF] font-semibold hover:underline">Chính sách bảo mật</a>
+        </label>
+      </div>
+
+      <!-- Modal Footer Action Buttons -->
+      <div class="px-8 py-4 flex items-center justify-center gap-4 bg-white">
+        <button 
+          type="button"
+          (click)="closeTermsModal()"
+          class="px-10 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold text-xs transition-all cursor-pointer"
+        >
+          Hủy
+        </button>
+
+        <button 
+          type="button"
+          (click)="confirmTerms()"
+          class="px-10 py-2.5 bg-[#5B4DFF] hover:bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer"
+        >
+          Tôi đồng ý
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </div>

@@ -51,7 +51,7 @@ function handle401Error(req: HttpRequest<unknown>, next: HttpHandlerFn, authServ
       }),
       catchError((err) => {
         isRefreshing = false;
-        authService.logout().subscribe();
+        authService.clearSession();
         return throwError(() => err);
       })
     );

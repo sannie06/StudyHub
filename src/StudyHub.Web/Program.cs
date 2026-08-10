@@ -223,7 +223,7 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("[Database Migration Error] " + ex.Message);
         }
 
-        // 0. Ensure CongViecNhom table exists
+        // 0. Ensure CongViecNhom & OTP tables exist
         try
         {
             dbContext.Database.ExecuteSqlRaw(@"
@@ -244,12 +244,27 @@ using (var scope = app.Services.CreateScope())
                         [DaXoa] BIT NOT NULL DEFAULT 0
                     );
                 END
+
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'OTP')
+                BEGIN
+                    CREATE TABLE [dbo].[OTP](
+                        [MaOTP] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                        [Email] NVARCHAR(255) NOT NULL,
+                        [Code] NVARCHAR(10) NOT NULL,
+                        [NgayHetHan] DATETIME2(7) NOT NULL,
+                        [DaSuDung] BIT NOT NULL DEFAULT 0,
+                        [LoaiOTP] NVARCHAR(50) NOT NULL,
+                        [NgayTao] DATETIME2(7) NOT NULL DEFAULT GETDATE(),
+                        [NgayCapNhat] DATETIME2(7) NULL,
+                        [DaXoa] BIT NOT NULL DEFAULT 0
+                    );
+                END
             ");
-            Console.WriteLine("[Database Schema Upgrade] Table CongViecNhom verified/created successfully.");
+            Console.WriteLine("[Database Schema Upgrade] Tables CongViecNhom & OTP verified/created successfully.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("[CongViecNhom Table Creation Error] " + ex.Message);
+            Console.WriteLine("[Table Creation Error] " + ex.Message);
         }
         try { dbContext.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LichHoc') AND name = 'TieuDe') ALTER TABLE LichHoc ADD TieuDe NVARCHAR(255) NULL;"); } catch { }
 
@@ -380,7 +395,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Register global exception handler middleware first
+// Configure CORS before global exception handler so error responses include CORS headers
+app.UseCors("AllowAngular");
+
+// Register global exception handler middleware
 app.UseMiddleware<StudyHub.Web.Middleware.GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
@@ -391,8 +409,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowAngular");
 
 app.UseAuthentication();
 app.UseAuthorization();

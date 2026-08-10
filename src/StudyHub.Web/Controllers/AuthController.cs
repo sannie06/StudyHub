@@ -71,6 +71,18 @@ namespace StudyHub.Web.Controllers
             return Ok(response);
         }
 
+        [HttpPost("google")]
+        public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            {
+                throw new BadRequestException("Thông tin tài khoản Google không hợp lệ.");
+            }
+
+            var response = await _authService.GoogleAuthAsync(request);
+            return Ok(response);
+        }
+
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {

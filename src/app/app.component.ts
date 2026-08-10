@@ -14,7 +14,7 @@ import { HeaderComponent } from './components/header/header.component';
 })
 export class AppComponent implements OnInit {
   title = 'StudyHub';
-  isAuthPage: boolean = false;
+  isAuthPage: boolean = typeof window !== 'undefined' && ['/login', '/register', '/verify-otp', '/forgot-password', '/reset-password', '/confirm-email'].some(route => window.location.pathname.includes(route));
 
   constructor(private router: Router) {}
 

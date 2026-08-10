@@ -30,15 +30,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUserInfo();
-    this.fetchProfile();
+    if (this.authService.token) {
+      this.fetchProfile();
+      this.notificationService.getUnreadCount().subscribe({ error: () => {} });
+    }
     this.userSub = this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.updateUserDisplay(user);
       }
     });
 
-    // Load and subscribe unread notification count
-    this.notificationService.getUnreadCount().subscribe();
     this.notifySub = this.notificationService.unreadCount$.subscribe(count => {
       this.unreadCount = count;
     });

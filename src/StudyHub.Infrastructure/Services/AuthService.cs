@@ -11,8 +11,19 @@ using StudyHub.Domain.Entities;
 
 namespace StudyHub.Infrastructure.Services
 {
+    public class PendingRegistration
+    {
+        public string HoTen { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string MatKhauHash { get; set; } = string.Empty;
+        public string OtpCode { get; set; } = string.Empty;
+        public DateTime OtpExpiresAt { get; set; }
+    }
+
     public class AuthService : IAuthService
     {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, PendingRegistration> _pendingRegistrations = new();
+
         private readonly INguoiDungRepository _nguoiDungRepository;
         private readonly IOTPRepository _otpRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -44,57 +55,52 @@ namespace StudyHub.Infrastructure.Services
             var normalizedEmail = request.Email?.Trim().ToLower() ?? string.Empty;
             var cleanPassword = request.MatKhau?.Trim() ?? string.Empty;
 
-            if (!await _nguoiDungRepository.IsEmailUniqueAsync(normalizedEmail))
+            var existingUser = await _nguoiDungRepository.GetByEmailAsync(normalizedEmail);
+            if (existingUser != null && existingUser.IsEmailConfirmed)
             {
-                _logger.LogWarning("Register failed: Email {Email} already exists.", normalizedEmail);
-                throw new BadRequestException("Email đã tồn tại trong hệ thống.");
+                _logger.LogWarning("Register failed: Email {Email} already exists and is confirmed.", normalizedEmail);
+                throw new BadRequestException("Email này đã được đăng ký và kích hoạt. Vui lòng chuyển sang trang Đăng nhập!");
             }
 
             var passwordHash = _passwordHasher.HashPassword(cleanPassword);
             var randomOtp = new Random().Next(100000, 999999).ToString();
+            var expiry = DateTime.UtcNow.AddMinutes(5);
 
-            var user = new NguoiDung
+            var pending = new PendingRegistration
             {
                 HoTen = request.HoTen?.Trim() ?? string.Empty,
                 Email = normalizedEmail,
                 MatKhauHash = passwordHash,
-                MaVaiTro = 2, // Default: Student (Học sinh)
-                TrangThai = 1, // Default: Active
-                IsEmailConfirmed = false,
-                EmailOtpCode = randomOtp,
-                OtpExpiresAt = DateTime.UtcNow.AddMinutes(5),
-                NgayTao = DateTime.UtcNow
+                OtpCode = randomOtp,
+                OtpExpiresAt = expiry
             };
 
-            await _nguoiDungRepository.AddAsync(user);
-            await _nguoiDungRepository.SaveAsync();
+            _pendingRegistrations[normalizedEmail] = pending;
 
-            Console.WriteLine($"[REGISTER SUCCESS] User '{user.Email}' saved to DB with ID: {user.MaNguoiDung}");
+            Console.WriteLine($"[REGISTER OTP CREATED] Pending registration for '{normalizedEmail}' with OTP: {randomOtp}");
 
-            // Send Email OTP Code (6-digits) safely without crashing registration
+            // Send Email OTP Code (6-digits) safely in background
             try
             {
-                await _emailService.SendOtpEmailAsync(user.Email, user.HoTen, randomOtp);
+                await _emailService.SendOtpEmailAsync(normalizedEmail, pending.HoTen, randomOtp);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send OTP email to {Email} during registration.", user.Email);
+                _logger.LogError(ex, "Failed to send OTP email to {Email} during registration.", normalizedEmail);
             }
 
-            // Fetch user with roles to generate initial DTO
-            var userWithRole = await _nguoiDungRepository.GetWithRolesAsync(user.Email);
-            if (userWithRole == null)
+            return new AuthResponse
             {
-                _logger.LogError("Register failed: User with role could not be loaded after insert for {Email}.", user.Email);
-                throw new BadRequestException("Đăng ký không thành công.");
-            }
-
-            var accessToken = _tokenService.GenerateAccessToken(userWithRole);
-            var refreshTokenString = _tokenService.GenerateRefreshToken();
-
-            _logger.LogInformation("User registered successfully: {Email} (ID: {UserId}). Email confirmation OTP sent.", user.Email, userWithRole.MaNguoiDung);
-
-            return MapToAuthResponse(userWithRole, accessToken, refreshTokenString);
+                AccessToken = string.Empty,
+                RefreshToken = string.Empty,
+                User = new UserDto
+                {
+                    Email = normalizedEmail,
+                    HoTen = pending.HoTen,
+                    MaVaiTro = 2,
+                    VaiTro = "Sinh viên"
+                }
+            };
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -104,15 +110,7 @@ namespace StudyHub.Infrastructure.Services
 
             var user = await _nguoiDungRepository.GetWithRolesAsync(normalizedEmail);
 
-            if (user == null)
-            {
-                // Fallback 1: Search by admin role or user ID 1
-                user = await _nguoiDungRepository.GetQueryable()
-                    .Include(u => u.VaiTro)
-                    .FirstOrDefaultAsync(u => u.MaVaiTro == 1 || u.MaNguoiDung == 1 || u.Email.ToLower().Contains("admin"));
-            }
-
-            if (user == null && (normalizedEmail.Contains("admin") || normalizedEmail.Contains("studyhub") || normalizedEmail == "admin@studyhub.com"))
+            if (user == null && normalizedEmail == "admin@studyhub.com")
             {
                 user = new NguoiDung
                 {
@@ -132,41 +130,25 @@ namespace StudyHub.Infrastructure.Services
             if (user == null)
             {
                 _logger.LogWarning("Login failed: User not found with email {Email}.", normalizedEmail);
-                Console.WriteLine($"[LOGIN FAIL] No user found with email '{normalizedEmail}' in DB.");
-                throw new UnauthorizedException("Email hoặc mật khẩu không chính xác.");
+                throw new UnauthorizedException("Tài khoản không tồn tại hoặc mật khẩu không chính xác.");
             }
 
-            var isAdminUser = user.MaVaiTro == 1 || user.Email.ToLower().Contains("admin") || normalizedEmail.Contains("admin");
-
-            if (!isAdminUser)
+            if (!_passwordHasher.VerifyPassword(cleanPassword, user.MatKhauHash))
             {
-                if (!_passwordHasher.VerifyPassword(cleanPassword, user.MatKhauHash))
-                {
-                    _logger.LogWarning("Login failed: Password verification failed for email {Email}.", normalizedEmail);
-                    Console.WriteLine($"[LOGIN FAIL] Password mismatch for user '{normalizedEmail}'.");
-                    throw new UnauthorizedException("Email hoặc mật khẩu không chính xác.");
-                }
+                _logger.LogWarning("Login failed: Password verification failed for email {Email}.", normalizedEmail);
+                throw new UnauthorizedException("Tài khoản không tồn tại hoặc mật khẩu không chính xác.");
             }
 
-            if (isAdminUser)
+            if (user.TrangThai == 0)
             {
-                user.IsEmailConfirmed = true;
-                user.TrangThai = 1;
-                user.MaVaiTro = 1;
+                _logger.LogWarning("Login failed: Account {Email} is inactive/banned.", normalizedEmail);
+                throw new UnauthorizedException("Tài khoản này hiện đang bị tạm khóa.");
             }
-            else
-            {
-                if (user.TrangThai == 0) // Supposing 0 is Banned / Inactive
-                {
-                    _logger.LogWarning("Login failed: Account {Email} is inactive/banned.", normalizedEmail);
-                    throw new UnauthorizedException("Tài khoản này đã bị khóa.");
-                }
 
-                if (!user.IsEmailConfirmed)
-                {
-                    _logger.LogWarning("Login failed: Account {Email} email is not confirmed.", normalizedEmail);
-                    throw new UnauthorizedException("Tài khoản chưa xác thực email. Vui lòng kiểm tra hộp thư của bạn.");
-                }
+            if (!user.IsEmailConfirmed)
+            {
+                _logger.LogWarning("Login failed: Account {Email} email is not confirmed.", normalizedEmail);
+                throw new UnauthorizedException("Tài khoản chưa xác thực email. Vui lòng kiểm tra mã OTP trong hộp thư của bạn.");
             }
 
             var accessToken = _tokenService.GenerateAccessToken(user);
@@ -219,14 +201,73 @@ namespace StudyHub.Infrastructure.Services
         public async Task<bool> VerifyOtpAsync(VerifyOtpRequest request)
         {
             var normalizedEmail = request.Email?.Trim().ToLower() ?? string.Empty;
+            var cleanCode = request.Code?.Trim() ?? string.Empty;
+
+            // 1. Check in pending registrations (New registration flow)
+            if (_pendingRegistrations.TryGetValue(normalizedEmail, out var pending))
+            {
+                if (pending.OtpExpiresAt < DateTime.UtcNow)
+                {
+                    throw new BadRequestException("Mã OTP đã hết hạn (hiệu lực trong 5 phút). Vui lòng yêu cầu gửi lại mã.");
+                }
+
+                if (pending.OtpCode != cleanCode)
+                {
+                    throw new BadRequestException("Mã OTP không chính xác.");
+                }
+
+                // VALID OTP -> NOW persist to Database
+                var userInDb = await _nguoiDungRepository.GetByEmailAsync(normalizedEmail);
+                if (userInDb == null)
+                {
+                    userInDb = new NguoiDung
+                    {
+                        HoTen = pending.HoTen,
+                        Email = normalizedEmail,
+                        MatKhauHash = pending.MatKhauHash,
+                        MaVaiTro = 2, // Sinh viên
+                        TrangThai = 1, // Active
+                        IsEmailConfirmed = true,
+                        NgayTao = DateTime.UtcNow
+                    };
+                    await _nguoiDungRepository.AddAsync(userInDb);
+                }
+                else
+                {
+                    userInDb.HoTen = pending.HoTen;
+                    userInDb.MatKhauHash = pending.MatKhauHash;
+                    userInDb.IsEmailConfirmed = true;
+                    userInDb.EmailOtpCode = null;
+                    userInDb.OtpExpiresAt = null;
+                    userInDb.NgayCapNhat = DateTime.UtcNow;
+                    _nguoiDungRepository.Update(userInDb);
+                }
+
+                await _nguoiDungRepository.SaveAsync();
+                _pendingRegistrations.TryRemove(normalizedEmail, out _);
+
+                var latestOtp = await _otpRepository.GetLatestOtpAsync(normalizedEmail, "Register");
+                if (latestOtp != null)
+                {
+                    latestOtp.DaSuDung = true;
+                    _otpRepository.Update(latestOtp);
+                    await _otpRepository.SaveAsync();
+                }
+
+                Console.WriteLine($"[VERIFY OTP SUCCESS] User '{normalizedEmail}' successfully registered and saved to Database!");
+                _logger.LogInformation("Email verified and user saved to database for {Email}", normalizedEmail);
+                return true;
+            }
+
+            // 2. Fallback check in NguoiDung table (for previously created unconfirmed accounts or legacy)
             var user = await _nguoiDungRepository.GetByEmailAsync(normalizedEmail);
             if (user == null)
             {
-                Console.WriteLine($"[VERIFY OTP FAIL] User '{normalizedEmail}' not found.");
-                throw new BadRequestException("Không tìm thấy tài khoản người dùng với email này.");
+                Console.WriteLine($"[VERIFY OTP FAIL] No pending registration or user found for '{normalizedEmail}'.");
+                throw new BadRequestException("Không tìm thấy thông tin đăng ký cho email này. Vui lòng đăng ký lại.");
             }
 
-            if (string.IsNullOrEmpty(user.EmailOtpCode) || user.EmailOtpCode != request.Code)
+            if (string.IsNullOrEmpty(user.EmailOtpCode) || user.EmailOtpCode != cleanCode)
             {
                 throw new BadRequestException("Mã OTP không chính xác.");
             }
@@ -252,15 +293,46 @@ namespace StudyHub.Infrastructure.Services
         public async Task<bool> ResendOtpAsync(string email)
         {
             var normalizedEmail = email?.Trim().ToLower() ?? string.Empty;
+            var newOtp = new Random().Next(100000, 999999).ToString();
+            var expiry = DateTime.UtcNow.AddMinutes(5);
+
+            if (_pendingRegistrations.TryGetValue(normalizedEmail, out var pending))
+            {
+                pending.OtpCode = newOtp;
+                pending.OtpExpiresAt = expiry;
+
+                try
+                {
+                    var otpEntity = new OTP
+                    {
+                        Email = normalizedEmail,
+                        Code = newOtp,
+                        LoaiOTP = "Register",
+                        NgayHetHan = expiry,
+                        DaSuDung = false,
+                        NgayTao = DateTime.UtcNow
+                    };
+                    await _otpRepository.AddAsync(otpEntity);
+                    await _otpRepository.SaveAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not save OTP to repository on resend.");
+                }
+
+                await _emailService.SendOtpEmailAsync(normalizedEmail, pending.HoTen, newOtp);
+                _logger.LogInformation("Resent new OTP code to pending email {Email}", normalizedEmail);
+                return true;
+            }
+
             var user = await _nguoiDungRepository.GetByEmailAsync(normalizedEmail);
             if (user == null)
             {
-                throw new NotFoundException("Không tìm thấy tài khoản người dùng với email này.");
+                throw new NotFoundException("Không tìm thấy thông tin đăng ký cho email này.");
             }
 
-            var newOtp = new Random().Next(100000, 999999).ToString();
             user.EmailOtpCode = newOtp;
-            user.OtpExpiresAt = DateTime.UtcNow.AddMinutes(5);
+            user.OtpExpiresAt = expiry;
             user.NgayCapNhat = DateTime.UtcNow;
 
             _nguoiDungRepository.Update(user);
@@ -277,8 +349,8 @@ namespace StudyHub.Infrastructure.Services
             var user = await _nguoiDungRepository.GetByEmailAsync(normalizedEmail);
             if (user == null)
             {
-                // Return silently to prevent email enumeration attacks
-                return;
+                _logger.LogWarning("ForgotPassword failed: User not found for email {Email}.", normalizedEmail);
+                throw new NotFoundException("Địa chỉ email này chưa được đăng ký trong hệ thống StudyHub.");
             }
 
             var code = new Random().Next(100000, 999999).ToString();
@@ -342,6 +414,89 @@ namespace StudyHub.Infrastructure.Services
 
             _logger.LogInformation("Email confirmed successfully for user: {Email} (ID: {UserId})", normalizedEmail, user.MaNguoiDung);
             return true;
+        }
+
+        public async Task<AuthResponse> GoogleAuthAsync(GoogleAuthRequest request)
+        {
+            var normalizedEmail = request.Email?.Trim().ToLower() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedEmail))
+            {
+                throw new BadRequestException("Email Google không được để trống.");
+            }
+
+            var user = await _nguoiDungRepository.GetWithRolesAsync(normalizedEmail);
+
+            if (user == null)
+            {
+                // Auto register new student user from Google
+                var fullName = string.IsNullOrWhiteSpace(request.HoTen) ? normalizedEmail.Split('@')[0] : request.HoTen.Trim();
+                var randomPassword = Guid.NewGuid().ToString("N") + "!1Aa";
+
+                user = new NguoiDung
+                {
+                    HoTen = fullName,
+                    Email = normalizedEmail,
+                    MatKhauHash = _passwordHasher.HashPassword(randomPassword),
+                    MaVaiTro = 2, // Sinh viên
+                    TrangThai = 1, // Active
+                    IsEmailConfirmed = true, // Google already verified this email
+                    AnhDaiDien = request.AvatarUrl,
+                    NgayTao = DateTime.UtcNow
+                };
+
+                await _nguoiDungRepository.AddAsync(user);
+                await _nguoiDungRepository.SaveAsync();
+
+                user = await _nguoiDungRepository.GetWithRolesAsync(normalizedEmail) ?? user;
+                _logger.LogInformation("New user created via Google Auth: {Email} (ID: {UserId})", normalizedEmail, user.MaNguoiDung);
+            }
+            else
+            {
+                if (user.TrangThai == 0)
+                {
+                    _logger.LogWarning("Google Login failed: Account {Email} is inactive/banned.", normalizedEmail);
+                    throw new UnauthorizedException("Tài khoản này hiện đang bị tạm khóa.");
+                }
+
+                // If user was previously unconfirmed, confirm them now via Google
+                if (!user.IsEmailConfirmed)
+                {
+                    user.IsEmailConfirmed = true;
+                    if (!string.IsNullOrWhiteSpace(request.AvatarUrl) && string.IsNullOrWhiteSpace(user.AnhDaiDien))
+                    {
+                        user.AnhDaiDien = request.AvatarUrl;
+                    }
+                    user.NgayCapNhat = DateTime.UtcNow;
+                    _nguoiDungRepository.Update(user);
+                    await _nguoiDungRepository.SaveAsync();
+                }
+            }
+
+            var accessToken = _tokenService.GenerateAccessToken(user);
+            var refreshTokenString = _tokenService.GenerateRefreshToken();
+
+            try
+            {
+                var refreshToken = new RefreshToken
+                {
+                    MaNguoiDung = user.MaNguoiDung,
+                    Token = refreshTokenString,
+                    NgayHetHan = DateTime.UtcNow.AddDays(30),
+                    DaSuDung = false,
+                    DaThuHoi = false,
+                    NgayTao = DateTime.UtcNow
+                };
+
+                await _refreshTokenRepository.AddAsync(refreshToken);
+                await _refreshTokenRepository.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not save refresh token for Google user.");
+            }
+
+            _logger.LogInformation("Google authentication successful for user: {Email} (ID: {UserId})", normalizedEmail, user.MaNguoiDung);
+            return MapToAuthResponse(user, accessToken, refreshTokenString);
         }
 
         // Manual DTO Mapping for performance and easy debugging

@@ -14,5 +14,6 @@ namespace StudyHub.Application.Common.Interfaces.Services
         Task ResetPasswordAsync(ResetPasswordRequest request);
         Task<bool> ConfirmEmailAsync(string email, string token);
         Task<bool> ResendOtpAsync(string email);
+        Task<AuthResponse> GoogleAuthAsync(GoogleAuthRequest request);
     }
 }

@@ -63,6 +63,12 @@ export class AuthService {
     );
   }
 
+  googleAuth(data: { email: string; hoTen?: string; avatarUrl?: string; googleId?: string; credential?: string }): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/google`, data).pipe(
+      tap(res => this.handleAuthentication(res))
+    );
+  }
+
   getProfile(): Observable<User> {
     return this.http.get<User>('http://localhost:5186/api/v1/users/profile').pipe(
       tap((user: User) => {
@@ -88,10 +94,12 @@ export class AuthService {
 
   logout(): Observable<any> {
     const refreshToken = localStorage.getItem('sh_refresh_token');
+    this.clearSession();
+    if (!refreshToken) {
+      return new Observable(obs => { obs.next({ message: 'Logged out' }); obs.complete(); });
+    }
     return this.http.post(`${this.apiUrl}/logout`, { refreshToken }).pipe(
-      tap(() => {
-        this.clearSession();
-      })
+      tap(() => this.clearSession())
     );
   }
 

@@ -32,7 +32,8 @@ namespace StudyHub.Web.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unhandled exception occurred during HTTP request execution.");
+                Console.WriteLine($"\n[ERROR SERVER 500/EXCEPTION] {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}\n");
+                _logger.LogError(ex, "An unhandled exception occurred during HTTP request execution: {Message}", ex.Message);
                 await HandleExceptionAsync(context, ex);
             }
         }
