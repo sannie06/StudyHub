@@ -19,8 +19,9 @@ export interface ClassSchedule {
   time: string;
   subject: string;
   room: string;
-  colorClass: string;
+  colorClass?: string;
   dotColor: string;
+  durationMinutes?: number;
 }
 
 @Component({
@@ -39,15 +40,36 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
 
   // Stats Card
   stats = {
-    totalTasks: 15,
-    completedTasks: 10,
-    completionRate: 66.7,
-    upcomingDeadlines: 3,
-    studyHoursToday: 4.5
+    totalTasks: 0,
+    completedTasks: 0,
+    completionRate: 0,
+    upcomingDeadlines: 0,
+    studyHoursToday: 0
   };
 
   tasks: DashboardTask[] = [];
   schedule: ClassSchedule[] = [];
+
+  get totalStudyTimeToday(): string {
+    if (!this.schedule || this.schedule.length === 0) {
+      return '0 phút';
+    }
+    let totalMinutes = 0;
+    for (const item of this.schedule) {
+      if (item.durationMinutes && item.durationMinutes > 0) {
+        totalMinutes += item.durationMinutes;
+      }
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours > 0 && mins > 0) {
+      return `${hours} giờ ${mins} phút`;
+    } else if (hours > 0) {
+      return `${hours} giờ`;
+    } else {
+      return `${mins} phút`;
+    }
+  }
 
   performanceData = [
     { day: 'T2', hours: 3.0, h: 50 },
@@ -150,23 +172,30 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
               const startStr = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
               const endStr = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
 
-              const colors = [
-                { colorClass: 'border-l-4 border-purple-500 bg-purple-50/40 text-purple-700', dotColor: 'bg-purple-500' },
-                { colorClass: 'border-l-4 border-emerald-500 bg-emerald-50/40 text-emerald-700', dotColor: 'bg-emerald-500' },
-                { colorClass: 'border-l-4 border-orange-500 bg-orange-50/40 text-orange-700', dotColor: 'bg-orange-500' }
-              ];
-              const c = colors[idx % colors.length];
+              let rawColor = (s.mauSac && s.mauSac.startsWith('#')) ? s.mauSac : '';
+              if (!rawColor) {
+                const subLower = (s.tenMonHoc || '').toLowerCase();
+                if (subLower.includes('thi') || subLower.includes('csdl')) {
+                  rawColor = '#ea580c'; // Red/Coral matching Calendar
+                } else if (subLower.includes('tiếng anh') || subLower.includes('anh')) {
+                  rawColor = '#ec4899'; // Pink matching Calendar
+                } else {
+                  rawColor = '#0284c7'; // Sky blue for ClassSchedule matching Calendar
+                }
+              }
+
+              const durationMins = Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60)));
 
               return {
                 time: `${startStr} - ${endStr}`,
                 subject: s.tenMonHoc,
-                room: s.phongHoc || 'Phòng A101',
-                colorClass: c.colorClass,
-                dotColor: c.dotColor
+                room: s.phongHoc || 'Phòng học',
+                dotColor: rawColor,
+                durationMinutes: durationMins
               };
             });
           } else {
-            this.loadFallbackSchedule();
+            this.schedule = [];
           }
 
           if (data.weeklyProgress && data.weeklyProgress.length > 0) {
@@ -204,8 +233,8 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
         if (err.status === 401) {
           this.errorMessage = 'Bạn cần đăng nhập để xem thông số Dashboard.';
         }
+        this.schedule = [];
         this.loadFallbackTasks();
-        this.loadFallbackSchedule();
         this.loadFallbackGroups();
         this.loadFallbackNotifications();
       }
@@ -218,14 +247,6 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
       { id: 2, title: 'Thiết kế sơ đồ ERD', subject: 'Cơ sở dữ liệu', priority: 'Cao', completed: false },
       { id: 3, title: 'Đọc tài liệu chương 3', subject: 'Lịch sử', priority: 'Trung bình', completed: true },
       { id: 4, title: 'Chuẩn bị slide báo cáo', subject: 'Thiết kế HTTT', priority: 'Thấp', completed: false }
-    ];
-  }
-
-  private loadFallbackSchedule() {
-    this.schedule = [
-      { time: '08:00 - 10:00', subject: 'Java Programming', room: 'Phòng 402-A5', colorClass: 'border-l-4 border-purple-500 bg-purple-50/40 text-purple-700', dotColor: 'bg-purple-500' },
-      { time: '10:15 - 12:15', subject: 'Cơ sở dữ liệu', room: 'Phòng 301-B1', colorClass: 'border-l-4 border-emerald-500 bg-emerald-50/40 text-emerald-700', dotColor: 'bg-emerald-500' },
-      { time: '14:00 - 16:00', subject: 'Thiết kế HTTT', room: 'Phòng 205-C2', colorClass: 'border-l-4 border-orange-500 bg-orange-50/40 text-orange-700', dotColor: 'bg-orange-500' }
     ];
   }
 

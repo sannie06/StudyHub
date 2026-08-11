@@ -458,12 +458,20 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.isTypeDropdownOpen = false;
   }
 
+  pinnedEvent: CalendarEvent | null = null;
+  hoveredEvent: CalendarEvent | null = null;
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (!target.closest('.custom-filter-dropdown')) {
       this.isSubjectDropdownOpen = false;
       this.isTypeDropdownOpen = false;
+    }
+    if (!target.closest('.calendar-event-card') && !target.closest('.event-popover-container')) {
+      this.pinnedEvent = null;
+      this.hoveredEvent = null;
+      this.selectedEvent = null;
     }
   }
 
@@ -683,14 +691,34 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
   }
 
+  isPopoverOpen(event: CalendarEvent): boolean {
+    if (!event || !this.pinnedEvent) return false;
+    return this.pinnedEvent === event;
+  }
+
   selectEvent(event: CalendarEvent, e?: MouseEvent) {
     if (e) {
       e.stopPropagation();
     }
-    this.selectedEvent = event;
+    if (this.pinnedEvent === event) {
+      this.pinnedEvent = null;
+      this.selectedEvent = null;
+    } else {
+      this.pinnedEvent = event;
+      this.selectedEvent = event;
+    }
+  }
+
+  closePopover(e?: MouseEvent) {
+    if (e) {
+      e.stopPropagation();
+    }
+    this.pinnedEvent = null;
+    this.selectedEvent = null;
   }
 
   closeDetailCard() {
+    this.pinnedEvent = null;
     this.selectedEvent = null;
   }
 
@@ -726,19 +754,22 @@ export class CalendarComponent implements OnInit, OnDestroy {
     });
   }
 
-  editCurrentEvent() {
-    if (!this.selectedEvent) return;
-    const targetId = this.selectedEvent.stringId ? String(this.selectedEvent.stringId) : String(this.selectedEvent.id);
+  editEvent(event: CalendarEvent, e?: MouseEvent) {
+    if (e) {
+      e.stopPropagation();
+    }
+    const targetId = event.stringId ? String(event.stringId) : String(event.id);
     this.router.navigate(['/calendar/create'], { queryParams: { editId: targetId } });
   }
 
-  deleteCurrentEvent() {
-    if (!this.selectedEvent) return;
-
-    const titleStr = this.selectedEvent.title;
+  deleteEvent(event: CalendarEvent, e?: MouseEvent) {
+    if (e) {
+      e.stopPropagation();
+    }
+    const titleStr = event.title;
     if (confirm(`Bạn có chắc chắn muốn xóa lịch "${titleStr}" này không?`)) {
-      const idToDelete = this.selectedEvent.id;
-      const eventType = this.selectedEvent.stringId?.split('_')[0] || (this.selectedEvent.type === 'Lịch học' ? 'ClassSchedule' : (this.selectedEvent.type === 'Lịch thi' ? 'ExamSchedule' : 'PersonalEvent'));
+      const idToDelete = event.id;
+      const eventType = event.stringId?.split('_')[0] || (event.type === 'Lịch học' ? 'ClassSchedule' : (event.type === 'Lịch thi' ? 'ExamSchedule' : 'PersonalEvent'));
       this.calendarService.deleteEvent(idToDelete, eventType).subscribe({
         next: () => {
           this.calendarService.deleteEventLocal(idToDelete);
@@ -754,12 +785,114 @@ export class CalendarComponent implements OnInit, OnDestroy {
     }
   }
 
+  editCurrentEvent() {
+    if (!this.selectedEvent) return;
+    this.editEvent(this.selectedEvent);
+  }
+
+  deleteCurrentEvent() {
+    if (!this.selectedEvent) return;
+    this.deleteEvent(this.selectedEvent);
+  }
+
+  isShortEvent(event: CalendarEvent): boolean {
+    return (event.durationHours || 1) < 0.75;
+  }
+
+  isMediumEvent(event: CalendarEvent): boolean {
+    const d = event.durationHours || 1;
+    return d >= 0.75 && d < 1.25;
+  }
+
+  getStartTime(timeStr: string): string {
+    if (!timeStr) return '';
+    return timeStr.split(' - ')[0] || timeStr;
+  }
+
+  isTooltipBelow(event: CalendarEvent): boolean {
+    return (event.startHour || 0) < 4.5;
+  }
+
+  getTooltipPosClass(colIndex?: number): string {
+    if (this.currentViewTab === 'day') {
+      return 'left-2 sm:left-4 translate-x-0';
+    }
+    if (colIndex !== undefined) {
+      if (colIndex <= 1) {
+        return 'left-0 translate-x-0';
+      }
+      if (colIndex >= 5) {
+        return 'right-0 left-auto translate-x-0';
+      }
+    }
+    return 'left-1/2 -translate-x-1/2';
+  }
+
+  getTooltipArrowClass(colIndex?: number): string {
+    if (this.currentViewTab === 'day') {
+      return 'left-8';
+    }
+    if (colIndex !== undefined) {
+      if (colIndex <= 1) {
+        return 'left-6';
+      }
+      if (colIndex >= 5) {
+        return 'right-6';
+      }
+    }
+    return 'left-1/2 -translate-x-1/2';
+  }
+
+  isMonthTooltipBelow(cellIndex: number): boolean {
+    // Only the first top row (Row 0: index 0 to 6) opens below
+    // All rows from row 1 onwards (index >= 7) open ABOVE to avoid being cut off at the bottom
+    return cellIndex < 7;
+  }
+
+  getMonthTooltipPosClass(cellIndex: number): string {
+    const col = cellIndex % 7;
+    if (col <= 1) return 'left-0 left-auto translate-x-0';
+    if (col >= 5) return 'right-0 left-auto translate-x-0';
+    return 'left-1/2 -translate-x-1/2';
+  }
+
+  getMonthTooltipArrowClass(cellIndex: number): string {
+    const col = cellIndex % 7;
+    if (col <= 1) return 'left-6';
+    if (col >= 5) return 'right-6';
+    return 'left-1/2 -translate-x-1/2';
+  }
+
+  isCellHasActivePopover(cell: MonthDayCell): boolean {
+    const active = this.hoveredEvent || this.pinnedEvent;
+    if (!active || !cell.events) return false;
+    return cell.events.some(e => e === active);
+  }
+
+  getEventDurationStr(event: CalendarEvent): string {
+    const dur = event.durationHours || 1;
+    const hours = Math.floor(dur);
+    const mins = Math.round((dur - hours) * 60);
+    if (hours > 0 && mins > 0) {
+      return `${hours} giờ ${mins}p`;
+    } else if (hours > 0) {
+      return `${hours} giờ`;
+    } else {
+      return `${mins} phút`;
+    }
+  }
+
   getEventStyle(event: CalendarEvent) {
     const isDayView = this.currentViewTab === 'day';
     const slotHeight = isDayView ? 56 : 52;
     const topPx = event.startHour * slotHeight;
-    const maxDur = Math.min(event.durationHours, Math.max(24 - event.startHour, 0.5));
-    const heightPx = Math.max(maxDur * slotHeight - 4, 36);
+    const isShort = this.isShortEvent(event);
+    const maxDur = Math.min(event.durationHours, Math.max(24 - event.startHour, 0.25));
+    // For short events (< 45 mins), min-height 28px
+    // For 1-hour events, height 48px
+    const heightPx = isShort 
+      ? Math.max(maxDur * slotHeight - 2, 28) 
+      : Math.max(maxDur * slotHeight - 4, 48);
     const hex = event.dotColor || '#6366F1';
 
     return {

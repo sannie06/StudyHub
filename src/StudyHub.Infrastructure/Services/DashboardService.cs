@@ -142,13 +142,15 @@ namespace StudyHub.Infrastructure.Services
             var todayClasses = await _classScheduleRepository.GetQueryable()
                 .AsNoTracking()
                 .Include(c => c.MonHoc)
-                .Where(c => c.MaNguoiDung == userId && c.NgayBatDau <= tomorrow && c.NgayKetThuc >= today)
+                .Where(c => c.MaNguoiDung == userId && !c.DaXoa && 
+                           ((c.NgayBatDau <= tomorrow && c.NgayKetThuc >= today) ||
+                            (c.NgayBatDau <= tomorrow.AddHours(7) && c.NgayKetThuc >= today.AddHours(-7))))
                 .OrderBy(c => c.NgayBatDau)
-                .Take(5)
+                .Take(10)
                 .Select(c => new DashboardClassScheduleItemDto
                 {
                     MaLichHoc = c.MaLichHoc,
-                    TenMonHoc = c.MonHoc != null ? c.MonHoc.TenMonHoc : "Môn học",
+                    TenMonHoc = !string.IsNullOrWhiteSpace(c.TieuDe) ? c.TieuDe : (c.MonHoc != null ? c.MonHoc.TenMonHoc : "Môn học"),
                     PhongHoc = c.PhongHoc ?? string.Empty,
                     GiangVien = c.GiangVien ?? string.Empty,
                     NgayBatDau = c.NgayBatDau,

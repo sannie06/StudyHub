@@ -5,7 +5,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { take } from 'rxjs/operators';
 import { TaskService, TaskDto, PagedList } from '../../services/task.service';
-import { SubjectService, SubjectTag } from '../../services/subject.service';
+import { SubjectService, SubjectTag, SubjectDto } from '../../services/subject.service';
 
 export interface TaskItem {
   id: number;
@@ -132,16 +132,8 @@ export class TasksComponent implements OnInit {
     progress: 0
   };
 
-  // Custom Subject Tag Select State
-  subjectTags: SubjectTag[] = [
-    { id: 1, name: 'PTPM', color: '#6366F1' },
-    { id: 2, name: 'Cơ sở dữ liệu', color: '#3B82F6' },
-    { id: 3, name: 'Java', color: '#10B981' },
-    { id: 4, name: 'Web', color: '#8B5CF6' },
-    { id: 5, name: 'Kỹ năng', color: '#EC4899' },
-    { id: 6, name: 'Thiết kế', color: '#F97316' },
-    { id: 7, name: 'Toán', color: '#14B8A6' }
-  ];
+  // Custom Subject Tag Select State (Loaded dynamically from Database API)
+  subjectTags: SubjectTag[] = [];
 
   presetColors: string[] = [
     '#EF4444', // Red
@@ -242,6 +234,129 @@ export class TasksComponent implements OnInit {
         badge: t.dueWarning,
         badgeClass: t.priorityClass
       }));
+  }
+
+  // --- Quick Stats computed from real task data ---
+  get totalTaskCount(): number {
+    return this.tasks.length;
+  }
+
+  get todoCount(): number {
+    return this.tasks.filter(t => t.status === 'Cần thực hiện').length;
+  }
+
+  get inProgressCount(): number {
+    return this.tasks.filter(t => t.status === 'Đang thực hiện').length;
+  }
+
+  get doneCount(): number {
+    return this.tasks.filter(t => t.status === 'Hoàn thành').length;
+  }
+
+  get todoPct(): number {
+    return this.totalTaskCount > 0 ? Math.round((this.todoCount / this.totalTaskCount) * 100) : 0;
+  }
+
+  get inProgressPct(): number {
+    return this.totalTaskCount > 0 ? Math.round((this.inProgressCount / this.totalTaskCount) * 100) : 0;
+  }
+
+  get donePct(): number {
+    return this.totalTaskCount > 0 ? Math.round((this.doneCount / this.totalTaskCount) * 100) : 0;
+  }
+
+  // Donut chart: circumference = 2 * pi * r = 2 * 3.14159 * 38 ≈ 238.76
+  private readonly CIRC = 238.76;
+
+  get todoArc(): string {
+    const len = (this.todoPct / 100) * this.CIRC;
+    return `${len.toFixed(1)} ${(this.CIRC - len).toFixed(1)}`;
+  }
+
+  get inProgressArc(): string {
+    const len = (this.inProgressPct / 100) * this.CIRC;
+    return `${len.toFixed(1)} ${(this.CIRC - len).toFixed(1)}`;
+  }
+
+  get doneArc(): string {
+    const len = (this.donePct / 100) * this.CIRC;
+    return `${len.toFixed(1)} ${(this.CIRC - len).toFixed(1)}`;
+  }
+
+  get inProgressOffset(): string {
+    const todoLen = (this.todoPct / 100) * this.CIRC;
+    return `-${todoLen.toFixed(1)}`;
+  }
+
+  get doneOffset(): string {
+    const todoLen = (this.todoPct / 100) * this.CIRC;
+    const inProgressLen = (this.inProgressPct / 100) * this.CIRC;
+    return `-${(todoLen + inProgressLen).toFixed(1)}`;
+  }
+
+  // Detailed Report Modal State & Analysis Getters
+  showReportModal: boolean = false;
+
+  openReportModal(): void {
+    this.showReportModal = true;
+  }
+
+  closeReportModal(): void {
+    this.showReportModal = false;
+  }
+
+  get highPriorityCount(): number {
+    return this.tasks.filter(t => t.priority === 'Cao').length;
+  }
+
+  get mediumPriorityCount(): number {
+    return this.tasks.filter(t => t.priority === 'Trung bình').length;
+  }
+
+  get lowPriorityCount(): number {
+    return this.tasks.filter(t => t.priority === 'Thấp').length;
+  }
+
+  get onTimeRate(): number {
+    if (this.totalTaskCount === 0) return 100;
+    const overdue = this.overdueCount;
+    const rate = Math.round(((this.totalTaskCount - overdue) / this.totalTaskCount) * 100);
+    return Math.max(0, Math.min(100, rate));
+  }
+
+  get subjectReportList(): Array<{ name: string; color: string; total: number; done: number; inProgress: number; todo: number; pct: number }> {
+    if (!this.tasks || this.tasks.length === 0) return [];
+    const map = new Map<string, { color: string; total: number; done: number; inProgress: number; todo: number }>();
+    
+    this.tasks.forEach(t => {
+      const tag = t.tag && t.tag.trim() ? t.tag.trim() : 'Chung';
+      const color = t.tagColor || '#6366F1';
+      if (!map.has(tag)) {
+        map.set(tag, { color, total: 0, done: 0, inProgress: 0, todo: 0 });
+      }
+      const item = map.get(tag)!;
+      item.total++;
+      if (t.status === 'Hoàn thành') item.done++;
+      else if (t.status === 'Đang thực hiện') item.inProgress++;
+      else item.todo++;
+    });
+
+    return Array.from(map.entries())
+      .map(([name, data]) => ({
+        name,
+        color: data.color,
+        total: data.total,
+        done: data.done,
+        inProgress: data.inProgress,
+        todo: data.todo,
+        pct: data.total > 0 ? Math.round((data.done / data.total) * 100) : 0
+      }))
+      .sort((a, b) => b.total - a.total);
+  }
+
+  get mostDemandingSubject(): string {
+    const list = this.subjectReportList;
+    return list.length > 0 ? list[0].name : 'Chưa có môn';
   }
 
   // Filter Bar States
@@ -346,41 +461,35 @@ export class TasksComponent implements OnInit {
     return 'Tag: ' + this.filterSubject;
   }
 
-  // --- Dynamic Subject Tag List extracted from tasks + defaults ---
+  // --- Dynamic Subject Tag List sourced from Real Database Subjects + Active Tasks ---
   get dynamicSubjectTags(): SubjectTag[] {
-    const tagMap = new Map<string, { name: string; color: string }>();
+    const tagMap = new Map<string, SubjectTag>();
 
-    // 1. Include default subjectTags
+    // 1. Include real database subjects
     if (this.subjectTags && Array.isArray(this.subjectTags)) {
       this.subjectTags.forEach(t => {
         if (t && t.name && t.name.trim()) {
           const key = t.name.trim().toLowerCase();
           if (!tagMap.has(key)) {
-            tagMap.set(key, { name: t.name.trim(), color: t.color || '#6366F1' });
+            tagMap.set(key, { id: t.id, name: t.name.trim(), color: t.color || '#6366F1' });
           }
         }
       });
     }
 
-    // 2. Extract dynamically from active tasks
+    // 2. Include any existing tasks' tags
     if (this.tasks && Array.isArray(this.tasks)) {
       this.tasks.forEach(t => {
-        if (t && t.tag && t.tag.trim()) {
+        if (t && t.tag && t.tag.trim() && t.tag !== 'Công việc') {
           const key = t.tag.trim().toLowerCase();
           if (!tagMap.has(key)) {
-            tagMap.set(key, { name: t.tag.trim(), color: t.tagColor || '#6366F1' });
+            tagMap.set(key, { id: 0, name: t.tag.trim(), color: t.tagColor || '#6366F1' });
           }
         }
       });
     }
 
-    const result: SubjectTag[] = [];
-    let counter = 1;
-    tagMap.forEach((val) => {
-      result.push({ id: counter++, name: val.name, color: val.color });
-    });
-
-    return result;
+    return Array.from(tagMap.values());
   }
 
   // --- Safe Date Normalizer Helper (Converts any date string to YYYY-MM-DD) ---
@@ -434,11 +543,7 @@ export class TasksComponent implements OnInit {
   }
 
   // --- Comprehensive Filtered Task Getters (Safe-Null & Crash Free) ---
-  get totalTasks(): number { return this.tasks.length; }
-  get todoCount(): number { return this.tasks.filter(t => t.status === 'Cần thực hiện').length; }
-  get inProgressCount(): number { return this.tasks.filter(t => t.status === 'Đang thực hiện').length; }
-  get completedCount(): number { return this.tasks.filter(t => t.status === 'Hoàn thành').length; }
-  get overdueCount(): number { return this.tasks.filter(t => t.dueWarning === 'Quá hạn').length; }
+  get overdueCount(): number { return this.tasks.filter(t => t.status !== 'Hoàn thành' && (t.status === 'Quá hạn' || t.dueWarning === 'Quá hạn')).length; }
 
   get filteredTasks(): TaskItem[] {
     if (!this.tasks || !Array.isArray(this.tasks)) return [];
@@ -460,7 +565,7 @@ export class TasksComponent implements OnInit {
         if (this.filterStatus === 'todo' && task.status !== 'Cần thực hiện') return false;
         if (this.filterStatus === 'inprogress' && task.status !== 'Đang thực hiện' && task.status !== 'Tạm dừng') return false;
         if (this.filterStatus === 'done' && task.status !== 'Hoàn thành') return false;
-        if (this.filterStatus === 'overdue' && task.status !== 'Quá hạn' && task.dueWarning !== 'Quá hạn') return false;
+        if (this.filterStatus === 'overdue' && (task.status === 'Hoàn thành' || (task.status !== 'Quá hạn' && task.dueWarning !== 'Quá hạn'))) return false;
       }
 
       // 3. Priority Filter
@@ -775,14 +880,7 @@ export class TasksComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.subjectService.getSubjectTags().subscribe({
-      next: (tags) => {
-        if (tags && tags.length > 0) {
-          this.subjectTags = tags;
-        }
-      },
-      error: (err) => console.warn('Could not load subject tags from SubjectService:', err)
-    });
+    this.loadSubjectTagsFromApi();
 
     this.route.queryParams.subscribe(params => {
       if (params['view'] === 'kanban') {
@@ -793,6 +891,18 @@ export class TasksComponent implements OnInit {
     });
 
     this.loadTasksFromApi();
+  }
+
+  loadSubjectTagsFromApi() {
+    this.subjectService.getSubjectTags().subscribe({
+      next: (tags) => {
+        this.subjectTags = tags || [];
+      },
+      error: (err) => {
+        console.warn('Could not load subject tags from Database:', err);
+        this.subjectTags = [];
+      }
+    });
   }
 
   loadTasksFromApi() {
@@ -1020,7 +1130,7 @@ export class TasksComponent implements OnInit {
   get countTodo(): number { return this.tasks.filter(t => t.status === 'Cần thực hiện').length; }
   get countInProgress(): number { return this.tasks.filter(t => t.status === 'Đang thực hiện' || t.status === 'Tạm dừng').length; }
   get countDone(): number { return this.tasks.filter(t => t.status === 'Hoàn thành').length; }
-  get countOverdue(): number { return this.tasks.filter(t => t.status === 'Quá hạn').length; }
+  get countOverdue(): number { return this.tasks.filter(t => t.status !== 'Hoàn thành' && (t.status === 'Quá hạn' || t.dueWarning === 'Quá hạn')).length; }
 
   setView(v: 'list' | 'kanban') {
     this.currentView = v;
@@ -1044,12 +1154,15 @@ export class TasksComponent implements OnInit {
     if (initialStatus === 'done') progressVal = 100;
     else if (initialStatus === 'inprogress') progressVal = 50;
 
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+
     this.newTask = {
       title: '',
       desc: '',
       subject: '',
       priority: 'medium',
-      startDate: '',
+      startDate: todayStr,
       dueDate: '',
       status: initialStatus,
       progress: progressVal
@@ -1058,6 +1171,554 @@ export class TasksComponent implements OnInit {
   }
 
   successToastMessage: string | null = null;
+
+  exportTasks() {
+    if (this.currentView === 'kanban') {
+      this.exportKanbanBoardImage();
+    } else {
+      this.exportTaskListImage();
+    }
+  }
+
+  exportTaskListImage() {
+    const listToExport = (this.filteredTasks && this.filteredTasks.length > 0) ? this.filteredTasks : this.tasks;
+    if (!listToExport || listToExport.length === 0) {
+      alert('Không có dữ liệu công việc để xuất!');
+      return;
+    }
+
+    const dpr = 2; // High-DPI 2x resolution
+    const width = 1100;
+    const padding = 36;
+    const headerHeight = 130;
+    const tableHeaderHeight = 44;
+    const rowHeight = 52;
+    const footerHeight = 50;
+    const tableHeight = tableHeaderHeight + (listToExport.length * rowHeight);
+    const totalHeight = padding + headerHeight + tableHeight + footerHeight + padding;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width * dpr;
+    canvas.height = totalHeight * dpr;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      alert('Trình duyệt không hỗ trợ xuất hình ảnh!');
+      return;
+    }
+
+    ctx.scale(dpr, dpr);
+
+    // 1. Background (Clean slate gradient)
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, totalHeight);
+    bgGradient.addColorStop(0, '#F8FAFC');
+    bgGradient.addColorStop(1, '#EEF2F6');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, totalHeight);
+
+    // 2. Header Box
+    let currentY = padding;
+
+    // Brand & Title
+    ctx.fillStyle = '#5B4DFF';
+    ctx.font = 'bold 22px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('StudyHub', padding, currentY + 22);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.font = 'bold 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('— Danh sách công việc học tập', padding + 110, currentY + 22);
+
+    // Date & Time Subtitle
+    const now = new Date();
+    const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    ctx.fillStyle = '#64748B';
+    ctx.font = 'normal 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`Thời gian xuất: ${dateFormatted}  •  Tổng số: ${listToExport.length} công việc`, padding, currentY + 48);
+
+    // Stats Summary Badges
+    const todo = listToExport.filter(t => t.status === 'Cần thực hiện').length;
+    const inprog = listToExport.filter(t => t.status === 'Đang thực hiện' || t.status === 'Tạm dừng').length;
+    const done = listToExport.filter(t => t.status === 'Hoàn thành').length;
+    const overdue = listToExport.filter(t => t.status !== 'Hoàn thành' && (t.status === 'Quá hạn' || t.dueWarning === 'Quá hạn')).length;
+
+    const badges = [
+      { label: `Cần làm: ${todo}`, bg: '#EFF6FF', text: '#2563EB' },
+      { label: `Đang làm: ${inprog}`, bg: '#FEF3C7', text: '#D97706' },
+      { label: `Hoàn thành: ${done}`, bg: '#DCFCE7', text: '#16A34A' },
+      { label: `Quá hạn: ${overdue}`, bg: '#FEE2E2', text: '#DC2626' }
+    ];
+
+    let badgeX = padding;
+    const badgeY = currentY + 70;
+    badges.forEach(b => {
+      ctx.font = 'bold 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const textWidth = ctx.measureText(b.label).width;
+      const badgeWidth = textWidth + 20;
+
+      // Badge bg
+      ctx.fillStyle = b.bg;
+      this.drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, 24, 6);
+      ctx.fill();
+
+      // Badge text
+      ctx.fillStyle = b.text;
+      ctx.fillText(b.label, badgeX + 10, badgeY + 16);
+
+      badgeX += badgeWidth + 10;
+    });
+
+    currentY += headerHeight;
+
+    // 3. Table Layout
+    const tableWidth = width - (padding * 2);
+    const colWidths = [50, 310, 160, 120, 150, 140, 98];
+    const colAligns: Array<'left' | 'center' | 'right'> = ['center', 'left', 'left', 'center', 'left', 'center', 'center'];
+    const headers = ['STT', 'Tên công việc', 'Môn học / Tag', 'Ưu tiên', 'Hạn chót', 'Trạng thái', 'Tiến độ'];
+
+    // Table Header Background (Deep Slate with rounded top)
+    ctx.fillStyle = '#1E293B';
+    this.drawRoundedRect(ctx, padding, currentY, tableWidth, tableHeaderHeight, 10, true, false);
+    ctx.fill();
+
+    // Table Header Text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    let currentX = padding;
+    headers.forEach((h, i) => {
+      const w = colWidths[i];
+      if (colAligns[i] === 'center') {
+        const tw = ctx.measureText(h).width;
+        ctx.fillText(h, currentX + (w - tw) / 2, currentY + 27);
+      } else {
+        ctx.fillText(h, currentX + 14, currentY + 27);
+      }
+      currentX += w;
+    });
+
+    currentY += tableHeaderHeight;
+
+    // Table Rows
+    listToExport.forEach((task, rowIdx) => {
+      const isLast = rowIdx === listToExport.length - 1;
+      const rowY = currentY;
+
+      // Row Background
+      ctx.fillStyle = rowIdx % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
+      if (isLast) {
+        this.drawRoundedRect(ctx, padding, rowY, tableWidth, rowHeight, 10, false, true);
+      } else {
+        ctx.fillRect(padding, rowY, tableWidth, rowHeight);
+      }
+      ctx.fill();
+
+      // Row Bottom Border
+      if (!isLast) {
+        ctx.fillStyle = '#E2E8F0';
+        ctx.fillRect(padding, rowY + rowHeight - 1, tableWidth, 1);
+      }
+
+      let colX = padding;
+
+      // Col 1: STT
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const sttStr = `${rowIdx + 1}`;
+      const sttW = ctx.measureText(sttStr).width;
+      ctx.fillText(sttStr, colX + (colWidths[0] - sttW) / 2, rowY + 31);
+      colX += colWidths[0];
+
+      // Col 2: Title (Truncated if too long)
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      let title = task.title || 'Không có tiêu đề';
+      if (ctx.measureText(title).width > colWidths[1] - 24) {
+        while (title.length > 3 && ctx.measureText(title + '...').width > colWidths[1] - 24) {
+          title = title.substring(0, title.length - 1);
+        }
+        title += '...';
+      }
+      ctx.fillText(title, colX + 14, rowY + 31);
+      colX += colWidths[1];
+
+      // Col 3: Tag / Subject (Pill)
+      const tagName = task.tag || 'Môn học';
+      ctx.font = '500 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const tagTextW = ctx.measureText(tagName).width;
+      const tagPillW = Math.min(colWidths[2] - 20, tagTextW + 16);
+      ctx.fillStyle = '#EEF2FF';
+      this.drawRoundedRect(ctx, colX + 10, rowY + 14, tagPillW, 24, 6);
+      ctx.fill();
+      ctx.fillStyle = '#4F46E5';
+      ctx.fillText(tagName, colX + 18, rowY + 30);
+      colX += colWidths[2];
+
+      // Col 4: Priority (Pill)
+      let pBg = '#FEF3C7';
+      let pColor = '#D97706';
+      if (task.priority === 'Cao') { pBg = '#FEE2E2'; pColor = '#DC2626'; }
+      else if (task.priority === 'Thấp') { pBg = '#DCFCE7'; pColor = '#16A34A'; }
+      const pText = task.priority || 'TB';
+      ctx.font = 'bold 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const pTextW = ctx.measureText(pText).width;
+      const pPillW = pTextW + 18;
+      const pPillX = colX + (colWidths[3] - pPillW) / 2;
+      ctx.fillStyle = pBg;
+      this.drawRoundedRect(ctx, pPillX, rowY + 14, pPillW, 24, 6);
+      ctx.fill();
+      ctx.fillStyle = pColor;
+      ctx.fillText(pText, pPillX + 9, rowY + 30);
+      colX += colWidths[3];
+
+      // Col 5: Due Date
+      ctx.fillStyle = '#334155';
+      ctx.font = '500 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(task.dueDate || 'Chưa đặt', colX + 14, rowY + 24);
+      if (task.dueWarning) {
+        ctx.fillStyle = task.dueWarning === 'Quá hạn' ? '#DC2626' : (task.dueWarning === 'Hôm nay' ? '#D97706' : '#64748B');
+        ctx.font = 'bold 10px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText(task.dueWarning, colX + 14, rowY + 39);
+      }
+      colX += colWidths[4];
+
+      // Col 6: Status (Pill)
+      let sBg = '#EFF6FF';
+      let sColor = '#2563EB';
+      if (task.status === 'Hoàn thành') { sBg = '#DCFCE7'; sColor = '#16A34A'; }
+      else if (task.status === 'Đang thực hiện' || task.status === 'Tạm dừng') { sBg = '#FEF3C7'; sColor = '#D97706'; }
+      else if (task.status === 'Quá hạn') { sBg = '#FEE2E2'; sColor = '#DC2626'; }
+
+      const sText = task.status || 'Cần làm';
+      ctx.font = 'bold 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const sTextW = ctx.measureText(sText).width;
+      const sPillW = sTextW + 18;
+      const sPillX = colX + (colWidths[5] - sPillW) / 2;
+      ctx.fillStyle = sBg;
+      this.drawRoundedRect(ctx, sPillX, rowY + 14, sPillW, 24, 6);
+      ctx.fill();
+      ctx.fillStyle = sColor;
+      ctx.fillText(sText, sPillX + 9, rowY + 30);
+      colX += colWidths[5];
+
+      // Col 7: Progress
+      const prog = task.progress || 0;
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const progStr = `${prog}%`;
+      const progW = ctx.measureText(progStr).width;
+      ctx.fillText(progStr, colX + (colWidths[6] - progW) / 2, rowY + 24);
+
+      // Mini bar
+      const barW = 54;
+      const barX = colX + (colWidths[6] - barW) / 2;
+      ctx.fillStyle = '#E2E8F0';
+      this.drawRoundedRect(ctx, barX, rowY + 31, barW, 5, 2.5);
+      ctx.fill();
+      if (prog > 0) {
+        ctx.fillStyle = prog === 100 ? '#10B981' : '#6366F1';
+        this.drawRoundedRect(ctx, barX, rowY + 31, (barW * Math.min(100, prog)) / 100, 5, 2.5);
+        ctx.fill();
+      }
+
+      currentY += rowHeight;
+    });
+
+    // 4. Footer
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = 'normal 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('StudyHub • Hệ thống quản lý học tập thông minh & theo dõi tiến độ sinh viên', padding, totalHeight - padding);
+
+    // Convert Canvas to PNG blob & download
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+      a.href = url;
+      a.download = `StudyHub_Danh_sach_cong_viec_${dateStr}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.successToastMessage = `Đã xuất thành công ${listToExport.length} công việc ra hình ảnh PNG chất lượng cao!`;
+      setTimeout(() => {
+        if (this.successToastMessage?.includes('ra hình ảnh PNG')) {
+          this.successToastMessage = null;
+        }
+      }, 4000);
+    }, 'image/png');
+  }
+
+  exportKanbanBoardImage() {
+    const todoList = this.filteredKanbanTodo || [];
+    const inprogList = this.filteredKanbanInProgress || [];
+    const doneList = this.filteredKanbanDone || [];
+    const totalItems = todoList.length + inprogList.length + doneList.length;
+
+    if (totalItems === 0) {
+      alert('Không có dữ liệu công việc trong bảng Kanban để xuất!');
+      return;
+    }
+
+    const dpr = 2; // High-DPI 2x resolution
+    const width = 1200;
+    const padding = 36;
+    const headerHeight = 110;
+    const colGap = 20;
+    const colWidth = (width - (padding * 2) - (colGap * 2)) / 3; // ~346px per column
+    const colHeaderHeight = 56;
+    const cardHeight = 88;
+    const cardGap = 12;
+    const footerHeight = 44;
+
+    const maxCardsInCol = Math.max(todoList.length, inprogList.length, doneList.length, 1);
+    const colBodyHeight = colHeaderHeight + (maxCardsInCol * (cardHeight + cardGap)) + 24;
+    const totalHeight = padding + headerHeight + colBodyHeight + footerHeight + padding;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width * dpr;
+    canvas.height = totalHeight * dpr;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      alert('Trình duyệt không hỗ trợ xuất hình ảnh!');
+      return;
+    }
+
+    ctx.scale(dpr, dpr);
+
+    // 1. Background (Clean soft gradient)
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, totalHeight);
+    bgGradient.addColorStop(0, '#F8FAFC');
+    bgGradient.addColorStop(1, '#EEF2F6');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, totalHeight);
+
+    // 2. Header
+    let currentY = padding;
+    ctx.fillStyle = '#5B4DFF';
+    ctx.font = 'bold 22px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('StudyHub', padding, currentY + 22);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.font = 'bold 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('— Bảng Kanban tiến độ công việc', padding + 110, currentY + 22);
+
+    const now = new Date();
+    const dateFormatted = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    ctx.fillStyle = '#64748B';
+    ctx.font = 'normal 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`Thời gian xuất: ${dateFormatted}  •  Tổng số: ${totalItems} công việc`, padding, currentY + 48);
+
+    // Stats Summary Badges
+    const badges = [
+      { label: `Cần thực hiện: ${todoList.length}`, bg: '#EFF6FF', text: '#2563EB' },
+      { label: `Đang thực hiện: ${inprogList.length}`, bg: '#FEF3C7', text: '#D97706' },
+      { label: `Hoàn thành: ${doneList.length}`, bg: '#DCFCE7', text: '#16A34A' }
+    ];
+
+    let badgeX = padding;
+    const badgeY = currentY + 68;
+    badges.forEach(b => {
+      ctx.font = 'bold 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const textWidth = ctx.measureText(b.label).width;
+      const badgeWidth = textWidth + 20;
+
+      ctx.fillStyle = b.bg;
+      this.drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, 24, 6);
+      ctx.fill();
+
+      ctx.fillStyle = b.text;
+      ctx.fillText(b.label, badgeX + 10, badgeY + 16);
+
+      badgeX += badgeWidth + 10;
+    });
+
+    currentY += headerHeight;
+
+    // 3. Render 3 Kanban Columns
+    const columns = [
+      { title: 'Cần thực hiện', count: todoList.length, dotColor: '#3B82F6', items: todoList, colBg: '#F8FAFC', colBorder: '#E2E8F0' },
+      { title: 'Đang thực hiện', count: inprogList.length, dotColor: '#F59E0B', items: inprogList, colBg: '#FFFBEB/40', colBorder: '#FEF3C7' },
+      { title: 'Hoàn thành', count: doneList.length, dotColor: '#10B981', items: doneList, colBg: '#F0FDF4/40', colBorder: '#DCFCE7' }
+    ];
+
+    columns.forEach((col, colIdx) => {
+      const colX = padding + (colIdx * (colWidth + colGap));
+      const colY = currentY;
+
+      // Column Container Box (Shadow & Rounded White/Tinted Card)
+      ctx.fillStyle = '#FFFFFF';
+      this.drawRoundedRect(ctx, colX, colY, colWidth, colBodyHeight, 16);
+      ctx.fill();
+
+      // Column Container Border
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1.5;
+      this.drawRoundedRect(ctx, colX, colY, colWidth, colBodyHeight, 16);
+      ctx.stroke();
+
+      // Column Header: Colored Dot + Column Title + Badge Count
+      ctx.fillStyle = col.dotColor;
+      ctx.beginPath();
+      ctx.arc(colX + 22, colY + 28, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#1E293B';
+      ctx.font = 'bold 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(col.title, colX + 36, colY + 33);
+
+      // Count Pill
+      ctx.font = 'bold 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      const countStr = `${col.count}`;
+      const countW = ctx.measureText(countStr).width;
+      ctx.fillStyle = '#F1F5F9';
+      this.drawRoundedRect(ctx, colX + colWidth - 36, colY + 18, countW + 14, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = '#64748B';
+      ctx.fillText(countStr, colX + colWidth - 29, colY + 32);
+
+      // Divider Line below Column Header
+      ctx.fillStyle = '#F1F5F9';
+      ctx.fillRect(colX + 16, colY + colHeaderHeight - 4, colWidth - 32, 1);
+
+      // Render Cards inside this Column
+      let cardY = colY + colHeaderHeight + 8;
+      col.items.forEach((item) => {
+        const cardX = colX + 14;
+        const cardW = colWidth - 28;
+
+        // Card Box
+        ctx.fillStyle = '#FFFFFF';
+        this.drawRoundedRect(ctx, cardX, cardY, cardW, cardHeight, 12);
+        ctx.fill();
+
+        // Card Border
+        ctx.strokeStyle = '#E2E8F0';
+        ctx.lineWidth = 1;
+        this.drawRoundedRect(ctx, cardX, cardY, cardW, cardHeight, 12);
+        ctx.stroke();
+
+        // Left Colored Indicator on Completed cards
+        if (colIdx === 2) {
+          ctx.fillStyle = '#10B981';
+          this.drawRoundedRect(ctx, cardX, cardY, 4, cardHeight, 2, true, true);
+          ctx.fill();
+        }
+
+        // Card Title
+        ctx.fillStyle = '#0F172A';
+        ctx.font = 'bold 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+        let cardTitle = item.title || 'Không có tiêu đề';
+        if (ctx.measureText(cardTitle).width > cardW - 24) {
+          while (cardTitle.length > 3 && ctx.measureText(cardTitle + '...').width > cardW - 24) {
+            cardTitle = cardTitle.substring(0, cardTitle.length - 1);
+          }
+          cardTitle += '...';
+        }
+        ctx.fillText(cardTitle, cardX + 14, cardY + 26);
+
+        // Tag Pill & Due Date Row
+        const tag = item.tag || 'Môn học';
+        ctx.font = '500 10px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+        const tagW = ctx.measureText(tag).width;
+        ctx.fillStyle = '#F3E8FF';
+        this.drawRoundedRect(ctx, cardX + 14, cardY + 38, tagW + 12, 18, 5);
+        ctx.fill();
+        ctx.fillStyle = '#7E22CE';
+        ctx.fillText(tag, cardX + 20, cardY + 51);
+
+        // Due Date
+        if (item.due) {
+          ctx.fillStyle = '#94A3B8';
+          ctx.font = 'normal 10px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+          ctx.fillText(`Hạn: ${item.due}`, cardX + tagW + 34, cardY + 51);
+        }
+
+        // Priority Pill (Bottom Right)
+        let pBg = '#FEF3C7';
+        let pColor = '#D97706';
+        if (item.priority === 'Cao') { pBg = '#FEE2E2'; pColor = '#DC2626'; }
+        else if (item.priority === 'Thấp') { pBg = '#DCFCE7'; pColor = '#16A34A'; }
+        const pText = item.priority || 'TB';
+        ctx.font = 'bold 10px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+        const pW = ctx.measureText(pText).width;
+        const pPillW = pW + 14;
+        ctx.fillStyle = pBg;
+        this.drawRoundedRect(ctx, cardX + cardW - pPillW - 12, cardY + 58, pPillW, 18, 5);
+        ctx.fill();
+        ctx.fillStyle = pColor;
+        ctx.fillText(pText, cardX + cardW - pPillW - 5, cardY + 71);
+
+        cardY += cardHeight + cardGap;
+      });
+    });
+
+    // 4. Footer
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = 'normal 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText('StudyHub • Hệ thống quản lý học tập thông minh & theo dõi tiến độ sinh viên', padding, totalHeight - padding);
+
+    // Convert Canvas to PNG blob & download
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+      a.href = url;
+      a.download = `StudyHub_Kanban_Board_${dateStr}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.successToastMessage = `Đã xuất thành công bảng Kanban (${totalItems} công việc) ra hình ảnh PNG chất lượng cao!`;
+      setTimeout(() => {
+        if (this.successToastMessage?.includes('ra hình ảnh PNG')) {
+          this.successToastMessage = null;
+        }
+      }, 4000);
+    }, 'image/png');
+  }
+
+  private drawRoundedRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+    topOnly = false,
+    bottomOnly = false
+  ) {
+    ctx.beginPath();
+    if (topOnly) {
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h);
+      ctx.lineTo(x, y + h);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    } else if (bottomOnly) {
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + w, y);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+    ctx.closePath();
+  }
 
   cancelCreateTask() {
     this.showCreateTask = false;
@@ -1278,34 +1939,78 @@ export class TasksComponent implements OnInit {
   deleteTag(event: Event, tagId: number) {
     event.stopPropagation();
     this.activeMoreOptionsTagId = null;
-    this.subjectTags = this.subjectTags.filter(t => t.id !== tagId);
-    if (this.selectedSubjectTag?.id === tagId) {
-      this.selectedSubjectTag = null;
-      this.newTask.subject = '';
+
+    if (!confirm('Bạn có chắc chắn muốn xóa môn học này khỏi cơ sở dữ liệu không?')) {
+      return;
     }
+
+    this.subjectService.deleteSubject(tagId).subscribe({
+      next: () => {
+        this.subjectTags = this.subjectTags.filter(t => t.id !== tagId);
+        if (this.selectedSubjectTag?.id === tagId) {
+          this.selectedSubjectTag = null;
+          this.newTask.subject = '';
+        }
+        this.successToastMessage = `Đã xóa môn học khỏi cơ sở dữ liệu thành công!`;
+        setTimeout(() => { this.successToastMessage = null; }, 3000);
+      },
+      error: (err) => {
+        console.error('Error deleting subject from Database:', err);
+        alert('Không thể xóa môn học. Môn học có thể đang được sử dụng trong các công việc!');
+      }
+    });
   }
 
   saveTag() {
     if (!this.tagFormName.trim()) return;
 
-    if (this.tagModalMode === 'create') {
-      const newTag = this.subjectService.addSubjectTag(this.tagFormName.trim(), this.tagFormColor);
-      if (!this.subjectTags.some(t => t.name.toLowerCase() === newTag.name.toLowerCase())) {
-        this.subjectTags.push(newTag);
-      }
-      this.selectSubjectTag(newTag);
-    } else if (this.tagModalMode === 'edit' && this.editingTagId !== null) {
-      const tagIndex = this.subjectTags.findIndex(t => t.id === this.editingTagId);
-      if (tagIndex !== -1) {
-        this.subjectTags[tagIndex].name = this.tagFormName.trim();
-        this.subjectTags[tagIndex].color = this.tagFormColor;
+    const name = this.tagFormName.trim();
+    const color = this.tagFormColor || '#6366F1';
 
-        if (this.selectedSubjectTag?.id === this.editingTagId) {
-          this.selectedSubjectTag = { ...this.subjectTags[tagIndex] };
-          this.newTask.subject = this.subjectTags[tagIndex].name;
+    if (this.tagModalMode === 'create') {
+      this.subjectService.createSubjectTag(name, color).subscribe({
+        next: (newTag) => {
+          if (!this.subjectTags.some(t => t.id === newTag.id || t.name.toLowerCase() === newTag.name.toLowerCase())) {
+            this.subjectTags.push(newTag);
+          }
+          this.selectSubjectTag(newTag);
+          this.successToastMessage = `Đã lưu môn học "${newTag.name}" vào cơ sở dữ liệu thành công!`;
+          setTimeout(() => { this.successToastMessage = null; }, 3000);
+        },
+        error: (err) => {
+          console.error('Error creating subject in Database:', err);
+          alert('Không thể tạo môn học trong cơ sở dữ liệu. Vui lòng thử lại!');
         }
-        this.subjectService.saveLocalSubjectTags(this.subjectTags);
-      }
+      });
+    } else if (this.tagModalMode === 'edit' && this.editingTagId !== null) {
+      const tagId = this.editingTagId;
+      const existingTag = this.subjectTags.find(t => t.id === tagId);
+      const payload: Partial<SubjectDto> = {
+        tenMonHoc: name,
+        maMon: existingTag?.code || `MH_${tagId}`,
+        mauSac: color,
+        icon: 'pi-tag'
+      };
+
+      this.subjectService.updateSubject(tagId, payload).subscribe({
+        next: (updatedDto) => {
+          const tagIndex = this.subjectTags.findIndex(t => t.id === tagId);
+          if (tagIndex !== -1) {
+            this.subjectTags[tagIndex].name = updatedDto.tenMonHoc;
+            this.subjectTags[tagIndex].color = updatedDto.mauSac;
+            if (this.selectedSubjectTag?.id === tagId) {
+              this.selectedSubjectTag = { ...this.subjectTags[tagIndex] };
+              this.newTask.subject = this.subjectTags[tagIndex].name;
+            }
+          }
+          this.successToastMessage = `Đã cập nhật môn học thành công!`;
+          setTimeout(() => { this.successToastMessage = null; }, 3000);
+        },
+        error: (err) => {
+          console.error('Error updating subject in Database:', err);
+          alert('Không thể cập nhật môn học. Vui lòng thử lại!');
+        }
+      });
     }
 
     this.showTagModal = false;

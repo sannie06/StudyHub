@@ -145,8 +145,8 @@
           <a routerLink="/calendar" class="text-[#5B4DFF] text-xs font-semibold hover:underline">Xem lịch ></a>
         </div>
 
-        <!-- Vertical Timeline Layout (Inner White Cards + Single-Line Time) -->
-        <div class="relative space-y-3.5 my-2 px-1">
+        <!-- Vertical Timeline Layout (When Schedule Exists) -->
+        <div *ngIf="schedule.length > 0" class="relative space-y-3.5 my-2 px-1">
           <!-- Timeline Continuous Line Centered directly at 131px -->
           <div class="absolute left-[130.5px] top-4 bottom-4 w-[1.5px] bg-gray-200 -z-0"></div>
 
@@ -157,10 +157,7 @@
 
             <!-- Column 2: Colored Dot (14px diameter, centered at 131px) -->
             <div class="w-3.5 h-3.5 rounded-full relative z-10 shrink-0 my-auto shadow-2xs"
-                 [class.bg-purple-500]="idx % 4 === 0"
-                 [class.bg-emerald-500]="idx % 4 === 1"
-                 [class.bg-amber-500]="idx % 4 === 2"
-                 [class.bg-blue-500]="idx % 4 === 3"></div>
+                 [style.background]="s.dotColor || '#5B4DFF'"></div>
 
             <!-- Column 3: Inner Subject Card -->
             <div class="flex-1 min-w-0 pl-1">
@@ -171,12 +168,25 @@
             </div>
           </div>
         </div>
+
+        <!-- Empty State When No Classes Today -->
+        <div *ngIf="schedule.length === 0" class="py-8 text-center flex flex-col items-center justify-center">
+          <div class="w-12 h-12 rounded-full bg-purple-50 text-[#5B4DFF] flex items-center justify-center mb-3">
+            <i class="pi pi-calendar text-xl"></i>
+          </div>
+          <p class="text-sm font-bold text-gray-800">Hôm nay không có lịch học nào</p>
+          <p class="text-xs text-gray-400 mt-1 max-w-xs">Hãy tận hưởng ngày nghỉ hoặc thêm lịch học mới vào lịch của bạn.</p>
+          <a routerLink="/calendar" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#5B4DFF] text-white text-xs font-semibold hover:bg-indigo-600 transition-all shadow-xs cursor-pointer">
+            <i class="pi pi-plus text-[10px]"></i>
+            <span>Thêm lịch học</span>
+          </a>
+        </div>
       </div>
 
-      <!-- Bottom Summary Bar -->
-      <div class="bg-purple-50/60 p-3 rounded-xl flex items-center gap-2 text-xs font-medium text-gray-700 mt-4 border border-purple-100/60">
+      <!-- Bottom Summary Bar (Only when has schedules) -->
+      <div *ngIf="schedule.length > 0" class="bg-purple-50/60 p-3 rounded-xl flex items-center gap-2 text-xs font-medium text-gray-700 mt-4 border border-purple-100/60">
         <i class="pi pi-clock text-[#5B4DFF] text-xs"></i>
-        <span>Tổng thời gian học hôm nay: <strong class="text-[#5B4DFF] font-bold">6 giờ 40 phút</strong></span>
+        <span>Tổng thời gian học hôm nay: <strong class="text-[#5B4DFF] font-bold">{{ totalStudyTimeToday }}</strong></span>
       </div>
     </div>
 

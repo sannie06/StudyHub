@@ -18,6 +18,7 @@ namespace StudyHub.Infrastructure.Services
         private readonly ILichHocRepository _classRepository;
         private readonly ILichThiRepository _examRepository;
         private readonly IGenericRepository<CongViec> _taskRepository;
+        private readonly IGenericRepository<MonHoc> _subjectRepository;
         private readonly INotificationService _notificationService;
         private readonly ILogger<CalendarService> _logger;
 
@@ -28,11 +29,24 @@ namespace StudyHub.Infrastructure.Services
             IGenericRepository<CongViec> taskRepository,
             INotificationService notificationService,
             ILogger<CalendarService> logger)
+            : this(eventRepository, classRepository, examRepository, taskRepository, null!, notificationService, logger)
+        {
+        }
+
+        public CalendarService(
+            ISuKienRepository eventRepository,
+            ILichHocRepository classRepository,
+            ILichThiRepository examRepository,
+            IGenericRepository<CongViec> taskRepository,
+            IGenericRepository<MonHoc> subjectRepository,
+            INotificationService notificationService,
+            ILogger<CalendarService> logger)
         {
             _eventRepository = eventRepository;
             _classRepository = classRepository;
             _examRepository = examRepository;
             _taskRepository = taskRepository;
+            _subjectRepository = subjectRepository;
             _notificationService = notificationService;
             _logger = logger;
         }
@@ -50,7 +64,7 @@ namespace StudyHub.Infrastructure.Services
                 var personalEvents = await _eventRepository.GetQueryable()
                     .AsNoTracking()
                     .Include(e => e.MonHoc)
-                    .Where(e => e.MaNguoiDung == userId && e.TrangThai == 1 &&
+                    .Where(e => e.MaNguoiDung == userId && !e.DaXoa && e.TrangThai == 1 &&
                                 e.ThoiGianBatDau <= end && e.ThoiGianKetThuc >= start)
                     .ToListAsync();
 
@@ -81,7 +95,7 @@ namespace StudyHub.Infrastructure.Services
                 var classSchedules = await _classRepository.GetQueryable()
                     .AsNoTracking()
                     .Include(l => l.MonHoc)
-                    .Where(l => l.MaNguoiDung == userId && l.NgayBatDau <= end && l.NgayKetThuc >= start)
+                    .Where(l => l.MaNguoiDung == userId && !l.DaXoa && l.NgayBatDau <= end && l.NgayKetThuc >= start)
                     .ToListAsync();
 
                 result.AddRange(classSchedules.Select(l => new CalendarEventDto
@@ -109,7 +123,7 @@ namespace StudyHub.Infrastructure.Services
                 var exams = await _examRepository.GetQueryable()
                     .AsNoTracking()
                     .Include(t => t.MonHoc)
-                    .Where(t => t.MaNguoiDung == userId && t.NgayThi >= start && t.NgayThi <= end)
+                    .Where(t => t.MaNguoiDung == userId && !t.DaXoa && t.NgayThi >= start && t.NgayThi <= end)
                     .ToListAsync();
 
                 result.AddRange(exams.Select(t => new CalendarEventDto
@@ -166,16 +180,49 @@ namespace StudyHub.Infrastructure.Services
             if (eventType == "ClassSchedule")
             {
                 int monHocId = request.MaMonHoc ?? 0;
-                string? monHocName = null;
-                if (monHocId > 0)
+                if (monHocId > 0 && _subjectRepository != null)
                 {
-                    monHocName = await _classRepository.GetQueryable().Where(l => l.MaMonHoc == monHocId).Select(l => l.MonHoc.TenMonHoc).FirstOrDefaultAsync();
+                    var exists = await _subjectRepository.GetQueryable().AnyAsync(m => m.MaMonHoc == monHocId);
+                    if (!exists) monHocId = 0;
                 }
+
+                if (monHocId == 0 && _subjectRepository != null)
+                {
+                    var existingSub = await _subjectRepository.GetQueryable()
+                        .FirstOrDefaultAsync(s => s.TenMonHoc.ToLower() == request.TieuDe.Trim().ToLower());
+                    if (existingSub != null)
+                    {
+                        monHocId = existingSub.MaMonHoc;
+                    }
+                    else
+                    {
+                        var firstSub = await _subjectRepository.GetQueryable().FirstOrDefaultAsync();
+                        if (firstSub != null)
+                        {
+                            monHocId = firstSub.MaMonHoc;
+                        }
+                        else
+                        {
+                            var newSub = new MonHoc
+                            {
+                                MaMon = "MH" + (DateTime.UtcNow.Ticks % 100000).ToString(),
+                                TenMonHoc = request.TieuDe.Trim(),
+                                MoTa = request.TieuDe.Trim(),
+                                MauSac = "#3B82F6",
+                                Icon = "pi pi-book",
+                                TrangThai = 1
+                            };
+                            await _subjectRepository.AddAsync(newSub);
+                            await _subjectRepository.SaveAsync();
+                            monHocId = newSub.MaMonHoc;
+                        }
+                    }
+                }
+
                 if (monHocId == 0)
                 {
                     monHocId = await _classRepository.GetQueryable().Select(l => l.MaMonHoc).FirstOrDefaultAsync();
-                    if (monHocId == 0) monHocId = await _examRepository.GetQueryable().Select(t => t.MaMonHoc).FirstOrDefaultAsync();
-                    if (monHocId == 0) monHocId = 2;
+                    if (monHocId == 0) monHocId = 1;
                 }
 
                 var lichHoc = new LichHoc
@@ -234,16 +281,49 @@ namespace StudyHub.Infrastructure.Services
             else if (eventType == "ExamSchedule")
             {
                 int monHocId = request.MaMonHoc ?? 0;
-                string? monHocName = null;
-                if (monHocId > 0)
+                if (monHocId > 0 && _subjectRepository != null)
                 {
-                    monHocName = await _examRepository.GetQueryable().Where(t => t.MaMonHoc == monHocId).Select(t => t.MonHoc.TenMonHoc).FirstOrDefaultAsync();
+                    var exists = await _subjectRepository.GetQueryable().AnyAsync(m => m.MaMonHoc == monHocId);
+                    if (!exists) monHocId = 0;
                 }
+
+                if (monHocId == 0 && _subjectRepository != null)
+                {
+                    var existingSub = await _subjectRepository.GetQueryable()
+                        .FirstOrDefaultAsync(s => s.TenMonHoc.ToLower() == request.TieuDe.Trim().ToLower());
+                    if (existingSub != null)
+                    {
+                        monHocId = existingSub.MaMonHoc;
+                    }
+                    else
+                    {
+                        var firstSub = await _subjectRepository.GetQueryable().FirstOrDefaultAsync();
+                        if (firstSub != null)
+                        {
+                            monHocId = firstSub.MaMonHoc;
+                        }
+                        else
+                        {
+                            var newSub = new MonHoc
+                            {
+                                MaMon = "MH" + (DateTime.UtcNow.Ticks % 100000).ToString(),
+                                TenMonHoc = request.TieuDe.Trim(),
+                                MoTa = request.TieuDe.Trim(),
+                                MauSac = "#3B82F6",
+                                Icon = "pi pi-book",
+                                TrangThai = 1
+                            };
+                            await _subjectRepository.AddAsync(newSub);
+                            await _subjectRepository.SaveAsync();
+                            monHocId = newSub.MaMonHoc;
+                        }
+                    }
+                }
+
                 if (monHocId == 0)
                 {
                     monHocId = await _examRepository.GetQueryable().Select(t => t.MaMonHoc).FirstOrDefaultAsync();
-                    if (monHocId == 0) monHocId = await _classRepository.GetQueryable().Select(l => l.MaMonHoc).FirstOrDefaultAsync();
-                    if (monHocId == 0) monHocId = 2;
+                    if (monHocId == 0) monHocId = 1;
                 }
 
                 var thoiLuongMinutes = (int)(request.ThoiGianKetThuc - request.ThoiGianBatDau).TotalMinutes;

@@ -15,10 +15,6 @@
         <i class="pi pi-plus text-xs"></i>
         <span>Tạo lịch mới</span>
       </button>
-      <button class="h-10 px-4 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs cursor-pointer transition-all flex items-center gap-2">
-        <i class="pi pi-upload text-xs text-slate-400"></i>
-        <span>Nhập từ file</span>
-      </button>
     </div>
   </div>
 
@@ -176,7 +172,7 @@
     <div class="flex-1 min-w-0 space-y-6">
 
       <!-- WEEKLY TIMETABLE GRID CARD (When currentViewTab === 'week') -->
-      <div *ngIf="currentViewTab === 'week'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden flex flex-col max-h-[620px]">
+      <div *ngIf="currentViewTab === 'week'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden flex flex-col h-[830px]">
 
         <!-- 1. Fixed Grid Header: Time Column + 7 Days (Pinned at top) -->
         <div class="timetable-grid border-b border-slate-100 bg-slate-50/50 shrink-0">
@@ -213,15 +209,126 @@
               <ng-container *ngFor="let ev of filteredEvents">
                 <div *ngIf="ev.dayIndex === colIndex"
                      (click)="selectEvent(ev, $event)"
-                     class="absolute left-1.5 right-1.5 rounded-2xl p-2.5 border transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 z-10 overflow-hidden space-y-0.5"
+                     class="calendar-event-card absolute left-1.5 right-1.5 rounded-2xl border transition-colors cursor-pointer shadow-xs hover:shadow-md z-10 hover:z-40"
+                     [class.z-40]="isPopoverOpen(ev)"
                      [class]="ev.colorClass"
                      [style]="getEventStyle(ev)">
-                  <div class="flex items-center gap-1.5 font-bold truncate">
-                    <span class="w-2 h-2 rounded-full flex-shrink-0" [style.background]="ev.dotColor"></span>
-                    <span class="truncate text-slate-900 text-[11px]">{{ ev.title }}</span>
+                  
+                  <!-- 1. Ultra-Short Layout (< 45 mins, e.g. 15-30m): 1 line (Dot + Full Title + Start Time) -->
+                  <div *ngIf="isShortEvent(ev)" class="w-full h-full px-2 flex items-center justify-between min-w-0 overflow-hidden leading-none">
+                    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+                      <span class="truncate text-slate-900 font-bold text-[11px]">{{ ev.title }}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500 shrink-0 font-medium ml-1 opacity-90">{{ getStartTime(ev.time) }}</span>
                   </div>
-                  <div class="text-[10px] text-slate-600 pl-3.5">{{ ev.time }}</div>
-                  <div class="text-[10px] text-slate-500 pl-3.5 truncate" *ngIf="ev.room">{{ ev.room }}</div>
+
+                  <!-- 2. Medium Layout (45 mins - 1 hour): 2 lines (Title + Time), room hidden to avoid truncation -->
+                  <div *ngIf="isMediumEvent(ev)" class="w-full h-full p-1.5 px-2 overflow-hidden flex flex-col justify-center space-y-0.5">
+                    <div class="flex items-center gap-1.5 font-bold truncate">
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+                      <span class="truncate text-slate-900 text-[11px] leading-tight">{{ ev.title }}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-600 pl-3.5 font-medium leading-tight truncate">{{ ev.time }}</div>
+                  </div>
+
+                  <!-- 3. Long Layout (>= 1.25 hours, e.g. 1.5h - 2h+): 3 lines (Title + Time + Room) -->
+                  <div *ngIf="!isShortEvent(ev) && !isMediumEvent(ev)" class="w-full h-full p-2 overflow-hidden space-y-0.5">
+                    <div class="flex items-center gap-1.5 font-bold truncate">
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+                      <span class="truncate text-slate-900 text-[11px]">{{ ev.title }}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-600 pl-3.5 font-medium">{{ ev.time }}</div>
+                    <div class="text-[10px] text-slate-500 pl-3.5 truncate" *ngIf="ev.room">{{ ev.room }}</div>
+                  </div>
+
+                  <!-- 3. Smart Interactive Popover (Click Pin + Click Outside Dismiss) -->
+                  <div *ngIf="isPopoverOpen(ev)"
+                       (click)="$event.stopPropagation()"
+                       class="event-popover-container absolute mb-2.5 mt-2.5 flex flex-col w-[280px] sm:w-[295px] p-4 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-100 z-50 pointer-events-auto transition-all duration-150 animate-in fade-in zoom-in-95 select-none text-left cursor-default"
+                       [class.top-[calc(100%+10px)]]="isTooltipBelow(ev)"
+                       [class.bottom-[calc(100%+10px)]]="!isTooltipBelow(ev)"
+                       [ngClass]="getTooltipPosClass(colIndex)">
+
+                    <!-- Invisible Hover Bridge -->
+                    <div class="absolute -top-3.5 left-0 right-0 h-3.5" *ngIf="isTooltipBelow(ev)"></div>
+                    <div class="absolute -bottom-3.5 left-0 right-0 h-3.5" *ngIf="!isTooltipBelow(ev)"></div>
+                    <!-- Triangle pointer (Pointing UP if below card, Pointing DOWN if above card) -->
+                    <div *ngIf="!isTooltipBelow(ev)"
+                         class="absolute top-full -mt-px w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white drop-shadow-xs pointer-events-none"
+                         [ngClass]="getTooltipArrowClass(colIndex)"></div>
+
+                    <div *ngIf="isTooltipBelow(ev)"
+                         class="absolute bottom-full -mb-px w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white drop-shadow-xs pointer-events-none"
+                         [ngClass]="getTooltipArrowClass(colIndex)"></div>
+
+                    <!-- Header: Dot + Title + Action Buttons (Edit, Delete, Close) -->
+                    <div class="flex items-center justify-between pb-3 mb-1 border-b border-slate-100/80">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="ev.dotColor || '#5B4DFF'"></span>
+                        <h4 class="font-bold text-slate-900 text-sm truncate">{{ ev.title }}</h4>
+                      </div>
+                      <div class="flex items-center gap-1 shrink-0 ml-2">
+                        <button (click)="editEvent(ev, $event)" 
+                                title="Chỉnh sửa lịch"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#5B4DFF] hover:bg-purple-50 transition-colors cursor-pointer">
+                          <i class="pi pi-pencil text-xs"></i>
+                        </button>
+                        <button (click)="deleteEvent(ev, $event)" 
+                                title="Xóa lịch"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer">
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                        <button (click)="closePopover($event)" 
+                                title="Đóng"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                          <i class="pi pi-times text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Details List with 4 Pastel Box Icons (Exact design from Image 2) -->
+                    <div class="space-y-3">
+                      <!-- Row 1: Time & Duration with subtle vertical separator -->
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#F4F1FF] flex items-center justify-center text-[#5B4DFF] shrink-0">
+                          <i class="pi pi-clock text-xs"></i>
+                        </div>
+                        <div class="flex items-center justify-between flex-1 text-xs">
+                          <span class="font-medium text-slate-800">{{ ev.time }}</span>
+                          <span class="text-slate-400 font-normal">| {{ getEventDurationStr(ev) }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Row 2: Location / Room -->
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#E8F8F0] flex items-center justify-center text-[#10B981] shrink-0">
+                          <i class="pi pi-map-marker text-xs"></i>
+                        </div>
+                        <span class="text-xs font-medium text-slate-800">{{ ev.room || 'Phòng học' }}</span>
+                      </div>
+
+                      <!-- Row 3: Teacher / Lecturer -->
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#FFF6E5] flex items-center justify-center text-[#F59E0B] shrink-0">
+                          <i class="pi pi-user text-xs"></i>
+                        </div>
+                        <span class="text-xs font-medium text-slate-800">{{ ev.teacher || 'Nguyễn Văn A' }}</span>
+                      </div>
+
+                      <!-- Row 4: Note -->
+                      <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-[#6366F1] shrink-0 mt-0.5">
+                          <i class="pi pi-file-edit text-xs"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                          <span class="text-[11px] text-slate-400 font-medium leading-none">Ghi chú</span>
+                          <span class="text-xs text-slate-600 font-normal leading-snug mt-1">{{ ev.note || 'Không có ghi chú' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </ng-container>
             </div>
@@ -242,7 +349,7 @@
       </div>
 
       <!-- MONTHLY TIMETABLE GRID CARD (When currentViewTab === 'month') -->
-      <div *ngIf="currentViewTab === 'month'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden">
+      <div *ngIf="currentViewTab === 'month'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs">
         <!-- Grid Header: 7 Days of the Week (THỨ 2 to CHỦ NHẬT) -->
         <div class="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50">
           <div *ngFor="let hDay of monthHeaderDays" class="p-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-100 last:border-r-0">
@@ -252,9 +359,10 @@
 
         <!-- 35 Day Cells Grid -->
         <div class="grid grid-cols-7 bg-slate-100/40 gap-px">
-          <div *ngFor="let cell of monthDaysMatrix"
-               class="min-h-[140px] p-2 bg-white flex flex-col justify-between transition-colors hover:bg-slate-50/60"
-               [class.bg-slate-50]="!cell.isCurrentMonth">
+          <div *ngFor="let cell of monthDaysMatrix; let cellIndex = index"
+               class="min-h-[140px] p-2 bg-white flex flex-col justify-between transition-colors hover:bg-slate-50/60 relative"
+               [class.bg-slate-50]="!cell.isCurrentMonth"
+               [class.z-40]="isCellHasActivePopover(cell)">
             
             <!-- Cell Top Header (Date Number) -->
             <div class="flex items-center justify-between mb-1.5 shrink-0">
@@ -271,11 +379,11 @@
               </span>
             </div>
 
-            <!-- Cell Events List -->
-            <div class="space-y-1.5 flex-1 overflow-y-auto max-h-[110px] custom-scrollbar">
+            <!-- Cell Events List (Scrollable, never overflows out of cell) -->
+            <div class="space-y-1.5 flex-1 overflow-y-auto max-h-[110px] custom-scrollbar pr-0.5">
               <div *ngFor="let ev of cell.events"
                    (click)="selectEvent(ev, $event)"
-                   class="p-2.5 rounded-xl border text-[11px] font-medium leading-normal cursor-pointer transition-all shadow-2xs hover:shadow-md hover:-translate-y-0.5 space-y-1 overflow-hidden"
+                   class="calendar-event-card p-2.5 rounded-xl border text-[11px] font-medium leading-normal cursor-pointer transition-colors shadow-2xs hover:shadow-md space-y-1"
                    [style.background]="ev.bgColor"
                    [style.borderColor]="ev.borderColor">
                 <div class="flex items-center gap-1.5 font-bold truncate">
@@ -293,12 +401,103 @@
               </div>
             </div>
 
+            <!-- Cell Popover Container (Floating at Cell level: Unclipped & Clean) -->
+            <ng-container *ngFor="let ev of cell.events">
+              <div *ngIf="isPopoverOpen(ev)"
+                   (click)="$event.stopPropagation()"
+                   class="event-popover-container absolute flex flex-col w-[280px] sm:w-[295px] p-4 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-100 z-50 pointer-events-auto transition-all duration-150 animate-in fade-in zoom-in-95 select-none text-left cursor-default"
+                   [class.top-[calc(100%+8px)]]="isMonthTooltipBelow(cellIndex)"
+                   [class.bottom-[calc(100%+8px)]]="!isMonthTooltipBelow(cellIndex)"
+                   [ngClass]="getMonthTooltipPosClass(cellIndex)">
+
+                <!-- Invisible Hover Bridge -->
+                <div class="absolute -top-3 left-0 right-0 h-3" *ngIf="isMonthTooltipBelow(cellIndex)"></div>
+                <div class="absolute -bottom-3 left-0 right-0 h-3" *ngIf="!isMonthTooltipBelow(cellIndex)"></div>
+
+                <!-- Triangle pointer -->
+                <div *ngIf="!isMonthTooltipBelow(cellIndex)"
+                     class="absolute top-full -mt-px w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white drop-shadow-xs pointer-events-none"
+                     [ngClass]="getMonthTooltipArrowClass(cellIndex)"></div>
+
+                <div *ngIf="isMonthTooltipBelow(cellIndex)"
+                     class="absolute bottom-full -mb-px w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white drop-shadow-xs pointer-events-none"
+                     [ngClass]="getMonthTooltipArrowClass(cellIndex)"></div>
+
+                <!-- Header: Dot + Title + Action Buttons (Edit, Delete, Close) -->
+                <div class="flex items-center justify-between pb-3 mb-1 border-b border-slate-100/80">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="ev.dotColor || '#5B4DFF'"></span>
+                    <h4 class="font-bold text-slate-900 text-sm truncate">{{ ev.title }}</h4>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0 ml-2">
+                    <button (click)="editEvent(ev, $event)" 
+                            title="Chỉnh sửa lịch"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#5B4DFF] hover:bg-purple-50 transition-colors cursor-pointer">
+                      <i class="pi pi-pencil text-xs"></i>
+                    </button>
+                    <button (click)="deleteEvent(ev, $event)" 
+                            title="Xóa lịch"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer">
+                      <i class="pi pi-trash text-xs"></i>
+                    </button>
+                    <button (click)="closePopover($event)" 
+                            title="Đóng"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                      <i class="pi pi-times text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Details List with 4 Pastel Box Icons -->
+                <div class="space-y-3">
+                  <!-- Row 1: Time & Duration with subtle vertical separator -->
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#F4F1FF] flex items-center justify-center text-[#5B4DFF] shrink-0">
+                      <i class="pi pi-clock text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between flex-1 text-xs">
+                      <span class="font-medium text-slate-800">{{ ev.time }}</span>
+                      <span class="text-slate-400 font-normal">| {{ getEventDurationStr(ev) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Row 2: Location / Room -->
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#E8F8F0] flex items-center justify-center text-[#10B981] shrink-0">
+                      <i class="pi pi-map-marker text-xs"></i>
+                    </div>
+                    <span class="text-xs font-medium text-slate-800">{{ ev.room || 'Phòng học' }}</span>
+                  </div>
+
+                  <!-- Row 3: Teacher / Lecturer -->
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#FFF6E5] flex items-center justify-center text-[#F59E0B] shrink-0">
+                      <i class="pi pi-user text-xs"></i>
+                    </div>
+                    <span class="text-xs font-medium text-slate-800">{{ ev.teacher || 'Nguyễn Văn A' }}</span>
+                  </div>
+
+                  <!-- Row 4: Note -->
+                  <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-[#6366F1] shrink-0 mt-0.5">
+                      <i class="pi pi-file-edit text-xs"></i>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                      <span class="text-[11px] text-slate-400 font-medium leading-none">Ghi chú</span>
+                      <span class="text-xs text-slate-600 font-normal leading-snug mt-1">{{ ev.note || 'Không có ghi chú' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </ng-container>
+
           </div>
         </div>
       </div>
 
       <!-- DAY TIMETABLE GRID CARD (When currentViewTab === 'day') -->
-      <div *ngIf="currentViewTab === 'day'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden flex flex-col max-h-[620px]">
+      <div *ngIf="currentViewTab === 'day'" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs overflow-hidden flex flex-col h-[830px]">
         <!-- 1. Fixed Single Day Header Block (GMT+07 + Large Date Number) -->
         <div class="grid grid-cols-[70px_1fr] border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div class="p-3 text-center text-xs font-semibold text-slate-400 border-r border-slate-100 flex items-center justify-center">
@@ -332,15 +531,126 @@
               <!-- Events placed on this day -->
               <ng-container *ngFor="let ev of dayEvents">
                 <div (click)="selectEvent(ev, $event)"
-                     class="absolute left-3 right-3 rounded-2xl p-3 border transition-all cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 z-10 overflow-hidden space-y-0.5"
+                     class="calendar-event-card absolute left-3 right-3 rounded-2xl border transition-colors cursor-pointer shadow-xs hover:shadow-md z-10 hover:z-40"
+                     [class.z-40]="isPopoverOpen(ev)"
                      [class]="ev.colorClass"
                      [style]="getEventStyle(ev)">
-                  <div class="flex items-center gap-1.5 font-bold truncate">
-                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="ev.dotColor"></span>
-                    <span class="truncate text-slate-900 text-xs">{{ ev.title }}</span>
+                  
+                  <!-- 1. Ultra-Short Layout (< 45 mins): 1 line -->
+                  <div *ngIf="isShortEvent(ev)" class="w-full h-full px-3 flex items-center justify-between min-w-0 overflow-hidden leading-none">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+                      <span class="truncate text-slate-900 font-bold text-xs">{{ ev.title }}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-500 shrink-0 font-medium ml-2 opacity-90">{{ getStartTime(ev.time) }}</span>
                   </div>
-                  <div class="text-[11px] text-slate-600 pl-4">{{ ev.time }}</div>
-                  <div class="text-[11px] text-slate-500 pl-4 truncate" *ngIf="ev.room">{{ ev.room }}</div>
+
+                  <!-- 2. Medium Layout (45 mins - 1 hour): 2 lines -->
+                  <div *ngIf="isMediumEvent(ev)" class="w-full h-full p-2 px-3 overflow-hidden flex flex-col justify-center space-y-0.5">
+                    <div class="flex items-center gap-1.5 font-bold truncate">
+                      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+                      <span class="truncate text-slate-900 text-xs leading-tight">{{ ev.title }}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-600 pl-4 font-medium leading-tight truncate">{{ ev.time }}</div>
+                  </div>
+
+                  <!-- 3. Long Layout (>= 1.25 hours): 3 lines -->
+                  <div *ngIf="!isShortEvent(ev) && !isMediumEvent(ev)" class="w-full h-full p-3 overflow-hidden space-y-0.5">
+                    <div class="flex items-center gap-1.5 font-bold truncate">
+                      <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="ev.dotColor"></span>
+                      <span class="truncate text-slate-900 text-xs">{{ ev.title }}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-600 pl-4 font-medium">{{ ev.time }}</div>
+                    <div class="text-[11px] text-slate-500 pl-4 truncate font-normal" *ngIf="ev.room">{{ ev.room }}</div>
+                  </div>
+
+                  <!-- 3. Smart Interactive Popover (Click Pin + Click Outside Dismiss) -->
+                  <div *ngIf="isPopoverOpen(ev)"
+                       (click)="$event.stopPropagation()"
+                       class="event-popover-container absolute mb-2.5 mt-2.5 flex flex-col w-[280px] sm:w-[300px] p-4 bg-white text-slate-800 rounded-2xl shadow-2xl border border-slate-100 z-50 pointer-events-auto transition-all duration-150 animate-in fade-in zoom-in-95 select-none text-left cursor-default"
+                       [class.top-[calc(100%+10px)]]="isTooltipBelow(ev)"
+                       [class.bottom-[calc(100%+10px)]]="!isTooltipBelow(ev)"
+                       [ngClass]="getTooltipPosClass()">
+
+                    <!-- Invisible Hover Bridge -->
+                    <div class="absolute -top-3.5 left-0 right-0 h-3.5" *ngIf="isTooltipBelow(ev)"></div>
+                    <div class="absolute -bottom-3.5 left-0 right-0 h-3.5" *ngIf="!isTooltipBelow(ev)"></div>
+                    <!-- Triangle pointer (Pointing UP if below card, Pointing DOWN if above card) -->
+                    <div *ngIf="!isTooltipBelow(ev)"
+                         class="absolute top-full -mt-px w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white drop-shadow-xs pointer-events-none"
+                         [ngClass]="getTooltipArrowClass()"></div>
+
+                    <div *ngIf="isTooltipBelow(ev)"
+                         class="absolute bottom-full -mb-px w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white drop-shadow-xs pointer-events-none"
+                         [ngClass]="getTooltipArrowClass()"></div>
+
+                    <!-- Header: Dot + Title + Action Buttons (Edit, Delete, Close) -->
+                    <div class="flex items-center justify-between pb-3 mb-1 border-b border-slate-100/80">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="ev.dotColor || '#5B4DFF'"></span>
+                        <h4 class="font-bold text-slate-900 text-sm truncate">{{ ev.title }}</h4>
+                      </div>
+                      <div class="flex items-center gap-1 shrink-0 ml-2">
+                        <button (click)="editEvent(ev, $event)" 
+                                title="Chỉnh sửa lịch"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-[#5B4DFF] hover:bg-purple-50 transition-colors cursor-pointer">
+                          <i class="pi pi-pencil text-xs"></i>
+                        </button>
+                        <button (click)="deleteEvent(ev, $event)" 
+                                title="Xóa lịch"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer">
+                          <i class="pi pi-trash text-xs"></i>
+                        </button>
+                        <button (click)="closePopover($event)" 
+                                title="Đóng"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
+                          <i class="pi pi-times text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Details List with 4 Pastel Box Icons (Exact design from Image 2) -->
+                    <div class="space-y-3">
+                      <!-- Row 1: Time & Duration with subtle vertical separator -->
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#F4F1FF] flex items-center justify-center text-[#5B4DFF] shrink-0">
+                          <i class="pi pi-clock text-xs"></i>
+                        </div>
+                        <div class="flex items-center justify-between flex-1 text-xs">
+                          <span class="font-medium text-slate-800">{{ ev.time }}</span>
+                          <span class="text-slate-400 font-normal">| {{ getEventDurationStr(ev) }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Row 2: Location / Room -->
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#E8F8F0] flex items-center justify-center text-[#10B981] shrink-0">
+                          <i class="pi pi-map-marker text-xs"></i>
+                        </div>
+                        <span class="text-xs font-medium text-slate-800">{{ ev.room || 'Phòng học' }}</span>
+                      </div>
+
+                      <!-- Row 3: Teacher / Lecturer -->
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#FFF6E5] flex items-center justify-center text-[#F59E0B] shrink-0">
+                          <i class="pi pi-user text-xs"></i>
+                        </div>
+                        <span class="text-xs font-medium text-slate-800">{{ ev.teacher || 'Nguyễn Văn A' }}</span>
+                      </div>
+
+                      <!-- Row 4: Note -->
+                      <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-[#EEF2FF] flex items-center justify-center text-[#6366F1] shrink-0 mt-0.5">
+                          <i class="pi pi-file-edit text-xs"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                          <span class="text-[11px] text-slate-400 font-medium leading-none">Ghi chú</span>
+                          <span class="text-xs text-slate-600 font-normal leading-snug mt-1">{{ ev.note || 'Không có ghi chú' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </ng-container>
 
@@ -356,83 +666,6 @@
 
             </div>
 
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════
-           EVENT DETAIL CARD (Bottom Left - Selected Event)
-           ═══════════════════════════════════════ -->
-      <div *ngIf="selectedEvent" class="bg-white rounded-2xl border border-slate-200/60 shadow-xs p-5 space-y-4">
-        <!-- Header Card -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-semibold text-slate-900">Chi tiết lịch: {{ selectedEvent.title }}</h3>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700">{{ selectedEvent.type }}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button (click)="editCurrentEvent()" class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer">
-              <i class="pi pi-pencil text-xs text-slate-400"></i> Sửa
-            </button>
-            <button (click)="deleteCurrentEvent()" class="flex items-center gap-1.5 px-3 py-1.5 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold hover:bg-rose-50 transition-all cursor-pointer">
-              <i class="pi pi-trash text-xs"></i> Xóa
-            </button>
-            <button (click)="closeDetailCard()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 ml-1 transition-all cursor-pointer">
-              <i class="pi pi-times text-xs"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Detail Grid (5 Info Columns) -->
-        <div class="grid grid-cols-5 gap-4 text-xs pt-1">
-          <div class="flex items-start gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-              <i class="pi pi-clock text-xs"></i>
-            </div>
-            <div>
-              <p class="text-[11px] font-normal text-slate-400">Thời gian</p>
-              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.fullDate || selectedEvent.time }}</p>
-            </div>
-          </div>
-
-          <div class="flex items-start gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-              <i class="pi pi-map-marker text-xs"></i>
-            </div>
-            <div>
-              <p class="text-[11px] font-normal text-slate-400">Địa điểm / Phòng</p>
-              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.room }}</p>
-            </div>
-          </div>
-
-          <div class="flex items-start gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-              <i class="pi pi-file-edit text-xs"></i>
-            </div>
-            <div>
-              <p class="text-[11px] font-normal text-slate-400">Hình thức</p>
-              <p class="text-xs font-semibold text-slate-800 mt-0.5">Trực tiếp</p>
-            </div>
-          </div>
-
-          <div class="flex items-start gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-              <i class="pi pi-user text-xs"></i>
-            </div>
-            <div>
-              <p class="text-[11px] font-normal text-slate-400">Giảng viên</p>
-              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.teacher || 'Giảng viên bộ môn' }}</p>
-            </div>
-          </div>
-
-          <div class="flex items-start gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-              <i class="pi pi-file text-xs"></i>
-            </div>
-            <div>
-              <p class="text-[11px] font-normal text-slate-400">Ghi chú</p>
-              <p class="text-xs font-semibold text-slate-800 mt-0.5">{{ selectedEvent.note || 'Không có ghi chú' }}</p>
-            </div>
           </div>
         </div>
       </div>

@@ -98,20 +98,14 @@ export interface DashboardData {
 })
 export class DashboardService {
   private apiUrl = 'http://localhost:5186/api/v1/dashboard';
-  private dashboardCache$: Observable<DashboardData> | null = null;
 
   constructor(private http: HttpClient) {}
 
   getDashboardData(): Observable<DashboardData> {
-    if (!this.dashboardCache$) {
-      this.dashboardCache$ = this.http.get<DashboardData>(this.apiUrl).pipe(
-        shareReplay(1)
-      );
-    }
-    return this.dashboardCache$;
+    return this.http.get<DashboardData>(this.apiUrl);
   }
 
   clearCache() {
-    this.dashboardCache$ = null;
+    // No-op for backward compatibility
   }
 }

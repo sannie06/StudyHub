@@ -17,7 +17,6 @@
         <div class="flex items-center justify-between pb-4 border-b border-gray-100">
           <div>
             <h1 class="text-2xl font-semibold text-gray-900 flex items-center gap-2.5">
-              <i class="pi" [ngClass]="isEditMode ? 'pi-pencil text-indigo-500' : 'pi-plus-circle text-indigo-500'"></i>
               {{ isEditMode ? 'Chỉnh sửa công việc' : 'Tạo công việc mới' }}
             </h1>
             <p class="text-xs text-gray-400 mt-1 font-normal">Quản lý công việc &rsaquo; {{ isEditMode ? 'Cập nhật thông tin' : 'Điền chi tiết công việc' }}</p>
@@ -250,10 +249,8 @@
           <p class="text-xs text-slate-400 mt-1 font-normal tracking-wide">Quản lý, theo dõi tiến độ và hoàn thành các mục tiêu học tập</p>
         </div>
         <div class="flex items-center gap-3">
-          <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200/70 hover:border-slate-300 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50/90 shadow-xs transition-all cursor-pointer">
-            <i class="pi pi-upload text-xs text-slate-400"></i> Nhập từ file
-          </button>
-          <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200/70 hover:border-slate-300 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50/90 shadow-xs transition-all cursor-pointer">
+          <button (click)="exportTasks()"
+                  class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200/70 hover:border-slate-300 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50/90 shadow-xs transition-all cursor-pointer">
             <i class="pi pi-download text-xs text-slate-400"></i> Xuất dữ liệu
           </button>
           <button (click)="showCreateTaskForm()"
@@ -637,7 +634,7 @@
         </div> <!-- END CARD 2 -->
       </div> <!-- END LEFT COLUMN -->
 
-        <!-- Right Column Widgets (col-span-12 lg:col-span-4 xl:col-span-3) -->
+        <!-- Right Column Widgets -->
         <div class="col-span-12 lg:col-span-4 xl:col-span-3 space-y-6">
 
           <!-- AI Assistant Card -->
@@ -692,45 +689,105 @@
             </button>
           </div>
 
-          <!-- Quick Stats Card -->
+          <!-- Quick Stats Card (Synchronized with right sidebar widgets) -->
           <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4">
-            <h3 class="text-sm font-semibold text-gray-900">Thống kê nhanh</h3>
-            <div class="flex items-center gap-4">
-              <div class="relative flex-shrink-0" style="width:96px;height:96px;">
-                <svg class="donut-svg w-full h-full" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" stroke-width="12"
-                          stroke-dasharray="98 147" stroke-dashoffset="0"/>
-                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f59e0b" stroke-width="12"
-                          stroke-dasharray="83 162" stroke-dashoffset="-98"/>
-                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" stroke-width="12"
-                          stroke-dasharray="70 175" stroke-dashoffset="-181"/>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span class="text-xl font-bold text-gray-900 leading-none">18</span>
-                  <span class="text-[10px] text-gray-400 font-normal mt-0.5">Tổng task</span>
-                </div>
+
+            <!-- Header -->
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-xs" style="background:#EEECFF;">
+                <i class="pi pi-chart-bar text-base" style="color:#6366F1;"></i>
               </div>
-              <div class="space-y-1.5 text-xs">
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></span>
-                  <span class="text-gray-600 font-normal">Cần thực hiện</span>
-                  <span class="font-semibold text-gray-900 ml-auto">7 (39%)</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
-                  <span class="text-gray-600 font-normal">Đang thực hiện</span>
-                  <span class="font-semibold text-gray-900 ml-auto">6 (33%)</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                  <span class="text-gray-600 font-normal">Hoàn thành</span>
-                  <span class="font-semibold text-gray-900 ml-auto">5 (28%)</span>
-                </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900">Thống kê nhanh</h3>
+                <p class="text-[11px] text-gray-400 font-normal">Tổng quan tiến độ</p>
               </div>
             </div>
-            <a href="javascript:void(0)" class="block text-center text-xs font-medium mt-2 text-[#6366F1] hover:underline">
-              Xem báo cáo chi tiết
-            </a>
+
+            <!-- Body: Donut + Stats List -->
+            <div class="flex items-center gap-3.5 pt-1">
+
+              <!-- Donut Chart -->
+              <div class="relative flex-shrink-0" style="width: 88px; height: 88px;">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#F1F5F9" stroke-width="12"/>
+                  <!-- Todo arc -->
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#6366F1" stroke-width="12"
+                          stroke-linecap="round"
+                          [attr.stroke-dasharray]="todoArc" stroke-dashoffset="0"/>
+                  <!-- In-progress arc -->
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#F59E0B" stroke-width="12"
+                          stroke-linecap="round"
+                          [attr.stroke-dasharray]="inProgressArc" [attr.stroke-dashoffset]="inProgressOffset"/>
+                  <!-- Done arc -->
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10B981" stroke-width="12"
+                          stroke-linecap="round"
+                          [attr.stroke-dasharray]="doneArc" [attr.stroke-dashoffset]="doneOffset"/>
+                  <!-- Fallback if 0 tasks -->
+                  <circle *ngIf="totalTaskCount === 0" cx="50" cy="50" r="38" fill="transparent" stroke="#E2E8F0" stroke-width="12"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span class="text-lg font-bold text-gray-900 leading-none">{{ totalTaskCount }}</span>
+                  <span class="text-[9px] text-gray-400 font-normal mt-0.5">Tổng task</span>
+                </div>
+              </div>
+
+              <!-- Stats List -->
+              <div class="flex-1 space-y-2 text-xs min-w-0">
+
+                <!-- Cần thực hiện -->
+                <div class="space-y-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-[#6366F1] flex-shrink-0"></span>
+                    <span class="text-gray-600 truncate flex-1 text-[11px]">Cần thực hiện</span>
+                    <span class="font-semibold text-gray-900 text-[11px]">{{ todoCount }}</span>
+                    <span class="text-[10px] font-medium text-indigo-500">({{ todoPct }}%)</span>
+                  </div>
+                  <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-[#6366F1] transition-all duration-500"
+                         [style.width.%]="todoPct"></div>
+                  </div>
+                </div>
+
+                <!-- Đang thực hiện -->
+                <div class="space-y-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
+                    <span class="text-gray-600 truncate flex-1 text-[11px]">Đang thực hiện</span>
+                    <span class="font-semibold text-gray-900 text-[11px]">{{ inProgressCount }}</span>
+                    <span class="text-[10px] font-medium text-amber-500">({{ inProgressPct }}%)</span>
+                  </div>
+                  <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-amber-500 transition-all duration-500"
+                         [style.width.%]="inProgressPct"></div>
+                  </div>
+                </div>
+
+                <!-- Hoàn thành -->
+                <div class="space-y-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                    <span class="text-gray-600 truncate flex-1 text-[11px]">Hoàn thành</span>
+                    <span class="font-semibold text-gray-900 text-[11px]">{{ doneCount }}</span>
+                    <span class="text-[10px] font-medium text-emerald-500">({{ donePct }}%)</span>
+                  </div>
+                  <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                         [style.width.%]="donePct"></div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- Footer Button: Open Detailed Report Modal -->
+            <button type="button"
+                    (click)="openReportModal()"
+                    class="w-full mt-2 py-2.5 bg-gray-50/80 hover:bg-gray-100/80 text-gray-700 text-xs font-medium rounded-xl transition-all border border-gray-200/60 cursor-pointer flex items-center justify-center gap-1.5 hover:text-[#6366F1]">
+              <i class="pi pi-chart-line text-xs"></i>
+              <span>Xem báo cáo chi tiết</span>
+            </button>
+
           </div>
 
         </div> <!-- END RIGHT COLUMN -->
@@ -868,3 +925,298 @@
     </div>
   </div>
 </div>
+
+<!-- ═══ DETAILED PERFORMANCE & ANALYSIS REPORT MODAL ═══ -->
+<div *ngIf="showReportModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+     (click)="closeReportModal()">
+
+  <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+       (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs" style="background: #EEECFF;">
+          <i class="pi pi-chart-bar text-lg" style="color: #6366F1;"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Báo cáo phân tích công việc</h3>
+          <p class="text-xs text-slate-400 font-normal">Tổng quan hiệu suất, tiến độ học tập và phân bổ nhiệm vụ</p>
+        </div>
+      </div>
+      <button type="button"
+              (click)="closeReportModal()"
+              class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+        <i class="pi pi-times text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar">
+
+      <!-- 4 Top KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+        <!-- KPI 1: Total Tasks -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-500">Tổng công việc</span>
+            <div class="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+              <i class="pi pi-list text-xs text-[#6366F1]"></i>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-slate-900 leading-tight">{{ totalTaskCount }}</p>
+          <p class="text-[11px] text-slate-400 mt-1">Nhiệm vụ trong danh sách</p>
+        </div>
+
+        <!-- KPI 2: Completion Rate -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-500">Tỉ lệ hoàn thành</span>
+            <div class="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <i class="pi pi-check-circle text-xs text-emerald-600"></i>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-emerald-600 leading-tight">{{ donePct }}%</p>
+          <p class="text-[11px] text-slate-400 mt-1">{{ doneCount }}/{{ totalTaskCount }} việc hoàn tất</p>
+        </div>
+
+        <!-- KPI 3: On-time Rate -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-500">Tỉ lệ đúng hạn</span>
+            <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+              <i class="pi pi-clock text-xs text-blue-600"></i>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-blue-600 leading-tight">{{ onTimeRate }}%</p>
+          <p class="text-[11px] text-slate-400 mt-1">{{ overdueCount }} việc bị trễ hạn</p>
+        </div>
+
+        <!-- KPI 4: Main Subject -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-500">Môn trọng tâm</span>
+            <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+              <i class="pi pi-book text-xs text-amber-600"></i>
+            </div>
+          </div>
+          <p class="text-base font-bold text-slate-900 truncate leading-tight mt-1" [title]="mostDemandingSubject">{{ mostDemandingSubject }}</p>
+          <p class="text-[11px] text-slate-400 mt-1">Nhiều nhiệm vụ nhất</p>
+        </div>
+
+      </div>
+
+      <!-- Main 2-Column Analytics Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Column Left: Status Breakdown & Priority Level -->
+        <div class="space-y-6">
+
+          <!-- Card: Status Breakdown -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/70 space-y-4">
+            <h4 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <i class="pi pi-chart-pie text-xs text-[#6366F1]"></i>
+              <span>Phân bố theo trạng thái</span>
+            </h4>
+
+            <div class="flex items-center gap-5">
+              <!-- Donut Mini -->
+              <div class="relative flex-shrink-0" style="width: 100px; height: 100px;">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#F1F5F9" stroke-width="14"/>
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#6366F1" stroke-width="14"
+                          stroke-linecap="round"
+                          [attr.stroke-dasharray]="todoArc" stroke-dashoffset="0"/>
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#F59E0B" stroke-width="14"
+                          stroke-linecap="round"
+                          [attr.stroke-dasharray]="inProgressArc" [attr.stroke-dashoffset]="inProgressOffset"/>
+                  <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10B981" stroke-width="14"
+                          stroke-linecap="round"
+                          [attr.stroke-dasharray]="doneArc" [attr.stroke-dashoffset]="doneOffset"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span class="text-xl font-bold text-slate-900 leading-none">{{ totalTaskCount }}</span>
+                  <span class="text-[9px] text-slate-400 font-normal mt-0.5">Task</span>
+                </div>
+              </div>
+
+              <!-- Breakdown list -->
+              <div class="flex-1 space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#6366F1]"></span>
+                    <span class="text-slate-600">Cần thực hiện</span>
+                  </div>
+                  <span class="font-bold text-slate-900">{{ todoCount }} <span class="font-normal text-slate-400 text-[11px]">({{ todoPct }}%)</span></span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <span class="text-slate-600">Đang thực hiện</span>
+                  </div>
+                  <span class="font-bold text-slate-900">{{ inProgressCount }} <span class="font-normal text-slate-400 text-[11px]">({{ inProgressPct }}%)</span></span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-slate-600">Hoàn thành</span>
+                  </div>
+                  <span class="font-bold text-slate-900">{{ doneCount }} <span class="font-normal text-slate-400 text-[11px]">({{ donePct }}%)</span></span>
+                </div>
+
+                <div *ngIf="overdueCount > 0" class="flex items-center justify-between pt-1 border-t border-slate-100">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span class="text-rose-600 font-medium">Quá hạn</span>
+                  </div>
+                  <span class="font-bold text-rose-600">{{ overdueCount }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card: Priority Breakdown -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/70 space-y-3.5">
+            <h4 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <i class="pi pi-flag text-xs text-amber-500"></i>
+              <span>Phân loại theo mức độ ưu tiên</span>
+            </h4>
+
+            <div class="space-y-3 text-xs">
+              <!-- High Priority -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>Ưu tiên cao</span>
+                  </span>
+                  <span class="font-semibold text-slate-900">{{ highPriorityCount }} việc</span>
+                </div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-rose-500 rounded-full transition-all duration-500"
+                       [style.width.%]="totalTaskCount > 0 ? (highPriorityCount / totalTaskCount) * 100 : 0"></div>
+                </div>
+              </div>
+
+              <!-- Medium Priority -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span>Ưu tiên trung bình</span>
+                  </span>
+                  <span class="font-semibold text-slate-900">{{ mediumPriorityCount }} việc</span>
+                </div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-amber-500 rounded-full transition-all duration-500"
+                       [style.width.%]="totalTaskCount > 0 ? (mediumPriorityCount / totalTaskCount) * 100 : 0"></div>
+                </div>
+              </div>
+
+              <!-- Low Priority -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                    <span>Ưu tiên thấp</span>
+                  </span>
+                  <span class="font-semibold text-slate-900">{{ lowPriorityCount }} việc</span>
+                </div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-blue-400 rounded-full transition-all duration-500"
+                       [style.width.%]="totalTaskCount > 0 ? (lowPriorityCount / totalTaskCount) * 100 : 0"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Column Right: Subject Breakdown & AI Insights -->
+        <div class="space-y-6">
+
+          <!-- Card: Subject / Tag Breakdown -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/70 space-y-3.5">
+            <h4 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <i class="pi pi-tags text-xs text-[#6366F1]"></i>
+              <span>Tiến độ theo Môn học / Tag</span>
+            </h4>
+
+            <div class="space-y-3 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+              <div *ngFor="let s of subjectReportList" class="p-2.5 bg-slate-50/70 rounded-xl space-y-1.5 border border-slate-100">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+                        [ngStyle]="getTagBadgeStyle(s.color)">
+                    {{ s.name }}
+                  </span>
+                  <span class="font-semibold text-slate-800 text-[11px]">
+                    {{ s.done }}/{{ s.total }} hoàn tất ({{ s.pct }}%)
+                  </span>
+                </div>
+                <div class="h-1.5 bg-slate-200/70 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                       [style.background-color]="s.color || '#6366F1'"
+                       [style.width.%]="s.pct"></div>
+                </div>
+              </div>
+
+              <div *ngIf="subjectReportList.length === 0" class="text-center py-4 text-xs text-slate-400">
+                Chưa có dữ liệu môn học
+              </div>
+            </div>
+          </div>
+
+          <!-- Card: AI StudyHub Insights -->
+          <div class="rounded-2xl p-5 border border-indigo-100 shadow-xs space-y-3"
+               style="background: linear-gradient(145deg, #F8F9FF 0%, #EEF1FF 100%);">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg flex items-center justify-center shadow-xs" style="background: #6366F1;">
+                <i class="pi pi-bolt text-white text-xs"></i>
+              </div>
+              <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Nhận xét & Khuyến nghị từ AI</h4>
+            </div>
+
+            <div class="space-y-2 text-xs text-slate-700 leading-relaxed">
+              <p *ngIf="donePct >= 70" class="flex items-start gap-2">
+                <i class="pi pi-check text-emerald-500 text-xs mt-0.5 shrink-0"></i>
+                <span>Năng suất học tập rất tốt! Bạn đã hoàn thành <b>{{ donePct }}%</b> tổng số nhiệm vụ.</span>
+              </p>
+              <p *ngIf="donePct < 70" class="flex items-start gap-2">
+                <i class="pi pi-info-circle text-indigo-500 text-xs mt-0.5 shrink-0"></i>
+                <span>Bạn còn <b>{{ inProgressCount + todoCount }} việc</b> cần xử lý. Hãy dùng Pomodoro để tập trung giải quyết.</span>
+              </p>
+              <p *ngIf="overdueCount > 0" class="flex items-start gap-2 text-rose-700">
+                <i class="pi pi-exclamation-triangle text-rose-500 text-xs mt-0.5 shrink-0"></i>
+                <span>Cảnh báo: Đang có <b>{{ overdueCount }} công việc quá hạn</b>, cần ưu tiên hoàn tất ngay hôm nay.</span>
+              </p>
+              <p *ngIf="subjectReportList.length > 0" class="flex items-start gap-2">
+                <i class="pi pi-compass text-amber-500 text-xs mt-0.5 shrink-0"></i>
+                <span>Môn <b>{{ mostDemandingSubject }}</b> đang chiếm nhiều khối lượng nhất ({{ subjectReportList[0]?.total }} việc).</span>
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+      <span class="text-xs text-slate-400">Dữ liệu được cập nhật theo thời gian thực từ cơ sở dữ liệu</span>
+      <button type="button"
+              (click)="closeReportModal()"
+              class="px-5 py-2.5 bg-[#6366F1] text-white text-xs font-medium rounded-xl hover:bg-[#5856EB] shadow-xs transition-all cursor-pointer">
+        Đóng báo cáo
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
