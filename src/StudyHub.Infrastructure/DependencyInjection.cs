@@ -6,6 +6,7 @@ using StudyHub.Application.Common.Interfaces.Services;
 using StudyHub.Application.Common.Security;
 using StudyHub.Infrastructure.Identity;
 using StudyHub.Infrastructure.Services;
+using StudyHub.Infrastructure.Services.Ai;
 
 namespace StudyHub.Infrastructure
 {
@@ -34,6 +35,8 @@ namespace StudyHub.Infrastructure
             services.AddScoped<IStudyGroupService, StudyGroupService>();
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IAiScheduleContextProvider, Services.Ai.AiScheduleContextProvider>();
+            services.AddSingleton<Services.Ai.AiDateResolver>();
             services.AddHttpClient<IAiService, AiService>();
             services.AddScoped<IAdminService, AdminService>();
             

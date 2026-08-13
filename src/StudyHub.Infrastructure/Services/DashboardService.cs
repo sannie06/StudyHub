@@ -46,8 +46,21 @@ namespace StudyHub.Infrastructure.Services
 
         public async Task<DashboardDto> GetDashboardDataAsync(int userId)
         {
-            var today = DateTime.UtcNow.Date;
+            var vnNow = DateTime.UtcNow.AddHours(7);
+            var today = vnNow.Date;
             var tomorrow = today.AddDays(1);
+
+            byte currentThu = vnNow.DayOfWeek switch
+            {
+                DayOfWeek.Monday => 2,
+                DayOfWeek.Tuesday => 3,
+                DayOfWeek.Wednesday => 4,
+                DayOfWeek.Thursday => 5,
+                DayOfWeek.Friday => 6,
+                DayOfWeek.Saturday => 7,
+                DayOfWeek.Sunday => 8,
+                _ => 2
+            };
 
             // 1. User Info
             var user = await _userRepository.GetQueryable()
@@ -65,7 +78,11 @@ namespace StudyHub.Infrastructure.Services
 
             // 2. Statistics & Weekly Progress
             var totalSubjects = await _subjectRepository.GetQueryable().AsNoTracking().CountAsync(s => s.TrangThai == 1);
-            var userTasks = await _taskRepository.GetQueryable().AsNoTracking().Where(t => t.MaNguoiDung == userId && !t.DaXoa).ToListAsync();
+            var userTasks = await _taskRepository.GetQueryable()
+                .AsNoTracking()
+                .Include(t => t.MonHoc)
+                .Where(t => t.MaNguoiDung == userId && !t.DaXoa)
+                .ToListAsync();
 
             var totalTasks = userTasks.Count;
             var completedTasks = userTasks.Count(t => t.TrangThai == 3);
@@ -103,12 +120,14 @@ namespace StudyHub.Infrastructure.Services
                 });
             }
 
-            // 3. Today's Tasks
+            // 3. Today's Tasks (Exact match for today's deadline or start date)
             var todayTasks = userTasks
                 .Where(t => t.TrangThai != 3 && 
-                           ((t.NgayBatDau.HasValue && t.NgayBatDau.Value.Date <= today) || 
-                            (t.HanHoanThanh.HasValue && t.HanHoanThanh.Value.Date >= today)))
-                .Take(5)
+                           ((t.HanHoanThanh.HasValue && t.HanHoanThanh.Value.Date == today) ||
+                            (t.NgayBatDau.HasValue && t.NgayBatDau.Value.Date == today)))
+                .OrderByDescending(t => t.DoUuTien)
+                .ThenBy(t => t.HanHoanThanh)
+                .Take(10)
                 .Select(t => new DashboardTaskItemDto
                 {
                     MaCongViec = t.MaCongViec,
@@ -121,11 +140,12 @@ namespace StudyHub.Infrastructure.Services
                 })
                 .ToList();
 
-            // 4. Upcoming Deadlines
+            // 4. Upcoming & Active Deadlines (Ordered strictly by earliest deadline, then priority)
             var upcomingDeadlines = userTasks
-                .Where(t => t.TrangThai != 3 && t.HanHoanThanh.HasValue && t.HanHoanThanh.Value >= DateTime.UtcNow)
+                .Where(t => t.TrangThai != 3 && t.HanHoanThanh.HasValue)
                 .OrderBy(t => t.HanHoanThanh)
-                .Take(5)
+                .ThenByDescending(t => t.DoUuTien)
+                .Take(15)
                 .Select(t => new DashboardTaskItemDto
                 {
                     MaCongViec = t.MaCongViec,
@@ -138,14 +158,15 @@ namespace StudyHub.Infrastructure.Services
                 })
                 .ToList();
 
-            // 5. Today's Class Schedule
+            // 5. Today's Class Schedule (Filtered accurately by current day of week Thu and semester date range)
             var todayClasses = await _classScheduleRepository.GetQueryable()
                 .AsNoTracking()
                 .Include(c => c.MonHoc)
                 .Where(c => c.MaNguoiDung == userId && !c.DaXoa && 
-                           ((c.NgayBatDau <= tomorrow && c.NgayKetThuc >= today) ||
-                            (c.NgayBatDau <= tomorrow.AddHours(7) && c.NgayKetThuc >= today.AddHours(-7))))
-                .OrderBy(c => c.NgayBatDau)
+                           c.Thu == currentThu &&
+                           c.NgayBatDau.Date <= today && c.NgayKetThuc.Date >= today)
+                .OrderBy(c => c.TietBatDau)
+                .ThenBy(c => c.NgayBatDau)
                 .Take(10)
                 .Select(c => new DashboardClassScheduleItemDto
                 {

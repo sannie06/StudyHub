@@ -209,31 +209,62 @@ export class TasksComponent implements OnInit {
     return `${dd}/${mm}/${yyyy}`;
   }
 
-  // --- Dynamic AI Suggestions & Deadline Alerts calculated from active API tasks ---
-  get aiSuggestions() {
-    return (this.tasks || [])
-      .filter(t => t.status !== 'Hoàn thành' && (t.dueWarning === 'Quá hạn' || t.priority === 'Cao' || t.priority === 'Khẩn cấp'))
-      .slice(0, 3)
-      .map((t, idx) => ({
-        rank: idx + 1,
-        title: t.title,
-        due: t.dueWarning || 'Trong hạn',
-        dueClass: t.warnClass,
-        priority: t.priority,
-        pClass: t.priorityClass
-      }));
+  // --- Smart AI Focus Tasks & Intelligent Insights ---
+  get aiInsightMessage(): string {
+    if (!this.tasks || this.tasks.length === 0) {
+      return 'Chưa có công việc nào. Hãy tạo task mới để AI hỗ trợ lập kế hoạch!';
+    }
+    if (this.overdueCount > 0) {
+      return `Bạn có ${this.overdueCount} việc quá hạn. Hãy ưu tiên giải quyết môn ${this.mostDemandingSubject} trước!`;
+    }
+    if (this.highPriorityCount > 0) {
+      return `Có ${this.highPriorityCount} việc mức ưu tiên Cao cần hoàn thành sớm trong tuần này.`;
+    }
+    if (this.donePct >= 70) {
+      return `Năng suất tuyệt vời! Bạn đã hoàn thành ${this.donePct}% công việc.`;
+    }
+    return `Bạn còn ${this.todoCount + this.inProgressCount} việc đang thực hiện. Tập trung giải quyết từng task nhé!`;
   }
 
-  get deadlineAlerts() {
-    return (this.tasks || [])
-      .filter(t => t.status !== 'Hoàn thành' && t.dueWarning)
-      .slice(0, 3)
-      .map(t => ({
-        title: t.title,
-        due: t.dueWarning,
-        badge: t.dueWarning,
-        badgeClass: t.priorityClass
-      }));
+  get aiFocusTasks() {
+    if (!this.tasks || this.tasks.length === 0) return [];
+    
+    return this.tasks
+      .filter(t => t.status !== 'Hoàn thành')
+      .map(t => {
+        // Calculate urgency score: Overdue = +100, High = +50, Medium = +25
+        let score = 0;
+        if (t.dueWarning === 'Quá hạn' || t.status === 'Quá hạn') score += 100;
+        if (t.priority === 'Cao' || t.priority === 'Khẩn cấp') score += 50;
+        else if (t.priority === 'Trung bình') score += 25;
+
+        return {
+          id: t.id,
+          title: t.title,
+          tag: t.tag,
+          tagColor: t.tagColor,
+          due: t.dueWarning || t.dueDate || 'Trong hạn',
+          dueClass: t.warnClass || 'text-slate-400',
+          priority: t.priority,
+          pClass: t.priorityClass,
+          score
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  }
+
+  // Navigate to AI Assistant with pre-filled context
+  askAiAboutTask(taskTitle?: string): void {
+    if (taskTitle) {
+      this.router.navigate(['/ai'], {
+        queryParams: {
+          prompt: `Hãy hướng dẫn tôi các bước chi tiết và kế hoạch để hoàn thành công việc: "${taskTitle}" một cách hiệu quả nhất.`
+        }
+      });
+    } else {
+      this.router.navigate(['/ai']);
+    }
   }
 
   // --- Quick Stats computed from real task data ---
@@ -413,6 +444,7 @@ export class TasksComponent implements OnInit {
   selectFilterStatus(statusVal: string, event?: Event) {
     if (event) event.stopPropagation();
     this.filterStatus = statusVal;
+    this.currentPage = 1;
     this.isFilterStatusDropdownOpen = false;
   }
 
@@ -426,6 +458,7 @@ export class TasksComponent implements OnInit {
   selectFilterPriority(priorityVal: string, event?: Event) {
     if (event) event.stopPropagation();
     this.filterPriority = priorityVal;
+    this.currentPage = 1;
     this.isFilterPriorityDropdownOpen = false;
   }
 
@@ -439,6 +472,7 @@ export class TasksComponent implements OnInit {
   selectFilterSubject(subjectVal: string, event?: Event) {
     if (event) event.stopPropagation();
     this.filterSubject = subjectVal;
+    this.currentPage = 1;
     this.isFilterSubjectDropdownOpen = false;
   }
 
@@ -540,6 +574,7 @@ export class TasksComponent implements OnInit {
     this.filterPriority = 'all';
     this.filterSubject = 'all';
     this.filterDueDate = '';
+    this.currentPage = 1;
   }
 
   // --- Comprehensive Filtered Task Getters (Safe-Null & Crash Free) ---
@@ -588,6 +623,86 @@ export class TasksComponent implements OnInit {
 
       return true;
     });
+  }
+
+  // --- Pagination States & Dynamic Logic ---
+  currentPage: number = 1;
+  pageSize: number = 6; // Default 6 tasks per page to balance with right column height
+  pageSizeOptions: number[] = [5, 6, 8, 10, 20];
+
+  get totalFilteredTasksCount(): number {
+    return this.filteredTasks.length;
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalFilteredTasksCount / this.pageSize) || 1;
+  }
+
+  get paginatedTasks(): TaskItem[] {
+    // If current page exceeds total pages after filtering, reset to page 1
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.filteredTasks.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  get paginationStartIndex(): number {
+    if (this.totalFilteredTasksCount === 0) return 0;
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get paginationEndIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalFilteredTasksCount);
+  }
+
+  get pageNumbers(): number[] {
+    const minPagesToShow = 3;
+    const maxPage = Math.max(minPagesToShow, this.totalPages);
+    const pages: number[] = [];
+
+    if (maxPage <= 5) {
+      for (let i = 1; i <= maxPage; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (this.currentPage <= 2) {
+        pages.push(1, 2, 3);
+      } else if (this.currentPage >= this.totalPages - 1) {
+        for (let i = this.totalPages - 2; i <= this.totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(this.currentPage - 1, this.currentPage, this.currentPage + 1);
+      }
+    }
+    return pages;
+  }
+
+  setPage(page: number): void {
+    if (page >= 1) {
+      this.currentPage = Math.min(page, this.totalPages || 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  onPageSizeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    if (select) {
+      this.pageSize = parseInt(select.value, 10) || 6;
+      this.currentPage = 1;
+    }
   }
 
   get filteredKanbanTodo(): KanbanItem[] {
@@ -1143,6 +1258,7 @@ export class TasksComponent implements OnInit {
 
   setFilterStatus(s: string) {
     this.filterStatus = s;
+    this.currentPage = 1;
   }
 
   showCreateTaskForm(initialStatus: string = 'todo') {
@@ -1789,9 +1905,11 @@ export class TasksComponent implements OnInit {
         if (createdTask && createdTask.maCongViec) {
           const newTaskItem = this.mapDtoToTaskItem(createdTask);
           this.tasks.unshift(newTaskItem);
+          this.currentPage = 1;
           this.recomputeAllDueStatuses();
           this.rebuildKanbanLists();
         } else {
+          this.currentPage = 1;
           this.loadTasksFromApi();
         }
 

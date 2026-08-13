@@ -13,6 +13,8 @@ namespace StudyHub.Application.DTOs.Ai
         public string Reply { get; set; } = string.Empty;
         public List<string> ActionSuggestions { get; set; } = new();
         public string? WorkloadLevel { get; set; } // "Low", "Moderate", "High", "Overloaded"
+        public string? Intent { get; set; }
+        public List<string>? RequiredInformation { get; set; }
     }
 
     public class StudyPlanRequest

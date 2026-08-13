@@ -8,6 +8,9 @@ using StudyHub.Application.DTOs.Ai;
 
 namespace StudyHub.Web.Controllers
 {
+    /// <summary>
+    /// AI Advisor & Dedicated Schedule Assistance Endpoints
+    /// </summary>
     [Authorize]
     [Route("api/v1/ai")]
     public class AiController : ApiControllerBase

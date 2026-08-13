@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { AiService, AiChatResponse, StudyPlanResponse, StudyPlanItem } from '../../services/ai.service';
 import { DashboardService, DashboardData } from '../../services/dashboard.service';
 
@@ -116,7 +116,8 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   constructor(
     private aiService: AiService,
     private dashboardService: DashboardService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   onSelectRecommendation(rec: AIRecommendationItem) {
@@ -135,6 +136,18 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.loadWorkloadAndAdvice();
     this.loadChatSessionsFromStorage();
     this.loadRealDashboardStats();
+
+    // Check if redirected from Tasks page with a specific task prompt
+    this.route.queryParams.subscribe(params => {
+      if (params && params['prompt']) {
+        this.activeTab = 'chat';
+        const promptText = params['prompt'];
+        setTimeout(() => {
+          this.promptInput = promptText;
+          this.sendPrompt(promptText);
+        }, 400);
+      }
+    });
   }
 
   loadRealDashboardStats() {

@@ -69,6 +69,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/ai/ai-assistant.component').then(m => m.AiAssistantComponent)
   },
   {
+    path: 'ai-assistant',
+    redirectTo: 'ai',
+    pathMatch: 'full'
+  },
+  {
     path: 'notifications',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/notifications/notifications.component').then(m => m.NotificationsComponent)

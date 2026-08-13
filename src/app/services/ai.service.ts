@@ -11,6 +11,8 @@ export interface AiChatResponse {
   reply: string;
   actionSuggestions: string[];
   workloadLevel?: string;
+  intent?: string;
+  requiredInformation?: string[];
 }
 
 export interface StudyPlanRequest {

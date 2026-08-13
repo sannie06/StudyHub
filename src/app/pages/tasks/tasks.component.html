@@ -417,9 +417,9 @@
 
               <!-- List Body -->
               <div class="flex-1 overflow-y-auto overflow-x-hidden py-1 custom-scrollbar">
-                <ng-container *ngIf="filteredTasks.length > 0; else emptyTasksState">
-                  <div *ngFor="let task of filteredTasks" 
-                       class="grid grid-cols-12 gap-4 px-4 py-5 border-b border-slate-100/70 hover:bg-slate-50/50 transition-colors group items-center cursor-default">
+                <ng-container *ngIf="paginatedTasks.length > 0; else emptyTasksState">
+                  <div *ngFor="let task of paginatedTasks" 
+                       class="grid grid-cols-12 gap-4 px-4 py-4 border-b border-slate-100/70 hover:bg-slate-50/50 transition-colors group items-center cursor-default">
                     
                     <!-- Title & Desc -->
                     <div class="col-span-4 flex items-center gap-3 min-w-0 pr-4">
@@ -445,7 +445,7 @@
                             [ngStyle]="getTagBadgeStyle(task.tagColor)"
                             [class]="!task.tagColor ? task.tagClass : ''"
                             title="{{ task.tag }}">
-                        {{ task.tag }}
+                          {{ task.tag }}
                       </span>
                     </div>
 
@@ -496,19 +496,39 @@
                 </ng-template>
               </div>
 
-              <!-- PAGINATION -->
+              <!-- DYNAMIC PAGINATION -->
               <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-4 bg-transparent">
-                <span class="font-normal">Hiển thị 1 đến 8 của 18 công việc</span>
+                <span class="font-normal">
+                  Hiển thị {{ paginationStartIndex }} đến {{ paginationEndIndex }} của {{ totalFilteredTasksCount }} công việc
+                </span>
                 <div class="flex items-center gap-2">
-                  <button class="p-2 rounded-xl hover:bg-gray-100 text-gray-400 cursor-pointer"><i class="pi pi-angle-left text-sm"></i></button>
-                  <button class="w-8 h-8 rounded-xl text-xs font-semibold text-white flex items-center justify-center bg-[#6366F1] shadow-xs">1</button>
-                  <button class="w-8 h-8 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer">2</button>
-                  <button class="w-8 h-8 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer">3</button>
-                  <button class="p-2 rounded-xl hover:bg-gray-100 text-gray-400 cursor-pointer"><i class="pi pi-angle-right text-sm"></i></button>
-                  <select class="border border-gray-200/80 rounded-xl px-2.5 py-1.5 text-xs text-gray-600 bg-white outline-none font-normal cursor-pointer">
-                    <option>10 / trang</option>
-                    <option>20 / trang</option>
-                  </select>
+                  <!-- Prev Button -->
+                  <button type="button"
+                          (click)="prevPage()"
+                          [disabled]="currentPage === 1"
+                          [ngClass]="{'opacity-40 cursor-not-allowed': currentPage === 1, 'cursor-pointer hover:bg-gray-100': currentPage > 1}"
+                          class="p-2 rounded-xl text-gray-400 transition-all">
+                    <i class="pi pi-angle-left text-sm"></i>
+                  </button>
+
+                  <!-- Page Number Buttons -->
+                  <ng-container *ngFor="let p of pageNumbers">
+                    <button type="button"
+                            (click)="setPage(p)"
+                            [ngClass]="p === currentPage ? 'bg-[#6366F1] text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'"
+                            class="w-8 h-8 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer">
+                      {{ p }}
+                    </button>
+                  </ng-container>
+
+                  <!-- Next Button -->
+                  <button type="button"
+                          (click)="nextPage()"
+                          [disabled]="currentPage === totalPages || totalPages === 0"
+                          [ngClass]="{'opacity-40 cursor-not-allowed': currentPage === totalPages || totalPages === 0, 'cursor-pointer hover:bg-gray-100': currentPage < totalPages}"
+                          class="p-2 rounded-xl text-gray-400 transition-all">
+                    <i class="pi pi-angle-right text-sm"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -637,56 +657,75 @@
         <!-- Right Column Widgets -->
         <div class="col-span-12 lg:col-span-4 xl:col-span-3 space-y-6">
 
-          <!-- AI Assistant Card -->
-          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-xs" style="background:#EEECFF;">
-                <i class="pi pi-android text-base" style="color:#6366F1;"></i>
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold text-gray-900">AI Assistant</h3>
-                <p class="text-[11px] text-gray-400 font-normal">Gợi ý ưu tiên cho bạn</p>
-              </div>
-            </div>
-            <div class="space-y-3 pt-1">
-              <div *ngFor="let s of aiSuggestions" class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full text-[11px] font-semibold text-white flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style="background:#6366F1;">{{ s.rank }}</span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-gray-900 truncate">{{ s.title }}</p>
-                  <p class="text-[11px] mt-0.5 font-normal" [class]="s.dueClass">{{ s.due }}</p>
+          <!-- ═══ CARD 1: UNIFIED AI TASK FOCUS CARD ═══ -->
+          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-3.5">
+            
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-xs" style="background: #EEECFF;">
+                  <i class="pi pi-bolt text-base" style="color: #6366F1;"></i>
                 </div>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0" [class]="s.pClass">{{ s.priority }}</span>
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-900">AI Assistant</h3>
+                  <p class="text-[11px] text-gray-400 font-normal">Nhiệm vụ trọng tâm hôm nay</p>
+                </div>
               </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-[#6366F1] border border-indigo-100/80">
+                AI Smart
+              </span>
             </div>
-            <button class="w-full mt-2 py-2.5 bg-gray-50/80 hover:bg-gray-100/80 text-gray-700 text-xs font-medium rounded-xl transition-all border border-gray-200/60 cursor-pointer">
-              Xem tất cả gợi ý
-            </button>
-          </div>
 
-          <!-- Deadline Alert Card -->
-          <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 space-y-4">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shadow-xs">
-                <i class="pi pi-bell text-base text-rose-500"></i>
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold text-gray-900">Cảnh báo deadline</h3>
-                <p class="text-[11px] text-rose-500 font-normal">Cần hoàn thành sớm</p>
-              </div>
+            <!-- Smart AI Insight Quote Box -->
+            <div class="p-3 bg-indigo-50/70 border border-indigo-100/70 rounded-xl text-[11px] text-indigo-950 flex items-start gap-2 leading-relaxed">
+              <i class="pi pi-sparkles text-xs text-[#6366F1] mt-0.5 shrink-0"></i>
+              <span class="font-normal">{{ aiInsightMessage }}</span>
             </div>
-            <div class="space-y-3 pt-1">
-              <div *ngFor="let d of deadlineAlerts" class="flex items-center justify-between gap-2">
-                <div class="min-w-0">
-                  <p class="text-xs font-medium text-gray-900 truncate">{{ d.title }}</p>
-                  <p class="text-[11px] text-gray-400 mt-0.5 font-normal">{{ d.due }}</p>
+
+            <!-- Top Focus Task List -->
+            <div class="space-y-2.5 pt-0.5">
+              <div *ngFor="let t of aiFocusTasks; let idx = index"
+                   class="p-2.5 rounded-xl border border-slate-100/80 hover:border-indigo-200/80 hover:bg-slate-50/50 transition-all space-y-1.5 group">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span class="w-4 h-4 rounded-full text-[10px] font-bold text-white flex items-center justify-center flex-shrink-0"
+                          style="background: #6366F1;">{{ idx + 1 }}</span>
+                    <p class="text-xs font-semibold text-slate-800 truncate" [title]="t.title">{{ t.title }}</p>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0" [class]="t.pClass">
+                    {{ t.priority }}
+                  </span>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap flex-shrink-0" [class]="d.badgeClass">{{ d.badge }}</span>
+
+                <div class="flex items-center justify-between text-[11px] pl-5.5">
+                  <span class="text-slate-400 font-normal flex items-center gap-1">
+                    <i class="pi pi-clock text-[10px]"></i>
+                    <span [class]="t.dueClass">{{ t.due }}</span>
+                  </span>
+                  <button type="button"
+                          (click)="askAiAboutTask(t.title)"
+                          title="Nhờ AI hỗ trợ cách làm task này"
+                          class="text-[#6366F1] hover:text-[#4F46E5] font-medium flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <span>Hỏi AI</span>
+                    <i class="pi pi-arrow-up-right text-[9px]"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Empty state -->
+              <div *ngIf="aiFocusTasks.length === 0" class="text-center py-4 text-xs text-slate-400">
+                Không có nhiệm vụ khẩn cấp nào!
               </div>
             </div>
-            <button class="w-full mt-2 py-2.5 bg-gray-50/80 hover:bg-gray-100/80 text-gray-700 text-xs font-medium rounded-xl transition-all border border-gray-200/60 cursor-pointer">
-              Xem tất cả
+
+            <!-- Footer Action: Open Full AI Assistant -->
+            <button type="button"
+                    (click)="askAiAboutTask()"
+                    class="w-full py-2 bg-gray-50/90 hover:bg-gray-100/90 text-slate-700 text-xs font-medium rounded-xl transition-all border border-gray-200/60 cursor-pointer flex items-center justify-center gap-1.5 hover:text-[#6366F1]">
+              <i class="pi pi-comments text-xs text-[#6366F1]"></i>
+              <span>Trò chuyện chi tiết với AI →</span>
             </button>
+
           </div>
 
           <!-- Quick Stats Card (Synchronized with right sidebar widgets) -->
@@ -1195,7 +1234,7 @@
               </p>
               <p *ngIf="subjectReportList.length > 0" class="flex items-start gap-2">
                 <i class="pi pi-compass text-amber-500 text-xs mt-0.5 shrink-0"></i>
-                <span>Môn <b>{{ mostDemandingSubject }}</b> đang chiếm nhiều khối lượng nhất ({{ subjectReportList[0]?.total }} việc).</span>
+                <span>Môn <b>{{ mostDemandingSubject }}</b> đang chiếm nhiều khối lượng nhất ({{ subjectReportList[0].total }} việc).</span>
               </p>
             </div>
           </div>
