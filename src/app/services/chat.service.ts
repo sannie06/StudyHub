@@ -2,6 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface TepDinhKemChatDto {
+  maFile: number;
+  tenFile: string;
+  duongDan: string;
+  dungLuong: number;
+  dinhDang: string;
+}
+
 export interface TinNhanDto {
   maTinNhan: number;
   maNhom: number;
@@ -13,6 +21,7 @@ export interface TinNhanDto {
   daChinhSua: boolean;
   ngayGui: string;
   isMine: boolean;
+  attachment?: TepDinhKemChatDto;
 }
 
 export interface SendChatMessageRequest {
@@ -42,6 +51,23 @@ export class ChatService {
 
   sendMessage(groupId: number, request: SendChatMessageRequest): Observable<TinNhanDto> {
     return this.http.post<TinNhanDto>(`${this.apiUrl}/${groupId}/messages`, request);
+  }
+
+  uploadFileMessage(groupId: number, file: File, content?: string): Observable<TinNhanDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (content) {
+      formData.append('content', content);
+    }
+    return this.http.post<TinNhanDto>(`${this.apiUrl}/${groupId}/messages/upload`, formData);
+  }
+
+  getPinnedAnnouncement(groupId: number): Observable<{ announcement: string }> {
+    return this.http.get<{ announcement: string }>(`${this.apiUrl}/${groupId}/pinned-announcement`);
+  }
+
+  updatePinnedAnnouncement(groupId: number, announcement: string): Observable<{ success: boolean; announcement: string }> {
+    return this.http.put<{ success: boolean; announcement: string }>(`${this.apiUrl}/${groupId}/pinned-announcement`, { announcement });
   }
 
   deleteMessage(messageId: number): Observable<void> {

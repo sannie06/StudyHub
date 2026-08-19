@@ -53,8 +53,62 @@ namespace StudyHub.Infrastructure.Services
             return new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
+        private async Task EnsureCleanAdminFromGroupAsync(int? groupId = null)
+        {
+            try
+            {
+                var query = _dbContext.ThanhVienNhom
+                    .Include(m => m.NguoiDung)
+                    .Where(m => m.TrangThai == 1 && (m.NguoiDung.HoTen.Contains("System Admin") || m.NguoiDung.Email == "admin@studyhub.com"));
+
+                if (groupId.HasValue)
+                {
+                    query = query.Where(m => m.MaNhom == groupId.Value);
+                }
+
+                var adminMembers = await query.ToListAsync();
+
+                if (adminMembers.Any())
+                {
+                    var affectedGroupIds = adminMembers.Select(a => a.MaNhom).Distinct().ToList();
+
+                    foreach (var gId in affectedGroupIds)
+                    {
+                        var group = await _dbContext.NhomHocTap.FirstOrDefaultAsync(g => g.MaNhom == gId);
+                        
+                        var otherMember = await _dbContext.ThanhVienNhom
+                            .Where(m => m.MaNhom == gId && m.TrangThai == 1 && !adminMembers.Select(a => a.MaNguoiDung).Contains(m.MaNguoiDung))
+                            .OrderBy(m => m.MaThanhVien)
+                            .FirstOrDefaultAsync();
+
+                        if (otherMember != null)
+                        {
+                            otherMember.VaiTro = 2; // Gán làm nhóm trưởng
+                            if (group != null)
+                            {
+                                group.MaNguoiTao = otherMember.MaNguoiDung;
+                            }
+                        }
+                    }
+
+                    foreach (var adminMember in adminMembers)
+                    {
+                        adminMember.TrangThai = 0; // Loại khỏi nhóm
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Lỗi khi dọn dẹp System Admin khỏi nhóm học tập");
+            }
+        }
+
         public async Task<IEnumerable<NhomHocTapDto>> GetMyGroupsAsync(int userId, string? search)
         {
+            await EnsureCleanAdminFromGroupAsync();
+
             var myGroupIds = await _memberRepository.GetQueryable()
                 .AsNoTracking()
                 .Where(m => m.MaNguoiDung == userId && m.TrangThai == 1)
@@ -97,6 +151,8 @@ namespace StudyHub.Infrastructure.Services
 
         public async Task<NhomHocTapDto> GetGroupByIdAsync(int id, int userId)
         {
+            await EnsureCleanAdminFromGroupAsync(id);
+
             var g = await _groupRepository.GetQueryable()
                 .AsNoTracking()
                 .Include(x => x.NguoiTao)
@@ -421,6 +477,8 @@ namespace StudyHub.Infrastructure.Services
 
         public async Task<IEnumerable<ThanhVienNhomDto>> GetGroupMembersAsync(int id, int userId)
         {
+            await EnsureCleanAdminFromGroupAsync(id);
+
             var isMember = await _memberRepository.GetQueryable().AsNoTracking()
                 .AnyAsync(m => m.MaNhom == id && m.MaNguoiDung == userId && m.TrangThai == 1);
 

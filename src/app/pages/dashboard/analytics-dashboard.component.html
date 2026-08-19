@@ -10,11 +10,12 @@
       <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl
                      text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
         <i class="pi pi-calendar text-gray-400 text-sm"></i>
-        <span>26/05/2024 - 01/06/2024</span>
+        <span>{{ currentWeekRange || '7 ngày gần nhất' }}</span>
         <i class="pi pi-chevron-down text-gray-400 text-xs"></i>
       </button>
-      <button class="flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl
-                     text-xs font-semibold hover:bg-purple-50 transition-all shadow-sm"
+      <button (click)="exportReport()"
+              class="flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl
+                     text-xs font-semibold hover:bg-purple-50 transition-all shadow-sm cursor-pointer active:scale-95"
               style="border-color:#5B4DFF; color:#5B4DFF;">
         <i class="pi pi-download text-xs"></i>
         <span>Xuất báo cáo</span>
@@ -84,16 +85,15 @@
           <div *ngFor="let bar of barData"
                class="flex flex-col items-center flex-1 h-full justify-end relative group">
 
-            <!-- Tooltip (only for active bar T5) -->
-            <div *ngIf="bar.active"
-                 class="absolute bg-white border border-gray-200 shadow-lg rounded-xl px-2.5 py-1.5 text-center whitespace-nowrap z-10"
+            <!-- Tooltip on Hover for EVERY bar -->
+            <div class="hidden group-hover:flex flex-col items-center absolute bg-white border border-gray-200 shadow-xl rounded-xl px-2.5 py-1.5 text-center whitespace-nowrap z-30 pointer-events-none transition-all duration-200"
                  style="bottom: calc(100% + 8px);">
-              <span class="text-[10px] text-gray-400 block">Thứ 5 - {{ bar.date }}</span>
-              <span class="text-xs font-bold text-gray-900">{{ bar.h }} giờ</span>
+              <span class="text-[10px] text-gray-500 block font-semibold">{{ getFullDayLabel(bar.day) }} ({{ bar.date }})</span>
+              <span class="text-xs font-black text-[#5B4DFF]">{{ bar.h }} giờ học</span>
             </div>
 
             <!-- Bar column -->
-            <div class="w-full rounded-t-lg transition-all duration-300"
+            <div class="w-full rounded-t-lg transition-all duration-300 cursor-pointer hover:brightness-110"
                  [style]="'height:' + bar.pct + '%; background:' + (bar.active ? '#5B4DFF' : '#8B80FF') + ';'"></div>
           </div>
         </div>
@@ -136,7 +136,7 @@
           </svg>
           <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span class="text-[10px] text-gray-400 font-medium">Tổng</span>
-            <span class="text-xl font-bold text-gray-900">70%</span>
+            <span class="text-xl font-bold text-gray-900">{{ kpiCards[3].value }}</span>
           </div>
         </div>
 
@@ -158,7 +158,7 @@
     <div class="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-bold text-gray-900">Deadline sắp tới</h2>
-        <a href="javascript:void(0)" class="text-xs font-semibold" style="color:#5B4DFF;">Xem tất cả</a>
+        <a routerLink="/tasks" class="text-xs font-semibold hover:underline cursor-pointer" style="color:#5B4DFF;">Xem tất cả</a>
       </div>
 
       <div class="space-y-0">
@@ -283,7 +283,7 @@
           Mục tiêu học tập
           <span class="text-xs font-normal text-gray-400 ml-1">(Tuần này)</span>
         </h2>
-        <a href="javascript:void(0)" class="text-xs font-semibold" style="color:#5B4DFF;">Chỉnh sửa</a>
+        <a routerLink="/tasks" class="text-xs font-semibold hover:underline cursor-pointer" style="color:#5B4DFF;">Quản lý task</a>
       </div>
 
       <div class="space-y-4">

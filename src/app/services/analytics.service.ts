@@ -24,6 +24,17 @@ export interface HeatMapEntryDto {
   value: number;
 }
 
+export interface UpcomingDeadlineDto {
+  maCongViec: number;
+  tieuDe: string;
+  tenMonHoc: string;
+  hanHoanThanh?: string;
+  doUuTien: number;
+  priorityLabel: string;
+  dueLabel: string;
+  isOverdue: boolean;
+}
+
 export interface AnalyticsDto {
   totalFocusMinutes: number;
   totalPomodoros: number;
@@ -36,6 +47,7 @@ export interface AnalyticsDto {
   subjectProgress: SubjectProgressDto[];
   weeklyActivity: WeeklyActivityDto[];
   heatMap: HeatMapEntryDto[];
+  upcomingDeadlines: UpcomingDeadlineDto[];
 }
 
 @Injectable({

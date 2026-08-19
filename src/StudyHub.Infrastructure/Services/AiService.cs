@@ -815,10 +815,9 @@ namespace StudyHub.Infrastructure.Services
                 };
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
-                request.Headers.Add("x-goog-api-key", apiKey);
                 request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 var response = await _httpClient.SendAsync(request, cts.Token);
 
                 if (response.IsSuccessStatusCode)

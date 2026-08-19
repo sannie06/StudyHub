@@ -2,6 +2,15 @@ using System;
 
 namespace StudyHub.Application.DTOs.Chat
 {
+    public class TepDinhKemChatDto
+    {
+        public int MaFile { get; set; }
+        public string TenFile { get; set; } = string.Empty;
+        public string DuongDan { get; set; } = string.Empty;
+        public long DungLuong { get; set; }
+        public string DinhDang { get; set; } = string.Empty;
+    }
+
     public class TinNhanDto
     {
         public int MaTinNhan { get; set; }
@@ -14,5 +23,6 @@ namespace StudyHub.Application.DTOs.Chat
         public bool DaChinhSua { get; set; }
         public DateTime NgayGui { get; set; }
         public bool IsMine { get; set; }
+        public TepDinhKemChatDto? Attachment { get; set; }
     }
 }

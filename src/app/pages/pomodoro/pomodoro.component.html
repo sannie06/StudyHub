@@ -26,8 +26,10 @@
           <i class="pi pi-moon"></i> Long Break
         </button>
       </div>
-      <button class="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-xs">
-        Lịch sử phiên
+      <button (click)="openHistoryModal()"
+              class="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-xs cursor-pointer flex items-center gap-1.5 transition-all">
+        <i class="pi pi-history text-xs text-[#5B4DFF]"></i>
+        <span>Lịch sử phiên</span>
       </button>
     </div>
   </div>
@@ -249,43 +251,16 @@
 
         <!-- Control Buttons Below -->
         <div class="flex gap-4 pt-2">
-          <button (click)="pauseTimer()"
-                  class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2">
-            <i class="pi pi-pause text-xs"></i> Tạm dừng
+          <button (click)="onTimerComplete()"
+                  class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2 cursor-pointer transition-all">
+            <i class="pi pi-stop-circle text-xs"></i> Kết thúc
           </button>
           <button (click)="resetTimer()"
-                  class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2">
+                  class="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2 cursor-pointer transition-all">
             <i class="pi pi-refresh text-xs"></i> Đặt lại
           </button>
         </div>
 
-      </div>
-
-      <!-- Card Quy tắc Pomodoro -->
-      <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-full space-y-3">
-        <h4 class="text-xs font-bold text-gray-400 uppercase">Quy tắc Pomodoro</h4>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
-            <i class="pi pi-bell text-purple-600 mb-1 text-sm"></i>
-            <p class="font-bold text-gray-900">1. Chọn task</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">muốn tập trung</p>
-          </div>
-          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
-            <i class="pi pi-clock text-purple-600 mb-1 text-sm"></i>
-            <p class="font-bold text-gray-900">2. Học 25 phút</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">tập trung cao độ</p>
-          </div>
-          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
-            <i class="pi pi-hourglass text-purple-600 mb-1 text-sm"></i>
-            <p class="font-bold text-gray-900">3. Nghỉ 5 phút</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">giải lao thư giãn</p>
-          </div>
-          <div class="p-3 bg-purple-50/50 rounded-xl border border-purple-100 flex flex-col items-center">
-            <i class="pi pi-star text-purple-600 mb-1 text-sm"></i>
-            <p class="font-bold text-gray-900">4. Nghỉ dài 15m</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">sau 4 phiên</p>
-          </div>
-        </div>
       </div>
 
     </div>
@@ -399,23 +374,23 @@
       <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
         <div class="flex items-center justify-between">
           <h4 class="text-xs font-bold text-gray-400 uppercase">Thống kê hôm nay</h4>
-          <a href="javascript:void(0)" class="text-xs font-semibold text-[#5B4DFF]">Xem chi tiết</a>
+          <button (click)="openHistoryModal()" class="text-xs font-semibold text-[#5B4DFF] hover:underline cursor-pointer">Xem chi tiết</button>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div class="p-3 bg-purple-50/60 rounded-xl border border-purple-100 text-center">
-            <p class="text-xl font-black text-gray-900">4</p>
+            <p class="text-xl font-black text-gray-900">{{ todayCompletedSessionsCount }}</p>
             <p class="text-[10px] text-gray-500 font-medium">Phiên hoàn thành</p>
           </div>
           <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-center">
-            <p class="text-xl font-black text-gray-900">2h 15m</p>
+            <p class="text-xl font-black text-gray-900">{{ todayTotalFocusTimeFormatted }}</p>
             <p class="text-[10px] text-gray-500 font-medium">Tổng thời gian</p>
           </div>
           <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100 text-center">
-            <p class="text-xl font-black text-gray-900">7 ngày</p>
+            <p class="text-xl font-black text-gray-900">{{ currentStreakDays }} ngày</p>
             <p class="text-[10px] text-gray-500 font-medium">Chuỗi tập trung</p>
           </div>
           <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 text-center">
-            <p class="text-xl font-black text-gray-900">85%</p>
+            <p class="text-xl font-black text-gray-900">{{ focusEfficiency }}%</p>
             <p class="text-[10px] text-gray-500 font-medium">Hiệu suất</p>
           </div>
         </div>
@@ -435,54 +410,77 @@
             <p class="text-[10px] text-gray-400">Hãy bấm Bắt đầu phiên Pomodoro để ghi lại tiến độ nhé!</p>
           </div>
 
-          <div *ngFor="let item of sessionHistory"
+          <div *ngFor="let item of sessionHistory.slice(0, 4)"
                class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-xs group">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="text-sm">{{ item.icon }}</span>
-              <span class="font-bold text-gray-900 truncate">{{ item.name }}</span>
-              <span class="text-gray-400 text-[10px] flex-shrink-0">{{ item.duration }}</span>
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="text-sm shrink-0">{{ item.icon }}</span>
+              <div class="min-w-0">
+                <p class="font-bold text-gray-900 truncate">{{ item.name }}</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span *ngIf="item.subjectName" class="text-[9px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded truncate max-w-[90px]">{{ item.subjectName }}</span>
+                  <span class="text-[10px] text-gray-400 font-medium">{{ item.duration }}</span>
+                </div>
+              </div>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <span class="text-[10px] text-gray-400">{{ item.timeRange }}</span>
               <i class="pi pi-check-circle text-xs text-emerald-500 group-hover:hidden"></i>
-              <button (click)="deleteHistoryItem(item.id, $event)" title="Xóa phiên này" class="hidden group-hover:block text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors">
+              <button (click)="deleteHistoryItem(item.id, $event)" title="Xóa phiên này" class="hidden group-hover:block text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors cursor-pointer">
                 <i class="pi pi-trash text-[11px]"></i>
               </button>
             </div>
           </div>
         </div>
+
+        <button *ngIf="sessionHistory.length > 4"
+                (click)="openHistoryModal()"
+                class="w-full text-center text-xs font-semibold text-[#5B4DFF] hover:underline pt-1 cursor-pointer">
+          Xem tất cả {{ sessionHistory.length }} phiên →
+        </button>
       </div>
 
-      <!-- Widget 3: AI Assistant (Beta) -->
-      <div class="rounded-2xl p-4 border border-purple-100 space-y-3" style="background:#F4F2FF;">
+      <!-- Widget 3: AI Assistant (Beta) Carousel -->
+      <div class="rounded-2xl p-4 border border-purple-100 space-y-3 transition-all" style="background:#F4F2FF;">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-xl bg-white shadow-xs flex items-center justify-center">
               <i class="pi pi-android text-sm text-[#5B4DFF]"></i>
             </div>
-            <h3 class="text-xs font-bold text-gray-900">AI ASSISTANT</h3>
+            <h3 class="text-xs font-bold text-gray-900 tracking-wide uppercase">{{ aiInsightsList[aiCurrentSlide]?.title || 'AI ASSISTANT' }}</h3>
           </div>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Beta</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+            {{ aiInsightsList[aiCurrentSlide]?.badge || 'Beta' }}
+          </span>
         </div>
 
-        <p class="text-xs text-gray-800 leading-relaxed font-medium">
-          Bạn đã hoàn thành <span class="font-bold text-purple-700">{{ getCompletedPomoCount() }} phiên Pomodoro</span> hôm nay! 🎉 Hiệu suất của bạn cao hơn <span class="font-bold text-purple-700">20%</span> so với trung bình.
+        <p class="text-xs text-gray-800 leading-relaxed font-medium min-h-[42px]">
+          {{ aiInsightsList[aiCurrentSlide]?.message }}
         </p>
 
-        <div class="p-3 bg-white/80 rounded-xl border border-purple-100 text-xs text-purple-900 font-medium leading-relaxed">
-          <span class="font-bold">Gợi ý:</span> Bạn nên nghỉ dài 15 phút sau mỗi 4 phiên tập trung để tái tạo năng lượng.
+        <div class="p-3 bg-white/85 rounded-xl border border-purple-100 text-xs text-purple-900 font-medium leading-relaxed shadow-xs">
+          <span class="font-bold">Gợi ý:</span> {{ aiInsightsList[aiCurrentSlide]?.tip }}
         </div>
 
+        <!-- Controls: Prev / Dots / Next -->
         <div class="flex items-center justify-between pt-1">
-          <button class="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-500 hover:text-gray-900">
+          <button (click)="prevAiSlide()"
+                  title="Gợi ý trước"
+                  class="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-500 hover:text-gray-900 hover:scale-105 active:scale-95 transition-all cursor-pointer">
             <i class="pi pi-chevron-left text-xs"></i>
           </button>
+          
           <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-[#5B4DFF]"></span>
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+            <button *ngFor="let item of aiInsightsList; let i = index"
+                    (click)="setAiSlide(i)"
+                    [title]="item.title"
+                    class="rounded-full transition-all cursor-pointer"
+                    [ngClass]="aiCurrentSlide === i ? 'w-4 h-1.5 bg-[#5B4DFF]' : 'w-1.5 h-1.5 bg-purple-200 hover:bg-purple-400'">
+            </button>
           </div>
-          <button class="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-500 hover:text-gray-900">
+
+          <button (click)="nextAiSlide()"
+                  title="Gợi ý tiếp theo"
+                  class="w-7 h-7 rounded-full bg-white shadow-xs flex items-center justify-center text-gray-500 hover:text-gray-900 hover:scale-105 active:scale-95 transition-all cursor-pointer">
             <i class="pi pi-chevron-right text-xs"></i>
           </button>
         </div>
@@ -782,12 +780,6 @@
              class="pi pi-check text-white text-[10px] font-black"></i>
         </div>
 
-        <!-- Subject icon -->
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white"
-             [ngStyle]="{'background': task.maMonHoc ? '#5B4DFF' : '#94a3b8'}">
-          <i class="pi pi-book text-sm"></i>
-        </div>
-
         <!-- Title & subject -->
         <div class="flex-1 min-w-0">
           <p class="font-bold text-gray-900 text-sm truncate">{{ task.tieuDe }}</p>
@@ -851,9 +843,205 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     TOAST NOTIFICATION FLOATING BANNER
+     MODAL: LỊCH SỬ PHIÊN HỌC CHI TIẾT
      ═══════════════════════════════════════════════════════════ -->
-<div *ngIf="toastMessage" class="fixed bottom-6 right-6 z-[1000] bg-gray-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-fadeIn border border-gray-800">
-  <i class="pi pi-info-circle text-[#5B4DFF] text-sm"></i>
-  <span>{{ toastMessage }}</span>
+<div *ngIf="showHistoryModal"
+     class="fixed inset-0 z-[950] flex items-center justify-center p-4"
+     (click)="closeHistoryModal()">
+
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+  <!-- Modal Container -->
+  <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col animate-fadeIn"
+       (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 px-7 py-5 border-b border-gray-100 shrink-0">
+      <div class="w-11 h-11 rounded-2xl bg-[#5B4DFF]/10 flex items-center justify-center shrink-0">
+        <i class="pi pi-history text-[#5B4DFF] text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-base font-black text-gray-900">Lịch sử phiên học Pomodoro</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Tổng cộng {{ sessionHistory.length }} phiên · {{ totalFocusTimeFormatted }} tập trung</p>
+      </div>
+      <button (click)="closeHistoryModal()"
+              class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+        <i class="pi pi-times text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Body: Sessions List -->
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2.5">
+
+      <!-- Empty state -->
+      <div *ngIf="sessionHistory.length === 0"
+           class="flex flex-col items-center justify-center py-14 text-center">
+        <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-3">
+          <i class="pi pi-clock text-[#5B4DFF] text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-700">Chưa có lịch sử phiên học nào</p>
+        <p class="text-xs text-gray-400 mt-1">Các phiên tập trung và giải lao sau khi hoàn thành sẽ hiển thị tại đây.</p>
+      </div>
+
+      <!-- History Rows -->
+      <div *ngFor="let item of sessionHistory"
+           class="flex items-center justify-between p-4 rounded-2xl border border-gray-100 hover:bg-gray-50/80 transition-all">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shrink-0"
+               [ngClass]="item.type === 'pomodoro' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'">
+            {{ item.icon }}
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="font-bold text-gray-900 text-sm truncate max-w-[280px]">{{ item.name }}</p>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                    [ngClass]="item.type === 'pomodoro' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'">
+                {{ item.type === 'pomodoro' ? 'Tập trung' : (item.type === 'short_break' ? 'Nghỉ ngắn' : 'Nghỉ dài') }}
+              </span>
+              <span *ngIf="item.subjectName" class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-[10px] font-semibold">
+                {{ item.subjectName }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Khung giờ: {{ item.timeRange }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0">
+          <span class="font-bold text-sm text-gray-800 bg-gray-100 px-3 py-1 rounded-xl">{{ item.duration }}</span>
+          <button (click)="deleteHistoryItem(item.id, $event)"
+                  title="Xóa phiên này"
+                  class="w-8 h-8 rounded-xl hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer">
+            <i class="pi pi-trash text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100 shrink-0 bg-gray-50/50 rounded-b-3xl">
+      <button *ngIf="sessionHistory.length > 0"
+              (click)="clearAllHistory()"
+              class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1">
+        <i class="pi pi-trash text-xs"></i>
+        <span>Xóa tất cả lịch sử</span>
+      </button>
+      <div *ngIf="sessionHistory.length === 0"></div>
+
+      <button (click)="closeHistoryModal()"
+              class="px-5 py-2 bg-[#5B4DFF] hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer">
+        Đóng
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ZEN FULLSCREEN FOCUS OVERLAY (CHẾ ĐỘ TẬP TRUNG TOÀN MÀN HÌNH)
+     ═══════════════════════════════════════════════════════════ -->
+<div *ngIf="toggleFullscreen"
+     class="fixed inset-0 z-[9999] bg-[#F8F9FE] flex flex-col items-center justify-center p-6 animate-fadeIn select-none">
+
+  <!-- Top Exit Button -->
+  <button (click)="exitFullscreenMode()"
+          title="Thoát chế độ toàn màn hình (ESC)"
+          class="absolute top-6 right-6 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-2xl text-xs font-bold shadow-xs flex items-center gap-2 transition-all cursor-pointer hover:shadow-md">
+    <i class="pi pi-window-minimize text-xs"></i>
+    <span>Thu nhỏ màn hình</span>
+  </button>
+
+  <!-- Main Centered Timer Box (Khớp 100% Ảnh 2) -->
+  <div class="bg-white p-10 lg:p-14 rounded-3xl border border-gray-100 shadow-xl shadow-purple-500/5 flex flex-col items-center relative w-full max-w-[560px] space-y-6">
+
+    <!-- SVG Circular Timer Ring -->
+    <div class="relative w-full max-w-[420px] aspect-square flex items-center justify-center mx-auto my-2">
+      <svg class="w-full h-full transform -rotate-90" viewBox="0 0 300 300">
+        <circle cx="150" cy="150" r="142" fill="transparent" stroke="#EEECFF" stroke-width="8"/>
+        <circle cx="150" cy="150" r="142" fill="transparent"
+                stroke="#5B4DFF"
+                stroke-width="8"
+                stroke-linecap="round"
+                class="timer-ring"
+                [attr.stroke-dasharray]="circumference"
+                [attr.stroke-dashoffset]="strokeDashoffset"/>
+        <g class="transform rotate-90 origin-center opacity-40">
+          <line *ngFor="let tick of clockTicks"
+                [attr.x1]="tick.x1" [attr.y1]="tick.y1"
+                [attr.x2]="tick.x2" [attr.y2]="tick.y2"
+                [attr.stroke]="tick.isMajor ? '#5B4DFF' : '#94a3b8'"
+                [attr.stroke-width]="tick.isMajor ? 2 : 1"/>
+        </g>
+      </svg>
+
+      <!-- Inside Ring Content -->
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 space-y-3">
+        <div class="flex items-center gap-1.5 px-4 py-1.5 bg-rose-50 rounded-full border border-rose-100">
+          <span class="text-sm">🍅</span>
+          <span class="text-xs font-extrabold text-rose-600 uppercase tracking-wider">
+            {{ activeMode === 'pomodoro' ? 'Pomodoro' : activeMode === 'short_break' ? 'Short Break' : 'Long Break' }}
+          </span>
+        </div>
+
+        <h2 class="text-7xl lg:text-8xl font-black text-gray-900 tracking-tight font-mono py-1">
+          {{ formattedTime }}
+        </h2>
+
+        <p class="text-xs font-semibold text-gray-500 max-w-[260px]">
+          {{ isRunning ? 'Đang trong phiên tập trung!' : 'Hãy tập trung và học thật hiệu quả!' }}
+        </p>
+
+        <span class="bg-purple-50 text-[#5B4DFF] text-xs px-4 py-2 rounded-full font-bold border border-purple-100 max-w-[300px] truncate"
+              [title]="'Mục tiêu: ' + (focusedTask ? focusedTask.tieuDe : 'Tập trung học tập')">
+          Mục tiêu: {{ focusedTask ? focusedTask.tieuDe : 'Tập trung học tập' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Overlapping Large Purple Play Button -->
+    <button (click)="togglePlay()"
+            class="w-16 h-16 bg-[#5B4DFF] shadow-xl shadow-purple-300 text-white rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all -mt-8 z-20">
+      <i class="pi text-2xl" [class]="isRunning ? 'pi-pause' : 'pi-play ml-0.5'"></i>
+    </button>
+
+    <!-- Control Buttons Below -->
+    <div class="flex gap-4 pt-2">
+      <button (click)="onTimerComplete()"
+              class="px-7 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2 cursor-pointer transition-all">
+        <i class="pi pi-stop-circle text-xs"></i> Kết thúc
+      </button>
+      <button (click)="resetTimer()"
+              class="px-7 py-3 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-xs flex items-center gap-2 cursor-pointer transition-all">
+        <i class="pi pi-refresh text-xs"></i> Đặt lại
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TOAST NOTIFICATION FLOATING BANNER (PREMIUM GLASS)
+     ═══════════════════════════════════════════════════════════ -->
+<div *ngIf="toastMessage"
+     class="fixed bottom-6 right-6 z-[1000] bg-white/95 backdrop-blur-xl border border-purple-200/80 shadow-2xl shadow-purple-500/15 rounded-2xl p-3.5 pr-4 flex items-center gap-3.5 max-w-md animate-fadeIn transition-all">
+  
+  <!-- Icon container -->
+  <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#5B4DFF] to-indigo-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-300">
+    <i class="pi pi-sparkles text-sm"></i>
+  </div>
+
+  <!-- Content text -->
+  <div class="flex-1 min-w-0">
+    <p class="text-[10px] font-extrabold uppercase tracking-wider text-[#5B4DFF]">StudyHub Focus</p>
+    <p class="text-xs font-bold text-gray-800 leading-snug mt-0.5">{{ toastMessage }}</p>
+  </div>
+
+  <!-- Close button -->
+  <button (click)="toastMessage = null"
+          title="Đóng thông báo"
+          class="w-6 h-6 rounded-full hover:bg-purple-50 flex items-center justify-center text-gray-400 hover:text-purple-700 transition-colors shrink-0 cursor-pointer ml-1">
+    <i class="pi pi-times text-[10px]"></i>
+  </button>
 </div>

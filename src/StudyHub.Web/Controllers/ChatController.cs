@@ -62,6 +62,30 @@ namespace StudyHub.Web.Controllers
             return Ok(message);
         }
 
+        [HttpPost("{groupId}/messages/upload")]
+        public async Task<IActionResult> SendFileMessage(int groupId, IFormFile file, [FromForm] string? content)
+        {
+            var userId = GetCurrentUserId();
+            var message = await _chatService.SendFileMessageAsync(userId, groupId, file, content);
+            return Ok(message);
+        }
+
+        [HttpGet("{groupId}/pinned-announcement")]
+        public async Task<IActionResult> GetPinnedAnnouncement(int groupId)
+        {
+            var userId = GetCurrentUserId();
+            var pin = await _chatService.GetPinnedAnnouncementAsync(groupId, userId);
+            return Ok(new { announcement = pin });
+        }
+
+        [HttpPut("{groupId}/pinned-announcement")]
+        public async Task<IActionResult> UpdatePinnedAnnouncement(int groupId, [FromBody] UpdatePinnedAnnouncementRequest request)
+        {
+            var userId = GetCurrentUserId();
+            await _chatService.UpdatePinnedAnnouncementAsync(groupId, userId, request?.Announcement ?? string.Empty);
+            return Ok(new { success = true, announcement = request?.Announcement ?? string.Empty });
+        }
+
         [HttpDelete("messages/{messageId}")]
         public async Task<IActionResult> DeleteMessage(int messageId)
         {
@@ -69,5 +93,10 @@ namespace StudyHub.Web.Controllers
             await _chatService.DeleteMessageAsync(messageId, userId);
             return NoContent();
         }
+    }
+
+    public class UpdatePinnedAnnouncementRequest
+    {
+        public string Announcement { get; set; } = string.Empty;
     }
 }

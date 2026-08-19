@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { CalendarService, CalendarEventDto, CreateCalendarEventRequest } from '../../services/calendar.service';
+import { TaskService, TaskDto } from '../../services/task.service';
+import { SubjectService, SubjectTag } from '../../services/subject.service';
 
 export interface CalendarEvent {
   id: number;
@@ -79,16 +81,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     { value: 'PersonalEvent', label: 'Sự kiện / Hoạt động', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700', color: '#F59E0B' }
   ];
 
-  subjectTags = [
-    { name: 'Cơ sở dữ liệu', color: '#3B82F6' },
-    { name: 'Cấu trúc dữ liệu và giải thuật', color: '#F59E0B' },
-    { name: 'Lập trình Web', color: '#10B981' },
-    { name: 'Tiếng Anh 2', color: '#8B5CF6' },
-    { name: 'PTPM', color: '#6366F1' },
-    { name: 'Java', color: '#EC4899' },
-    { name: 'Kỹ năng mềm', color: '#14B8A6' },
-    { name: 'Công nghệ phần mềm', color: '#EF4444' }
-  ];
+  subjectTags: SubjectTag[] = [];
 
   getTagBadgeStyle(colorHex?: string) {
     if (!colorHex) return { 'background-color': '#F1F5F9', 'color': '#475569' };
@@ -104,8 +97,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
   }
 
   getSubjectColor(name: string): string {
-    const found = this.subjectTags.find(s => s.name === name);
-    return found ? found.color : '#64748B';
+    const found = this.subjectTags.find(s => s.name.toLowerCase() === name.toLowerCase());
+    return found ? found.color : '#6366F1';
   }
 
   loading: boolean = false;
@@ -120,17 +113,6 @@ export class CalendarComponent implements OnInit, OnDestroy {
   currentTimeTopWeek: number = 0;
   currentTimeTopDay: number = 0;
   private timeIntervalId: any;
-
-  subjectOptions: string[] = [
-    'Cơ sở dữ liệu',
-    'Cấu trúc dữ liệu và giải thuật',
-    'Lập trình Web',
-    'Tiếng Anh 2',
-    'PTPM',
-    'Java',
-    'Kỹ năng mềm',
-    'Công nghệ phần mềm'
-  ];
 
   weekDays = [
     { day: 'T2', date: '', isToday: false },
@@ -172,9 +154,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
   events: CalendarEvent[] = [];
   upcomingSchedules: UpcomingSchedule[] = [];
   upcomingExams: UpcomingExam[] = [];
+  allTasks: TaskDto[] = [];
 
   constructor(
     private calendarService: CalendarService,
+    private taskService: TaskService,
+    private subjectService: SubjectService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -190,7 +175,205 @@ export class CalendarComponent implements OnInit, OnDestroy {
       this.updateCurrentTime();
     }, 10000);
     this.setupCurrentWeekDays();
+    this.loadSubjects();
     this.loadCalendarEvents();
+    this.loadTasks();
+  }
+
+  loadSubjects() {
+    this.subjectService.getSubjectTags().subscribe({
+      next: (tags) => {
+        if (tags && tags.length > 0) {
+          this.subjectTags = tags;
+        } else {
+          this.extractSubjectsFromEvents();
+        }
+      },
+      error: (err) => {
+        console.warn('Could not load subject tags from API, extracting from events:', err);
+        this.extractSubjectsFromEvents();
+      }
+    });
+  }
+
+  extractSubjectsFromEvents() {
+    const subjectMap = new Map<string, string>();
+    (this.events || []).forEach(e => {
+      const name = e.tenMonHoc || e.title;
+      if (name && !subjectMap.has(name) && e.type !== 'Hoạt động') {
+        subjectMap.set(name, e.dotColor || '#6366F1');
+      }
+    });
+    if (subjectMap.size > 0) {
+      this.subjectTags = Array.from(subjectMap.entries()).map(([name, color], idx) => ({
+        id: idx + 1,
+        name,
+        color
+      }));
+    }
+  }
+
+  loadTasks() {
+    this.taskService.getTasks({ pageSize: 100 }).subscribe({
+      next: (res) => {
+        if (res && res.items) {
+          this.allTasks = res.items;
+        }
+      },
+      error: (err) => console.warn('Could not load tasks for AI advisor:', err)
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // SMART AI ADVISOR REAL-TIME CALCULATIONS
+  // ═══════════════════════════════════════════════
+
+  get realUpcomingExams(): CalendarEvent[] {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return (this.events || [])
+      .filter(e => e.type === 'Lịch thi' && e.startDateObj && e.startDateObj.getTime() >= now.getTime())
+      .sort((a, b) => (a.startDateObj?.getTime() || 0) - (b.startDateObj?.getTime() || 0));
+  }
+
+  get nearestExam(): CalendarEvent | null {
+    return this.realUpcomingExams.length > 0 ? this.realUpcomingExams[0] : null;
+  }
+
+  get daysUntilNearestExam(): number {
+    if (!this.nearestExam || !this.nearestExam.startDateObj) return 0;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const diffMs = this.nearestExam.startDateObj.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 3600 * 24)));
+  }
+
+  get realUpcomingClasses(): CalendarEvent[] {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return (this.events || [])
+      .filter(e => e.type === 'Lịch học' && e.startDateObj && e.startDateObj.getTime() >= now.getTime())
+      .sort((a, b) => (a.startDateObj?.getTime() || 0) - (b.startDateObj?.getTime() || 0));
+  }
+
+  get nearestClass(): CalendarEvent | null {
+    return this.realUpcomingClasses.length > 0 ? this.realUpcomingClasses[0] : null;
+  }
+
+  get targetSubjectName(): string {
+    if (this.nearestExam) {
+      return this.nearestExam.tenMonHoc || this.nearestExam.title;
+    }
+    if (this.nearestClass) {
+      return this.nearestClass.tenMonHoc || this.nearestClass.title;
+    }
+    return '';
+  }
+
+  get aiAlertText(): string {
+    if (this.currentViewTab === 'day') {
+      return `Hôm nay bạn có ${this.dayTotalCount} lịch trình. Hãy chuẩn bị bài vở chu đáo nhé!`;
+    }
+    if (this.nearestExam) {
+      const examCount = this.realUpcomingExams.length;
+      const days = this.daysUntilNearestExam;
+      const examName = this.nearestExam.tenMonHoc || this.nearestExam.title;
+      if (days === 0) {
+        return `Hôm nay bạn có lịch thi môn ${examName}. Chúc bạn làm bài thật tốt!`;
+      }
+      if (days <= 7) {
+        return `Bạn có ${examCount} lịch thi trong ${days} ngày tới. Môn ${examName} cần ưu tiên ôn tập ngay!`;
+      }
+      return `Bạn có ${examCount} lịch thi sắp tới (Môn ${examName} còn ${days} ngày). Hãy lên kế hoạch ôn tập sớm!`;
+    }
+    if (this.realUpcomingClasses.length > 0) {
+      const classCount = this.realUpcomingClasses.length;
+      return `Sắp tới bạn có ${classCount} buổi học. Hãy chú ý đi học đúng giờ và xem trước bài giảng nhé!`;
+    }
+    return `Không có lịch thi hay lịch học gấp. Bạn có thể tự do ôn tập hoặc nghỉ ngơi thư giãn!`;
+  }
+
+  get smartTaskSuggestions(): TaskDto[] {
+    const uncompleted = (this.allTasks || []).filter(t => t.trangThai !== 3);
+    if (uncompleted.length === 0) return [];
+
+    const sortTasks = (list: TaskDto[]) => {
+      return [...list].sort((a, b) => {
+        if (b.doUuTien !== a.doUuTien) {
+          return (b.doUuTien || 0) - (a.doUuTien || 0);
+        }
+        if (b.danhDauQuanTrong !== a.danhDauQuanTrong) {
+          return (b.danhDauQuanTrong ? 1 : 0) - (a.danhDauQuanTrong ? 1 : 0);
+        }
+        if (a.hanHoanThanh && b.hanHoanThanh) {
+          return new Date(a.hanHoanThanh).getTime() - new Date(b.hanHoanThanh).getTime();
+        }
+        return a.hanHoanThanh ? -1 : 1;
+      });
+    };
+
+    const targetSubjLower = (this.targetSubjectName || '').trim().toLowerCase();
+
+    let targetSubjectTasks: TaskDto[] = [];
+    let otherSubjectTasks: TaskDto[] = [];
+
+    if (targetSubjLower) {
+      targetSubjectTasks = uncompleted.filter(t => {
+        const tSubj = (t.tenMonHoc || '').toLowerCase();
+        const tTitle = (t.tieuDe || '').toLowerCase();
+        return tSubj.includes(targetSubjLower) || targetSubjLower.includes(tSubj) || tTitle.includes(targetSubjLower);
+      });
+      otherSubjectTasks = uncompleted.filter(t => !targetSubjectTasks.includes(t));
+    } else {
+      otherSubjectTasks = [...uncompleted];
+    }
+
+    const sortedTargetTasks = sortTasks(targetSubjectTasks);
+    const sortedOtherTasks = sortTasks(otherSubjectTasks);
+
+    const result: TaskDto[] = [];
+    if (sortedTargetTasks.length >= 2) {
+      result.push(sortedTargetTasks[0], sortedTargetTasks[1]);
+    } else if (sortedTargetTasks.length === 1) {
+      result.push(sortedTargetTasks[0]);
+      if (sortedOtherTasks.length > 0) {
+        result.push(sortedOtherTasks[0]);
+      }
+    } else {
+      if (sortedOtherTasks.length > 0) result.push(sortedOtherTasks[0]);
+      if (sortedOtherTasks.length > 1) result.push(sortedOtherTasks[1]);
+    }
+
+    return result;
+  }
+
+  formatDateShort(d?: Date): string {
+    if (!d) return '';
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    return `${day}/${month}`;
+  }
+
+  formatTaskDeadline(hanHoanThanh?: string): string {
+    if (!hanHoanThanh) return '';
+    try {
+      const d = new Date(hanHoanThanh);
+      if (isNaN(d.getTime())) return '';
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      return `Hạn: ${day}/${month}`;
+    } catch {
+      return '';
+    }
+  }
+
+  getPriorityBadge(doUuTien: number): { label: string, bg: string, text: string } {
+    switch (doUuTien) {
+      case 3: return { label: 'Khẩn cấp', bg: 'bg-red-50', text: 'text-red-700' };
+      case 2: return { label: 'Ưu tiên cao', bg: 'bg-rose-50', text: 'text-rose-700' };
+      case 1: return { label: 'Trung bình', bg: 'bg-amber-50', text: 'text-amber-700' };
+      default: return { label: 'Thấp', bg: 'bg-slate-50', text: 'text-slate-600' };
+    }
   }
 
   ngOnDestroy() {
@@ -321,23 +504,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
         if (ev.type === 'TaskDeadline' || ev.title?.startsWith('Deadline:')) return false;
 
         // Apply Subject filter
-        if (this.selectedSubjectFilter !== 'all') {
-          const filterLower = this.selectedSubjectFilter.toLowerCase();
-          const eventSubjectLower = (ev.tenMonHoc || '').toLowerCase();
-          const eventTitleLower = (ev.title || '').toLowerCase();
-
-          const matchesSubject = (eventSubjectLower && (eventSubjectLower === filterLower || eventSubjectLower.includes(filterLower))) ||
-                                 (eventTitleLower && eventTitleLower.includes(filterLower)) ||
-                                 (ev.maMonHoc !== undefined && String(ev.maMonHoc) === filterLower);
-
-          if (!matchesSubject) return false;
+        if (!this.matchesEventSubject(ev, this.selectedSubjectFilter)) {
+          return false;
         }
 
         // Apply Type filter
-        if (this.selectedTypeFilter !== 'all') {
-          if (this.selectedTypeFilter === 'ExamSchedule' && ev.type !== 'Lịch thi') return false;
-          if (this.selectedTypeFilter === 'ClassSchedule' && ev.type !== 'Lịch học') return false;
-          if (this.selectedTypeFilter === 'PersonalEvent' && ev.type !== 'Hoạt động' && ev.type !== 'Sắp tới') return false;
+        if (!this.matchesEventType(ev, this.selectedTypeFilter)) {
+          return false;
         }
 
         const t = ev.startDateObj.getTime();
@@ -439,11 +612,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
   selectSubject(subj: string) {
     this.selectedSubjectFilter = subj;
     this.isSubjectDropdownOpen = false;
+    this.setupMonthGrid();
   }
 
   selectType(typeValue: string) {
     this.selectedTypeFilter = typeValue;
     this.isTypeDropdownOpen = false;
+    this.setupMonthGrid();
   }
 
   getTypeLabel(value: string): string {
@@ -456,6 +631,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.selectedTypeFilter = 'all';
     this.isSubjectDropdownOpen = false;
     this.isTypeDropdownOpen = false;
+    this.setupMonthGrid();
   }
 
   pinnedEvent: CalendarEvent | null = null;
@@ -473,6 +649,43 @@ export class CalendarComponent implements OnInit, OnDestroy {
       this.hoveredEvent = null;
       this.selectedEvent = null;
     }
+  }
+
+  matchesEventSubject(ev: CalendarEvent, filter: string): boolean {
+    if (!filter || filter === 'all') return true;
+    const filterLower = filter.trim().toLowerCase();
+    const eventSubjectLower = (ev.tenMonHoc || '').trim().toLowerCase();
+    const eventTitleLower = (ev.title || '').trim().toLowerCase();
+
+    if (eventSubjectLower && (
+      eventSubjectLower === filterLower ||
+      eventSubjectLower.includes(filterLower) ||
+      filterLower.includes(eventSubjectLower)
+    )) {
+      return true;
+    }
+
+    if (eventTitleLower && (
+      eventTitleLower === filterLower ||
+      eventTitleLower.includes(filterLower) ||
+      filterLower.includes(eventTitleLower)
+    )) {
+      return true;
+    }
+
+    if (ev.maMonHoc !== undefined && String(ev.maMonHoc) === filterLower) {
+      return true;
+    }
+
+    return false;
+  }
+
+  matchesEventType(ev: CalendarEvent, typeFilter: string): boolean {
+    if (!typeFilter || typeFilter === 'all') return true;
+    if (typeFilter === 'ExamSchedule' && ev.type !== 'Lịch thi') return false;
+    if (typeFilter === 'ClassSchedule' && ev.type !== 'Lịch học') return false;
+    if (typeFilter === 'PersonalEvent' && ev.type !== 'Hoạt động' && ev.type !== 'Sắp tới') return false;
+    return true;
   }
 
   get filteredEvents(): CalendarEvent[] {
@@ -505,23 +718,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
       }
 
       // 2. Subject filter
-      if (this.selectedSubjectFilter !== 'all') {
-        const filterLower = this.selectedSubjectFilter.toLowerCase();
-        const eventSubjectLower = (ev.tenMonHoc || '').toLowerCase();
-        const eventTitleLower = (ev.title || '').toLowerCase();
-
-        const matchesSubject = (eventSubjectLower && (eventSubjectLower === filterLower || eventSubjectLower.includes(filterLower))) ||
-                               (eventTitleLower && eventTitleLower.includes(filterLower)) ||
-                               (ev.maMonHoc !== undefined && String(ev.maMonHoc) === filterLower);
-
-        if (!matchesSubject) return false;
+      if (!this.matchesEventSubject(ev, this.selectedSubjectFilter)) {
+        return false;
       }
 
       // 3. Schedule type filter
-      if (this.selectedTypeFilter !== 'all') {
-        if (this.selectedTypeFilter === 'ExamSchedule' && ev.type !== 'Lịch thi') return false;
-        if (this.selectedTypeFilter === 'ClassSchedule' && ev.type !== 'Lịch học') return false;
-        if (this.selectedTypeFilter === 'PersonalEvent' && ev.type !== 'Hoạt động' && ev.type !== 'Sắp tới') return false;
+      if (!this.matchesEventType(ev, this.selectedTypeFilter)) {
+        return false;
       }
 
       return true;
@@ -553,6 +756,9 @@ export class CalendarComponent implements OnInit, OnDestroy {
           this.buildUpcomingSidebars(activeDtos);
           this.updateSelectedEventState();
           this.setupMonthGrid();
+          if (this.subjectTags.length === 0) {
+            this.extractSubjectsFromEvents();
+          }
         }
       },
       error: (err) => {

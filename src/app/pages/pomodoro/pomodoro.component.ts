@@ -10,6 +10,8 @@ export interface PomodoroSession {
   id: number;
   type: 'pomodoro' | 'short_break' | 'long_break';
   name: string;
+  taskTitle?: string;
+  subjectName?: string;
   duration: string;
   timeRange: string;
   icon: string;
@@ -59,6 +61,7 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   pauseCount: number = 0;
   pauseStartTime: number | null = null;
   totalPauseSeconds: number = 0;
+  sessionStartTime: Date | null = null;
 
   // Toggle Switches State
   toggleMuteNotifications: boolean = true;
@@ -98,9 +101,7 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   // All Tasks Modal
   showAllTasksModal: boolean = false;
   allTasksPage: number = 1;
-  allTasksPageSize: number = 6;
-  allTasksTotal: number = 0;
-  allTasksList: TaskDto[] = [];
+  allTasksPageSize: number = 5; // 5 tasks per page is the ideal UX size for modal dialogs
   isLoadingAllTasks: boolean = false;
 
   // Edit Task Modal & Custom Subject Dropdown State
@@ -139,6 +140,7 @@ export class PomodoroComponent implements OnInit, OnDestroy {
 
   // Completed sessions history
   sessionHistory: PomodoroSession[] = [];
+  showHistoryModal: boolean = false;
 
   constructor(
     private pomodoroService: PomodoroService,
@@ -153,6 +155,249 @@ export class PomodoroComponent implements OnInit, OnDestroy {
     this.loadSubjects();
     this.checkActiveSession();
     this.loadSessionHistoryFromStorage();
+  }
+
+  openHistoryModal() {
+    this.showHistoryModal = true;
+  }
+
+  closeHistoryModal() {
+    this.showHistoryModal = false;
+  }
+
+  clearAllHistory() {
+    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử các phiên học không?')) {
+      this.sessionHistory = [];
+      this.saveSessionHistoryToStorage();
+      const todayKey = this.getTodayDateKey();
+      localStorage.removeItem(`studyhub_pomo_abandoned_${todayKey}`);
+      localStorage.removeItem(`studyhub_pomo_pauses_${todayKey}`);
+      this.showToast('🗑️ Đã xóa toàn bộ lịch sử phiên học');
+    }
+  }
+
+  private getTodayDateKey(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+  }
+
+  getTodayAbandonedCount(): number {
+    const key = `studyhub_pomo_abandoned_${this.getTodayDateKey()}`;
+    return parseInt(localStorage.getItem(key) || '0', 10) || 0;
+  }
+
+  recordAbandonedSession() {
+    const key = `studyhub_pomo_abandoned_${this.getTodayDateKey()}`;
+    const current = this.getTodayAbandonedCount();
+    localStorage.setItem(key, (current + 1).toString());
+  }
+
+  getTodayPauseCount(): number {
+    const key = `studyhub_pomo_pauses_${this.getTodayDateKey()}`;
+    return parseInt(localStorage.getItem(key) || '0', 10) || 0;
+  }
+
+  recordPauseEvent() {
+    const key = `studyhub_pomo_pauses_${this.getTodayDateKey()}`;
+    const current = this.getTodayPauseCount();
+    localStorage.setItem(key, (current + 1).toString());
+  }
+
+  private isTodaySession(session: PomodoroSession): boolean {
+    if (!session || !session.id) return false;
+    const sessionDate = new Date(session.id);
+    const today = new Date();
+    return sessionDate.getFullYear() === today.getFullYear() &&
+           sessionDate.getMonth() === today.getMonth() &&
+           sessionDate.getDate() === today.getDate();
+  }
+
+  get todaySessions(): PomodoroSession[] {
+    return this.sessionHistory.filter(s => this.isTodaySession(s));
+  }
+
+  get todayCompletedSessionsCount(): number {
+    return this.todaySessions.filter(s => s.type === 'pomodoro').length;
+  }
+
+  get todayTotalFocusMinutes(): number {
+    return this.todaySessions
+      .filter(s => s.type === 'pomodoro')
+      .reduce((acc, s) => {
+        if (s.duration.includes('s')) {
+          const secs = parseInt(s.duration.replace(/\D/g, '')) || 0;
+          return acc + (secs >= 30 ? 1 : 0);
+        }
+        const mins = parseInt(s.duration.replace(/\D/g, '')) || 0;
+        return acc + mins;
+      }, 0);
+  }
+
+  get todayTotalFocusTimeFormatted(): string {
+    const totalMins = this.todayTotalFocusMinutes;
+    if (totalMins === 0) return '0m';
+    const hours = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    if (hours === 0) return `${mins}m`;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins}m`;
+  }
+
+  get currentStreakDays(): number {
+    const dates = new Set<string>();
+    this.sessionHistory.forEach(s => {
+      if (s.type === 'pomodoro') {
+        const d = new Date(s.id);
+        if (!isNaN(d.getTime())) {
+          dates.add(d.toDateString());
+        }
+      }
+    });
+    return Math.max(dates.size, this.todayCompletedSessionsCount > 0 ? 1 : 0);
+  }
+
+  get focusEfficiency(): number {
+    const completed = this.todayCompletedSessionsCount;
+    const abandoned = this.getTodayAbandonedCount();
+    const pauses = this.getTodayPauseCount();
+
+    // Default 100% when day starts
+    if (completed === 0 && abandoned === 0 && pauses === 0) {
+      return 100;
+    }
+
+    // When sessions were abandoned before completing any
+    if (completed === 0 && abandoned > 0) {
+      return Math.max(20, 100 - (abandoned * 30));
+    }
+
+    const totalAttempts = completed + abandoned;
+    const baseCompletionRate = (completed / totalAttempts) * 100;
+    const pausePenalty = Math.min(25, pauses * 3); // Each pause minus 3% (capped at 25%)
+
+    return Math.max(10, Math.min(100, Math.round(baseCompletionRate - pausePenalty)));
+  }
+
+  get totalFocusMinutes(): number {
+    return this.todayTotalFocusMinutes;
+  }
+
+  get totalFocusTimeFormatted(): string {
+    const totalMins = this.todayTotalFocusMinutes;
+    if (totalMins === 0) return '0 phút';
+    const hours = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    if (hours === 0) return `${mins} phút`;
+    if (mins === 0) return `${hours} giờ`;
+    return `${hours} giờ ${mins} phút`;
+  }
+
+  // ═══════════════════════════════════════════════
+  // AI ASSISTANT CAROUSEL & INSIGHTS
+  // ═══════════════════════════════════════════════
+  aiCurrentSlide: number = 0;
+
+  get urgentTask(): TaskDto | null {
+    const unfinished = (this.tasks || []).filter(t => t.trangThai !== 3 && t.tiLeHoanThanh !== 100);
+    if (unfinished.length === 0) return null;
+    
+    // Sort: Priority descending, then closest deadline ascending
+    const sorted = [...unfinished].sort((a, b) => {
+      if ((b.doUuTien || 0) !== (a.doUuTien || 0)) {
+        return (b.doUuTien || 0) - (a.doUuTien || 0);
+      }
+      if (a.hanHoanThanh && b.hanHoanThanh) {
+        return new Date(a.hanHoanThanh).getTime() - new Date(b.hanHoanThanh).getTime();
+      }
+      return 0;
+    });
+
+    return sorted[0];
+  }
+
+  get aiInsightsList(): Array<{ title: string; badge: string; message: string; tip: string }> {
+    const list: Array<{ title: string; badge: string; message: string; tip: string }> = [];
+
+    // Slide 1: Hiệu suất & Năng suất hôm nay
+    const pCount = this.todayCompletedSessionsCount;
+    const eff = this.focusEfficiency;
+    let s1Msg = '';
+    let s1Tip = '';
+
+    if (pCount === 0) {
+      s1Msg = 'Bạn chưa hoàn thành phiên Pomodoro nào hôm nay. Hãy bấm Bắt đầu phiên 25 phút để khởi động ngày học nhé!';
+      s1Tip = 'Mỗi ngày hoàn thành 4 phiên Pomodoro sẽ giúp não bộ đạt hiệu suất tối đa.';
+    } else if (pCount < 4) {
+      s1Msg = `Bạn đã hoàn thành ${pCount} phiên Pomodoro hôm nay! 🎉 Hiệu suất tập trung đạt ${eff}%.`;
+      s1Tip = eff < 80 
+        ? `Hiệu suất đang là ${eff}%. Hãy hạn chế bấm tạm dừng để tăng sự tập trung nhé!`
+        : 'Nên nghỉ giải lao 5 phút giữa các phiên để giữ não bộ luôn tỉnh táo.';
+    } else {
+      s1Msg = `Xuất sắc! Bạn đã hoàn thành ${pCount} phiên Pomodoro hôm nay! 🎉 Hiệu suất tập trung đạt ${eff}%.`;
+      s1Tip = 'Bạn đã hoàn thành 4 phiên! Hãy dành 15 phút nghỉ dài để nạp lại năng lượng.';
+    }
+
+    list.push({
+      title: 'HIỆU SUẤT HỌC TẬP',
+      badge: 'Năng suất',
+      message: s1Msg,
+      tip: s1Tip
+    });
+
+    // Slide 2: Gợi ý Task ưu tiên & Hạn chót
+    const urgent = this.urgentTask;
+    let s2Msg = '';
+    let s2Tip = '';
+
+    if (urgent) {
+      const subjectText = urgent.tenMonHoc ? ` (Môn ${urgent.tenMonHoc})` : '';
+      const deadlineText = urgent.hanHoanThanh ? ` - Hạn: ${new Date(urgent.hanHoanThanh).toLocaleDateString('vi-VN')}` : '';
+      s2Msg = `Công việc cần ưu tiên tiếp theo: "${urgent.tieuDe}"${subjectText}${deadlineText}.`;
+      s2Tip = `Bấm chọn task "${urgent.tieuDe}" ở danh sách bên trái để bắt đầu phiên tập trung ngay!`;
+    } else {
+      s2Msg = 'Tuyệt vời! Bạn đã hoàn thành 100% tất cả công việc chưa làm. Hãy ôn tập nhẹ nhàng hoặc thư giãn.';
+      s2Tip = 'Bạn có thể tạo thêm task mới trong trang Quản lý công việc.';
+    }
+
+    list.push({
+      title: 'ĐỀ XUẤT CÔNG VIỆC',
+      badge: urgent ? 'Ưu tiên' : 'Hoàn tất',
+      message: s2Msg,
+      tip: s2Tip
+    });
+
+    // Slide 3: Chuỗi học tập & Năng lượng
+    const streak = this.currentStreakDays;
+    const focusTime = this.todayTotalFocusTimeFormatted;
+    const s3Msg = `Bạn đang duy trì chuỗi ${streak} ngày học liên tục, với tổng thời gian tập trung hôm nay là ${focusTime}.`;
+    const s3Tip = 'Duy trì học đều đặn mỗi ngày giúp não bộ tiếp thu kiến thức nhanh hơn 40% so với học dồn.';
+
+    list.push({
+      title: 'CHUỖI HỌC TẬP',
+      badge: `${streak} ngày`,
+      message: s3Msg,
+      tip: s3Tip
+    });
+
+    return list;
+  }
+
+  nextAiSlide() {
+    const len = this.aiInsightsList.length;
+    if (len === 0) return;
+    this.aiCurrentSlide = (this.aiCurrentSlide + 1) % len;
+  }
+
+  prevAiSlide() {
+    const len = this.aiInsightsList.length;
+    if (len === 0) return;
+    this.aiCurrentSlide = (this.aiCurrentSlide - 1 + len) % len;
+  }
+
+  setAiSlide(index: number) {
+    if (index >= 0 && index < this.aiInsightsList.length) {
+      this.aiCurrentSlide = index;
+    }
   }
 
   loadSessionHistoryFromStorage() {
@@ -341,28 +586,34 @@ export class PomodoroComponent implements OnInit, OnDestroy {
     this.toggleFullscreen = !this.toggleFullscreen;
     if (this.toggleFullscreen) {
       if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {
-          this.toggleFullscreen = false;
-        });
+        document.documentElement.requestFullscreen().catch(() => {});
       }
-      this.showToast('🖥️ Đã mở chế độ toàn màn hình');
+      this.showToast('🖥️ Đã mở chế độ tập trung toàn màn hình');
     } else {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      }
-      this.showToast('🔲 Đã thoát chế độ toàn màn hình');
+      this.exitFullscreenMode();
     }
   }
 
+  exitFullscreenMode() {
+    this.toggleFullscreen = false;
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    this.showToast('🔲 Đã thoát chế độ toàn màn hình');
+  }
+
   loadTasks() {
+    this.taskService.clearCache();
     this.taskService.getTasks({ pageSize: 100 }).subscribe({
       next: (res) => {
         if (res.items && res.items.length > 0) {
           this.tasks = res.items;
           const unfinished = this.tasks.filter(t => t.trangThai !== 3 && t.tiLeHoanThanh !== 100);
           if (unfinished.length > 0) {
-            this.focusedTask = unfinished[0];
-            this.selectedOtherTaskId = unfinished.length > 1 ? unfinished[1].maCongViec : unfinished[0].maCongViec;
+            if (!this.focusedTask || !unfinished.some(t => t.maCongViec === this.focusedTask?.maCongViec)) {
+              this.focusedTask = unfinished[0];
+            }
+            this.selectedOtherTaskId = this.focusedTask ? this.focusedTask.maCongViec : unfinished[0].maCongViec;
           } else {
             this.focusedTask = this.tasks[0];
           }
@@ -381,26 +632,18 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   openAllTasksModal() {
     this.allTasksPage = 1;
     this.showAllTasksModal = true;
-    this.loadAllTasksPage();
   }
 
   closeAllTasksModal() {
     this.showAllTasksModal = false;
   }
 
-  loadAllTasksPage() {
-    this.isLoadingAllTasks = true;
-    this.taskService.getTasks({ pageSize: this.allTasksPageSize, pageNumber: this.allTasksPage }).subscribe({
-      next: (res) => {
-        // Filter out completed tasks (trangThai === 3 or tiLeHoanThanh === 100)
-        this.allTasksList = (res.items || []).filter(
-          t => t.trangThai !== 3 && t.tiLeHoanThanh !== 100
-        );
-        this.allTasksTotal = res.totalCount || res.items?.length || 0;
-        this.isLoadingAllTasks = false;
-      },
-      error: () => { this.isLoadingAllTasks = false; }
-    });
+  get allUnfinishedTasks(): TaskDto[] {
+    return (this.tasks || []).filter(t => t.trangThai !== 3 && t.tiLeHoanThanh !== 100);
+  }
+
+  get allTasksTotal(): number {
+    return this.allUnfinishedTasks.length;
   }
 
   get allTasksTotalPages(): number {
@@ -411,10 +654,14 @@ export class PomodoroComponent implements OnInit, OnDestroy {
     return Array.from({ length: this.allTasksTotalPages }, (_, i) => i + 1);
   }
 
+  get allTasksList(): TaskDto[] {
+    const startIndex = (this.allTasksPage - 1) * this.allTasksPageSize;
+    return this.allUnfinishedTasks.slice(startIndex, startIndex + this.allTasksPageSize);
+  }
+
   goToAllTasksPage(page: number) {
     if (page < 1 || page > this.allTasksTotalPages) return;
     this.allTasksPage = page;
-    this.loadAllTasksPage();
   }
 
   selectFocusTask(task: TaskDto) {
@@ -488,6 +735,11 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   startTimer() {
     if (this.isRunning) return;
 
+    // Record start time if beginning a fresh session
+    if (!this.sessionStartTime) {
+      this.sessionStartTime = new Date();
+    }
+
     // Accumulate pause time if resuming
     if (this.pauseStartTime) {
       const pauseDuration = Math.floor((Date.now() - this.pauseStartTime) / 1000);
@@ -533,6 +785,10 @@ export class PomodoroComponent implements OnInit, OnDestroy {
     this.pauseCount++;
     this.pauseStartTime = Date.now();
 
+    if (this.activeMode === 'pomodoro') {
+      this.recordPauseEvent();
+    }
+
     if (this.activeSessionId) {
       this.pomodoroService.pauseSession(this.activeSessionId, {
         tongThoiGianTamDung: this.totalPauseSeconds
@@ -551,6 +807,11 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   }
 
   resetTimer() {
+    // If resetting an in-progress Pomodoro session that ran for a bit, record as abandoned
+    if (this.activeMode === 'pomodoro' && this.timeLeft < this.totalSeconds) {
+      this.recordAbandonedSession();
+    }
+
     if (this.activeSessionId) {
       this.pomodoroService.cancelSession(this.activeSessionId).subscribe({
         next: () => {
@@ -562,6 +823,7 @@ export class PomodoroComponent implements OnInit, OnDestroy {
 
     this.stopTimer();
     this.activeSessionId = null;
+    this.sessionStartTime = null;
     this.pauseCount = 0;
     this.pauseStartTime = null;
     this.totalPauseSeconds = 0;
@@ -571,10 +833,15 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   onTimerComplete() {
     this.stopTimer();
 
-    const now = new Date();
-    const startTime = new Date(now.getTime() - (this.totalSeconds * 1000));
+    const endTime = new Date();
+    // Calculate actual elapsed focus duration
+    const elapsedSeconds = this.totalSeconds - this.timeLeft;
+    const actualSeconds = elapsedSeconds > 0 ? elapsedSeconds : this.totalSeconds;
+
+    // Accurate start time (from when user clicked play, or fallback from actual elapsed duration)
+    const startTime = this.sessionStartTime || new Date(endTime.getTime() - (actualSeconds * 1000));
     const startStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
-    const endStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const endStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
 
     if (this.activeSessionId) {
       this.pomodoroService.finishSession(this.activeSessionId, {
@@ -582,7 +849,7 @@ export class PomodoroComponent implements OnInit, OnDestroy {
         soLanTamDung: this.pauseCount
       }).subscribe({
         next: () => {
-          this.addHistoryItem(startStr, endStr);
+          this.addHistoryItem(startStr, endStr, actualSeconds);
           this.activeSessionId = null;
           this.pauseCount = 0;
           this.totalPauseSeconds = 0;
@@ -590,24 +857,55 @@ export class PomodoroComponent implements OnInit, OnDestroy {
         error: (err) => console.error('Error finishing Pomodoro session API:', err)
       });
     } else {
-      this.addHistoryItem(startStr, endStr);
+      this.addHistoryItem(startStr, endStr, actualSeconds);
     }
 
-    alert('🎉 Phiên tập trung đã hoàn thành! Hãy nghỉ giải lao nhé.');
+    this.sessionStartTime = null;
+    this.timeLeft = this.totalSeconds;
+
+    this.showToast('🎉 Tuyệt vời! Phiên tập trung đã hoàn thành. Hãy nghỉ giải lao nhé!');
   }
 
-  private addHistoryItem(startStr: string, endStr: string) {
+  private addHistoryItem(startStr: string, endStr: string, actualSeconds?: number) {
     const isPomo = this.activeMode === 'pomodoro';
     const isShort = this.activeMode === 'short_break';
-    const minutes = Math.round(this.totalSeconds / 60);
+    
+    // Accurate duration display
+    const seconds = (actualSeconds !== undefined && actualSeconds > 0) ? actualSeconds : this.totalSeconds;
+    let durationText = '';
+    if (seconds < 60) {
+      durationText = `${seconds}s`;
+    } else {
+      const minutes = Math.max(1, Math.round(seconds / 60));
+      durationText = `${minutes} phút`;
+    }
 
-    const pomoCount = this.sessionHistory.filter(s => s.type === 'pomodoro').length + 1;
+    let sessionName = '';
+    let taskTitle = '';
+    let subjectName = '';
+
+    if (isPomo) {
+      if (this.focusedTask && this.focusedTask.tieuDe) {
+        sessionName = this.focusedTask.tieuDe;
+        taskTitle = this.focusedTask.tieuDe;
+        subjectName = this.focusedTask.tenMonHoc || '';
+      } else {
+        const pomoCount = this.sessionHistory.filter(s => s.type === 'pomodoro').length + 1;
+        sessionName = `Tập trung Pomodoro ${pomoCount}`;
+      }
+    } else if (isShort) {
+      sessionName = 'Nghỉ giải lao 5p';
+    } else {
+      sessionName = 'Nghỉ dài 15p';
+    }
 
     const newHistory: PomodoroSession = {
       id: Date.now(),
       type: this.activeMode,
-      name: isPomo ? `Pomodoro ${pomoCount}` : (isShort ? 'Short Break' : 'Long Break'),
-      duration: `${minutes} phút`,
+      name: sessionName,
+      taskTitle: taskTitle,
+      subjectName: subjectName,
+      duration: durationText,
       timeRange: `${startStr} - ${endStr}`,
       icon: isPomo ? '🍅' : (isShort ? '☕' : '🌴'),
       iconColor: isPomo ? 'text-red-500' : 'text-blue-500'

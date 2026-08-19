@@ -32,9 +32,12 @@ export interface ChatMessage {
   time: string;
   content: string;
   isMe: boolean;
+  loaiTinNhan?: number;
   attachment?: {
     fileName: string;
     fileSize: string;
+    fileUrl?: string;
+    ext?: string;
   };
   reaction?: {
     emoji: string;
@@ -1104,6 +1107,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Fetch members, messages, tasks, meetings, folders, and documents
     this.loadGroupMembers(id);
     this.loadGroupMessages(id);
+    this.loadPinnedAnnouncement(id);
     this.loadGroupTasksFromBackend(id);
     this.loadGroupMeetings(id);
     this.loadGroupFolders(id);
@@ -1168,7 +1172,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
             extBg: extBg,
             size: sizeStr,
             uploaderName: d.tenNguoiTaiLen || 'Thành viên',
-            uploaderAvatar: d.avatarNguoiTaiLen || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80',
+            uploaderAvatar: d.avatarNguoiTaiLen || '',
             updatedAt: d.ngayTaiLen ? new Date(d.ngayTaiLen).toLocaleDateString('vi-VN') : 'Gần đây',
             folderId: d.maThuMuc || 0
           };
@@ -1233,7 +1237,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
             checklist: [],
             comments: [],
             assigneeName: d.tenNguoiDuocGiao || d.tenNguoiTao || 'Chưa phân công',
-            assigneeAvatar: d.anhNguoiDuocGiao || d.anhNguoiTao || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80',
+            assigneeAvatar: d.anhNguoiDuocGiao || d.anhNguoiTao || '',
             dueDate: d.hanHoanThanh ? d.hanHoanThanh.split('T')[0] : '',
             priority: priorityLabel,
             priorityClass: priorityClass,
@@ -1249,6 +1253,32 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ').filter(p => !!p);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, Math.min(2, name.length)).toUpperCase();
+  }
+
+  getAvatarBgColor(name: string): string {
+    const colors = [
+      'bg-purple-100 text-[#5B4DFF]',
+      'bg-indigo-100 text-indigo-600',
+      'bg-rose-100 text-rose-600',
+      'bg-blue-100 text-blue-600',
+      'bg-emerald-100 text-emerald-600',
+      'bg-amber-100 text-amber-600'
+    ];
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const idx = Math.abs(hash) % colors.length;
+    return colors[idx];
+  }
+
   rawMembers: ThanhVienNhomDto[] = [];
 
   loadGroupMembers(groupId: number): void {
@@ -1257,17 +1287,11 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (members: ThanhVienNhomDto[]) => {
         this.loadingMembers = false;
         this.rawMembers = members;
-        const defaultAvatars = [
-          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80'
-        ];
 
-        this.membersList = members.map((m, idx) => ({
+        this.membersList = members.map((m) => ({
           name: m.hoTen || m.email,
           role: m.vaiTro === 2 ? 'Nhóm trưởng' : m.vaiTro === 1 ? 'Quản trị viên' : 'Thành viên',
-          avatar: m.avatar || defaultAvatars[idx % defaultAvatars.length],
+          avatar: m.avatar || '',
           status: 'Online',
           statusClass: 'text-emerald-500'
         }));
@@ -1279,20 +1303,87 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  // ═══════════════════════════════════════════════
+  // CHAT: PINNED ANNOUNCEMENT & FILE ATTACHMENTS
+  // ═══════════════════════════════════════════════
+  pinnedAnnouncement: string = 'Họp nhóm vào 20:00 tối nay để thống nhất giao diện!';
+  showEditPinModal: boolean = false;
+  newPinText: string = '';
+  savingPin: boolean = false;
+
+  selectedChatFile: File | null = null;
+  selectedChatFilePreview: { name: string; size: string; ext: string } | null = null;
+  uploadingChatFile: boolean = false;
+
+  formatChatFileSize(bytes?: number): string {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  loadPinnedAnnouncement(groupId: number): void {
+    if (!groupId) return;
+    this.chatService.getPinnedAnnouncement(groupId).subscribe({
+      next: (res) => {
+        if (res?.announcement) {
+          this.pinnedAnnouncement = res.announcement;
+        }
+      },
+      error: (err) => {
+        console.warn('Could not load pinned announcement:', err);
+      }
+    });
+  }
+
+  openEditPinModal(): void {
+    this.newPinText = this.pinnedAnnouncement;
+    this.showEditPinModal = true;
+  }
+
+  closeEditPinModal(): void {
+    this.showEditPinModal = false;
+  }
+
+  savePinnedAnnouncement(): void {
+    if (!this.newPinText.trim() || !this.activeGroupId) return;
+    this.savingPin = true;
+    this.chatService.updatePinnedAnnouncement(this.activeGroupId, this.newPinText.trim()).subscribe({
+      next: (res) => {
+        this.savingPin = false;
+        this.pinnedAnnouncement = this.newPinText.trim();
+        this.showEditPinModal = false;
+      },
+      error: (err) => {
+        this.savingPin = false;
+        console.error('Error updating pinned announcement:', err);
+        // Optimistically update
+        this.pinnedAnnouncement = this.newPinText.trim();
+        this.showEditPinModal = false;
+      }
+    });
+  }
+
   loadGroupMessages(groupId: number): void {
     this.loadingMessages = true;
     this.chatService.getGroupMessages(groupId).subscribe({
       next: (messages: TinNhanDto[]) => {
         this.loadingMessages = false;
-        const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80';
 
         this.chatMessages = messages.map(msg => ({
           id: msg.maTinNhan,
           senderName: msg.tenNguoiGui || 'Thành viên',
-          senderAvatar: msg.avatarNguoiGui || defaultAvatar,
+          senderAvatar: msg.avatarNguoiGui || '',
           time: new Date(msg.ngayGui).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           content: msg.noiDung,
-          isMe: msg.isMine
+          isMe: msg.isMine,
+          loaiTinNhan: msg.loaiTinNhan,
+          attachment: msg.attachment ? {
+            fileName: msg.attachment.tenFile,
+            fileSize: this.formatChatFileSize(msg.attachment.dungLuong),
+            fileUrl: msg.attachment.duongDan.startsWith('http') ? msg.attachment.duongDan : 'http://localhost:5186' + msg.attachment.duongDan,
+            ext: msg.attachment.dinhDang
+          } : undefined
         }));
       },
       error: (err) => {
@@ -1303,16 +1394,23 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   appendRealtimeMessage(msg: TinNhanDto): void {
-    const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80';
     if (!this.chatMessages.some(m => m.id === msg.maTinNhan)) {
       this.chatMessages.push({
         id: msg.maTinNhan,
         senderName: msg.tenNguoiGui || 'Thành viên',
-        senderAvatar: msg.avatarNguoiGui || defaultAvatar,
+        senderAvatar: msg.avatarNguoiGui || '',
         time: new Date(msg.ngayGui).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         content: msg.noiDung,
-        isMe: msg.isMine
+        isMe: msg.isMine,
+        loaiTinNhan: msg.loaiTinNhan,
+        attachment: msg.attachment ? {
+          fileName: msg.attachment.tenFile,
+          fileSize: this.formatChatFileSize(msg.attachment.dungLuong),
+          fileUrl: msg.attachment.duongDan.startsWith('http') ? msg.attachment.duongDan : 'http://localhost:5186' + msg.attachment.duongDan,
+          ext: msg.attachment.dinhDang
+        } : undefined
       });
+      this.shouldScrollToBottom = true;
     }
   }
 
@@ -1333,8 +1431,72 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   attachFile(): void {
-    // TODO: Kết nối upload file thực tế sau
-    alert('Tính năng đính kèm file sẽ được cập nhật trong phiên bản tiếp theo! 📎');
+    const fileInput = document.getElementById('chatFileInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  onChatFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    this.selectedChatFile = file;
+    const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+    this.selectedChatFilePreview = {
+      name: file.name,
+      size: this.formatChatFileSize(file.size),
+      ext: ext
+    };
+    event.target.value = '';
+  }
+
+  removeSelectedChatFile(): void {
+    this.selectedChatFile = null;
+    this.selectedChatFilePreview = null;
+  }
+
+  downloadChatFile(url?: string, fileName?: string): void {
+    const targetFileName = fileName || 'tai-lieu';
+    let targetUrl = url;
+    if (!targetUrl) {
+      targetUrl = `/uploads/chat/${targetFileName}`;
+    }
+
+    const fullUrl = targetUrl.startsWith('http') 
+      ? targetUrl 
+      : `http://localhost:5186${targetUrl.startsWith('/') ? '' : '/'}${targetUrl}`;
+
+    fetch(fullUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Không thể tải file trực tiếp từ server');
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = targetFileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 500);
+      })
+      .catch(err => {
+        console.warn('Fetch blob download fallback to direct link:', err);
+        const a = document.createElement('a');
+        a.href = fullUrl;
+        a.download = targetFileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+        }, 300);
+      });
   }
 
   getCurrentTime(): string {
@@ -1344,50 +1506,92 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   sendMessage(): void {
     const content = this.newMessageText.trim();
-    if (!content) return;
+    if (!content && !this.selectedChatFile) return;
 
+    const fileToSend = this.selectedChatFile;
+    const filePreview = this.selectedChatFilePreview;
     this.newMessageText = '';
+    this.removeSelectedChatFile();
 
     // --- MOCK: Optimistically add message to UI immediately ---
     const mockMsg: ChatMessage = {
       id: Date.now(),
       senderName: 'Bạn',
-      senderAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop&q=80',
+      senderAvatar: '',
       time: this.getCurrentTime(),
-      content: content,
-      isMe: true
+      content: content || (fileToSend ? fileToSend.name : ''),
+      isMe: true,
+      loaiTinNhan: fileToSend ? 2 : 0,
+      attachment: filePreview ? {
+        fileName: filePreview.name,
+        fileSize: filePreview.size,
+        ext: filePreview.ext
+      } : undefined
     };
     this.chatMessages.push(mockMsg);
     this.shouldScrollToBottom = true;
 
-    // --- API: Try to persist + broadcast via SignalR (if connected) ---
+    // --- API: Send File or Text Message ---
     if (this.activeGroupId > 0) {
-      this.chatSignalRService.sendMessage(this.activeGroupId, content);
+      if (fileToSend) {
+        this.uploadingChatFile = true;
+        this.chatService.uploadFileMessage(this.activeGroupId, fileToSend, content).subscribe({
+          next: (msgDto: TinNhanDto) => {
+            this.uploadingChatFile = false;
+            const idx = this.chatMessages.findIndex(m => m.id === mockMsg.id);
+            if (idx !== -1) {
+              this.chatMessages[idx] = {
+                id: msgDto.maTinNhan,
+                senderName: msgDto.tenNguoiGui || 'Bạn',
+                senderAvatar: msgDto.avatarNguoiGui || '',
+                time: new Date(msgDto.ngayGui).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                content: msgDto.noiDung,
+                isMe: true,
+                loaiTinNhan: msgDto.loaiTinNhan,
+                attachment: msgDto.attachment ? {
+                  fileName: msgDto.attachment.tenFile,
+                  fileSize: this.formatChatFileSize(msgDto.attachment.dungLuong),
+                  fileUrl: msgDto.attachment.duongDan.startsWith('http') ? msgDto.attachment.duongDan : 'http://localhost:5186' + msgDto.attachment.duongDan,
+                  ext: msgDto.attachment.dinhDang
+                } : mockMsg.attachment
+              };
+            }
 
-      this.chatService.sendMessage(this.activeGroupId, {
-        maNhom: this.activeGroupId,
-        noiDung: content,
-        loaiTinNhan: 0
-      }).subscribe({
-        next: (msgDto: TinNhanDto) => {
-          // Replace mock message with real one from API
-          const idx = this.chatMessages.findIndex(m => m.id === mockMsg.id);
-          if (idx !== -1) {
-            this.chatMessages[idx] = {
-              id: msgDto.maTinNhan,
-              senderName: msgDto.tenNguoiGui || 'Bạn',
-              senderAvatar: msgDto.avatarNguoiGui || mockMsg.senderAvatar,
-              time: new Date(msgDto.ngayGui).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              content: msgDto.noiDung,
-              isMe: true
-            };
+            // Sync to Documents tab in background
+            this.loadGroupFolders(this.activeGroupId);
+            this.loadGroupDocuments(this.activeGroupId);
+          },
+          error: (err) => {
+            this.uploadingChatFile = false;
+            console.warn('File message saved locally only (API error):', err?.message);
           }
-        },
-        error: (err) => {
-          // Keep mock message in UI; log warning
-          console.warn('Message saved locally only (API error):', err?.message);
-        }
-      });
+        });
+      } else {
+        this.chatSignalRService.sendMessage(this.activeGroupId, content);
+
+        this.chatService.sendMessage(this.activeGroupId, {
+          maNhom: this.activeGroupId,
+          noiDung: content,
+          loaiTinNhan: 0
+        }).subscribe({
+          next: (msgDto: TinNhanDto) => {
+            const idx = this.chatMessages.findIndex(m => m.id === mockMsg.id);
+            if (idx !== -1) {
+              this.chatMessages[idx] = {
+                id: msgDto.maTinNhan,
+                senderName: msgDto.tenNguoiGui || 'Bạn',
+                senderAvatar: msgDto.avatarNguoiGui || '',
+                time: new Date(msgDto.ngayGui).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                content: msgDto.noiDung,
+                isMe: true
+              };
+            }
+          },
+          error: (err) => {
+            console.warn('Message saved locally only (API error):', err?.message);
+          }
+        });
+      }
     }
   }
 
@@ -1491,7 +1695,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   getAssigneeAvatar(name: string): string {
     const member = this.membersList.find(m => m.name === name);
-    return member?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80';
+    return member?.avatar || '';
   }
 
   closeTaskModal(): void {
@@ -1603,7 +1807,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
       id: Date.now(),
       text: this.newCommentText.trim(),
       author: 'Bạn',
-      avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop&q=80',
+      avatar: '',
       time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
     this.editingCard.comments.push(comment);
@@ -1618,7 +1822,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   submitQuickAdd(): void {
     if (!this.quickAddTitle.trim()) { this.cancelQuickAdd(); return; }
-    const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80';
+    const defaultAvatar = '';
     this.kanbanTasks.push({
       id: Date.now(),
       title: this.quickAddTitle.trim(),
@@ -1696,7 +1900,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
       const taskIndex = this.kanbanTasks.findIndex(t => t.id === this.editingTaskId);
       if (taskIndex !== -1) {
         const matchedMember = this.membersList.find(m => m.name === this.newTaskForm.assigneeName);
-        const avatar = matchedMember?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80';
+        const avatar = matchedMember?.avatar || '';
         
         this.kanbanTasks[taskIndex] = {
           ...this.kanbanTasks[taskIndex],
@@ -1769,7 +1973,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
             checklist: [],
             comments: [],
             assigneeName: d.tenNguoiDuocGiao || d.tenNguoiTao || 'Chưa phân công',
-            assigneeAvatar: d.anhNguoiDuocGiao || d.anhNguoiTao || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80',
+            assigneeAvatar: d.anhNguoiDuocGiao || d.anhNguoiTao || '',
             dueDate: d.hanHoanThanh ? d.hanHoanThanh.split('T')[0] : '',
             priority: priorityLabel,
             priorityClass: priorityClass,
@@ -1787,7 +1991,7 @@ export class GroupsComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
     } else {
       const matchedMember = this.membersList.find(m => m.name === this.newTaskForm.assigneeName);
-      const avatar = matchedMember?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80';
+      const avatar = matchedMember?.avatar || '';
 
       const newTask: KanbanTask = {
         id: Date.now(),
